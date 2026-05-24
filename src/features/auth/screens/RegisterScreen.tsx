@@ -227,9 +227,9 @@ export function RegisterScreen() {
                 ]}
               >
                 {passwordVisible ? (
-                  <EyeOff size={20} color={theme.colors.textMuted} />
-                ) : (
                   <Eye size={20} color={theme.colors.textMuted} />
+                ) : (
+                  <EyeOff size={20} color={theme.colors.textMuted} />
                 )}
               </Pressable>
             }

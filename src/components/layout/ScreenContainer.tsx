@@ -27,7 +27,13 @@ export function ScreenContainer({
   const theme = useTheme();
 
   const body = (
-    <View style={[styles.content, contentStyle]}>
+    <View
+      style={[
+        styles.content,
+        { backgroundColor: theme.colors.background },
+        contentStyle,
+      ]}
+    >
       {header}
       {children}
     </View>
@@ -40,9 +46,14 @@ export function ScreenContainer({
     >
       {scroll ? (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          style={{ backgroundColor: theme.colors.background }}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { backgroundColor: theme.colors.background },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          overScrollMode="never"
         >
           {body}
         </ScrollView>
