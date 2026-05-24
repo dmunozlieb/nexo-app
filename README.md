@@ -1,41 +1,41 @@
 # Nexo
 
-Nexo es una base MVP avanzada para una app social de comunidades. Las comunidades son **Orbitas**, las publicaciones tienen energia propia y las reacciones son **Ecos** con significado.
+Nexo is an advanced MVP foundation for a community-based social app. Communities are **Orbitas**, posts have their own energy, and reactions are meaningful **Ecos**.
 
-## Decisiones tecnicas
+## Technical Decisions
 
-- **Expo SDK 56 estable**: plantilla oficial con `expo@~56.0.3`, `react-native@0.85.3`, `react@19.2.3`, Node 24 local y Android SDK 36 gestionado por Expo. Esto queda por encima del requisito actual de Google Play de target API 35 para apps nuevas/actualizadas desde el 31 de agosto de 2025.
-- **Expo Router**: navegacion file-based con rutas protegidas y onboarding obligatorio.
-- **Supabase**: Auth, PostgreSQL, Realtime, Storage, RLS y una Edge Function opcional para acciones de moderacion.
-- **TanStack Query**: cache, paginacion, invalidacion y estado de servidor.
-- **Zustand**: estado local minimo, por ahora tema claro/oscuro.
-- **React Hook Form + Zod**: formularios con validacion compartida y limites de seguridad.
-- **Sistema de estilos propio con tokens**: alternativa equivalente a NativeWind para evitar riesgo de compatibilidad en un SDK recien publicado y mantener tokens centralizados, responsive y reutilizables.
+- **Stable Expo SDK 56**: official template with `expo@~56.0.3`, `react-native@0.85.3`, `react@19.2.3`, local Node 24, and Android SDK 36 managed by Expo. This is above Google Play's current target API 35 requirement for new and updated apps since August 31, 2025.
+- **Expo Router**: file-based navigation with protected routes and mandatory onboarding.
+- **Supabase**: Auth, PostgreSQL, Realtime, Storage, RLS, and an optional Edge Function for moderation actions.
+- **TanStack Query**: caching, pagination, invalidation, and server state.
+- **Zustand**: minimal local state, currently light/dark theme.
+- **React Hook Form + Zod**: forms with shared validation and safety limits.
+- **Custom token-based styling system**: a NativeWind-equivalent alternative to avoid compatibility risk on a newly released SDK while keeping tokens centralized, responsive, and reusable.
 
-## Requisitos
+## Requirements
 
 - Node >= 22.13.0.
 - npm >= 10.
 - Expo CLI via `npx expo`.
-- Supabase CLI si quieres correr backend local.
-- EAS CLI para builds y submit.
+- Supabase CLI if you want to run the backend locally.
+- EAS CLI for builds and submission.
 
-## Configuracion
+## Configuration
 
-1. Crea `.env` desde `.env.example`.
-2. Define:
+1. Create `.env` from `.env.example`.
+2. Set:
 
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-public-anon-key
 ```
 
-3. En Supabase, aplica las migraciones y seed.
-4. Activa Email/Password en Auth. Google OAuth esta preparado en servicio, pero requiere configurar proveedor y redirect URLs.
+3. In Supabase, apply the migrations and seed.
+4. Enable Email/Password in Auth. Google OAuth is prepared in the service layer, but it requires configuring the provider and redirect URLs.
 
-### Modo demo sin Docker
+### Demo Mode Without Docker
 
-Si no puedes usar Docker/WSL, activa:
+If you cannot use Docker/WSL, enable:
 
 ```bash
 EXPO_PUBLIC_DEMO_MODE=true
@@ -43,9 +43,9 @@ EXPO_PUBLIC_SUPABASE_URL=https://example.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=demo-anon-key
 ```
 
-Con este modo puedes iniciar sesion y recorrer pantallas con datos locales en memoria. Supabase real queda intacto para cloud o local Docker.
+With this mode, you can sign in and move through screens using local in-memory data. The real Supabase setup remains untouched for cloud or local Docker usage.
 
-## Comandos
+## Commands
 
 ```bash
 npm install
@@ -58,50 +58,50 @@ eas build --platform android --profile production
 eas submit --platform android
 ```
 
-## Estructura
+## Structure
 
-- `app/`: rutas Expo Router.
-- `src/components/`: UI reutilizable y layout.
+- `app/`: Expo Router routes.
+- `src/components/`: reusable UI and layout.
 - `src/features/`: auth, feed, communities, posts, comments, chat, profile, search, moderation, settings.
-- `src/lib/`: Supabase y Query Client.
-- `src/theme/`: tokens y tema.
-- `supabase/`: migraciones, RLS, seed y Edge Function opcional.
-- `docs/`: arquitectura, privacidad, moderacion y Play Store.
-- `tests/`: validaciones y utilidades.
+- `src/lib/`: Supabase and Query Client.
+- `src/theme/`: tokens and theme.
+- `supabase/`: migrations, RLS, seed, and optional Edge Function.
+- `docs/`: architecture, privacy, moderation, and Play Store.
+- `tests/`: validations and utilities.
 
-## Supabase local
+## Local Supabase
 
-Las credenciales demo del seed son:
+The seed demo credentials are:
 
 - `luna@nexo.local` / `Password123!`
 - `kai@nexo.local` / `Password123!`
 - `iris@nexo.local` / `Password123!`
 
-El seed crea intereses, perfiles, Orbitas, miembros, posts, comentarios, reacciones, salas y mensajes.
+The seed creates interests, profiles, Orbitas, members, posts, comments, reactions, rooms, and messages.
 
-## QA manual minimo
+## Minimum Manual QA
 
-- Registro con email/password.
-- Login y sesion persistente.
-- Onboarding: username, intereses y avatar opcional.
-- Descubrir Orbitas y unirse.
-- Crear publicacion con energia y Orbita destino.
-- Reaccionar con Ecos.
-- Guardar publicacion.
-- Comentar y responder comentario.
-- Abrir sala de chat y enviar mensaje realtime.
-- Reportar post, comentario, mensaje, perfil o comunidad.
-- Bloquear usuario desde perfil.
-- Revisar cola de moderacion como mod/owner.
-- Editar perfil.
-- Cambiar tema.
-- Logout.
+- Register with email/password.
+- Log in and keep a persistent session.
+- Onboarding: username, interests, and optional avatar.
+- Discover Orbitas and join one.
+- Create a post with energy and a target Orbita.
+- React with Ecos.
+- Save a post.
+- Comment and reply to a comment.
+- Open a chat room and send a realtime message.
+- Report a post, comment, message, profile, or community.
+- Block a user from their profile.
+- Review the moderation queue as mod/owner.
+- Edit profile.
+- Change theme.
+- Log out.
 
-## Notas de produccion
+## Production Notes
 
-- No se deben exponer claves privadas. La app solo usa `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
-- RLS es obligatorio: el cliente no decide permisos sensibles.
-- Falta conectar politica de privacidad, terminos, soporte y formulario Data Safety antes de publicar.
-- Para push notifications reales, crear proyecto EAS, configurar FCM/APNs y canales de Expo Notifications.
-- Para rate limiting fuerte, mover acciones sensibles a Edge Functions con comprobacion de usuario y limites por IP/usuario.
-- `npm audit` muestra avisos moderados transitivos en tooling de Expo por `uuid` via `@expo/config-plugins`; no ejecutes `npm audit fix --force` porque propone degradar Expo de forma incompatible.
+- Private keys must not be exposed. The app only uses `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+- RLS is mandatory: the client does not decide sensitive permissions.
+- Privacy policy, terms, support, and the Data Safety form still need to be connected before publishing.
+- For real push notifications, create an EAS project, configure FCM/APNs, and Expo Notifications channels.
+- For stronger rate limiting, move sensitive actions to Edge Functions with user checks and IP/user limits.
+- `npm audit` shows moderate transitive warnings in Expo tooling for `uuid` via `@expo/config-plugins`; do not run `npm audit fix --force` because it proposes downgrading Expo in an incompatible way.
