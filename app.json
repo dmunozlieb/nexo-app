@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Nexo",
+    "slug": "nexo",
+    "version": "1.0.0",
+    "scheme": "nexo",
+    "orientation": "portrait",
+    "icon": "./assets/logo/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nexo.social"
+    },
+    "android": {
+      "package": "com.nexo.social",
+      "versionCode": 1,
+      "permissions": [],
+      "adaptiveIcon": {
+        "backgroundColor": "#090A12",
+        "foregroundImage": "./assets/logo/adaptive-foreground.png",
+        "monochromeImage": "./assets/logo/adaptive-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/logo/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image",
+      "expo-splash-screen"
+    ]
+  }
+}

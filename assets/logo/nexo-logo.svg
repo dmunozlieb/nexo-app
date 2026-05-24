@@ -1,0 +1,44 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="108" fill="#090A12"/>
+  <ellipse
+    cx="256"
+    cy="258"
+    rx="178"
+    ry="116"
+    transform="rotate(-24 256 258)"
+    stroke="url(#orbit)"
+    stroke-width="18"
+    stroke-linecap="round"
+    stroke-dasharray="422 116"
+  />
+  <path
+    d="M160 348V166L352 348V166"
+    stroke="#F7FAFF"
+    stroke-width="42"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M160 348V166L352 348V166"
+    stroke="url(#letterSheen)"
+    stroke-width="42"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.26"
+  />
+  <circle cx="160" cy="166" r="22" fill="#7C5CFF"/>
+  <circle cx="352" cy="348" r="22" fill="#00D4FF"/>
+  <circle cx="360" cy="160" r="13" fill="#FF4FD8"/>
+  <defs>
+    <linearGradient id="orbit" x1="78" y1="142" x2="434" y2="374" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C5CFF"/>
+      <stop offset="0.52" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#FF4FD8"/>
+    </linearGradient>
+    <linearGradient id="letterSheen" x1="152" y1="160" x2="360" y2="356" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.52" stop-color="#DDFBFF"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>

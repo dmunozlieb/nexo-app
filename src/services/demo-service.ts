@@ -1,0 +1,989 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { Session } from "@supabase/supabase-js";
+import type {
+  Comment,
+  CommentWithAuthor,
+  Community,
+  CommunityMember,
+  CommunityWithMeta,
+  Conversation,
+  ConversationPreview,
+  Interest,
+  Message,
+  Post,
+  PostWithMeta,
+  Profile,
+  ReactionType,
+  Report,
+  ReportStatus,
+  ReportTargetType,
+} from "../types/domain";
+import type { ReportReason } from "../constants/moderation";
+import type { FeedMode } from "../features/feed/services/feed-service";
+import type {
+  AuthLoginInput,
+  AuthRegisterInput,
+  CommentInput,
+  CreateCommunityInput,
+  MessageInput,
+  OnboardingInput,
+  PostFormInput,
+  ProfileInput,
+  ResetPasswordInput,
+} from "../utils/validation";
+import { sanitizePlainText } from "../utils/sanitize";
+import { createEmptyReactionCounts } from "../features/posts/services/post-mapper";
+
+const DEMO_SESSION_KEY = "nexo.demo.session";
+const DEMO_PASSWORD = "Password123!";
+
+type DemoAuthListener = (session: Session | null) => void;
+type MessageListener = (message: Message) => void;
+
+const authListeners = new Set<DemoAuthListener>();
+const messageListeners = new Map<string, Set<MessageListener>>();
+
+const now = () => new Date().toISOString();
+const uuid = () =>
+  globalThis.crypto?.randomUUID?.() ??
+  `00000000-0000-4000-8000-${Math.random().toString(16).slice(2, 14)}`;
+
+const demoUsers: Array<{ email: string; id: string }> = [
+  { email: "luna@nexo.local", id: "11111111-1111-4111-8111-111111111111" },
+  { email: "kai@nexo.local", id: "22222222-2222-4222-8222-222222222222" },
+  { email: "iris@nexo.local", id: "33333333-3333-4333-8333-333333333333" },
+];
+
+const profiles: Profile[] = [
+  {
+    id: "11111111-1111-4111-8111-111111111111",
+    username: "luna_vega",
+    display_name: "Luna Vega",
+    bio: "Mod de arte, fanart y retos semanales.",
+    avatar_url: null,
+    banner_url: null,
+    created_at: now(),
+    updated_at: now(),
+    is_banned: false,
+  },
+  {
+    id: "22222222-2222-4222-8222-222222222222",
+    username: "kai_nova",
+    display_name: "Kai Nova",
+    bio: "Pregunto demasiado y guardo buenas recomendaciones.",
+    avatar_url: null,
+    banner_url: null,
+    created_at: now(),
+    updated_at: now(),
+    is_banned: false,
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333333",
+    username: "iris_sol",
+    display_name: "Iris Sol",
+    bio: "Comunidades sanas, debates claros y musica rara.",
+    avatar_url: null,
+    banner_url: null,
+    created_at: now(),
+    updated_at: now(),
+    is_banned: false,
+  },
+];
+
+const interests: Interest[] = [
+  { id: "aaaaaaaa-0000-4000-8000-000000000001", name: "Arte", slug: "arte", icon: "art" },
+  { id: "aaaaaaaa-0000-4000-8000-000000000002", name: "Gaming", slug: "gaming", icon: "game" },
+  { id: "aaaaaaaa-0000-4000-8000-000000000003", name: "Lectura", slug: "lectura", icon: "book" },
+  { id: "aaaaaaaa-0000-4000-8000-000000000004", name: "Musica", slug: "musica", icon: "music" },
+  { id: "aaaaaaaa-0000-4000-8000-000000000005", name: "Tecnologia", slug: "tecnologia", icon: "code" },
+  { id: "aaaaaaaa-0000-4000-8000-000000000006", name: "Cine", slug: "cine", icon: "film" },
+];
+
+const userInterests = new Map<string, string[]>([
+  ["11111111-1111-4111-8111-111111111111", ["aaaaaaaa-0000-4000-8000-000000000001", "aaaaaaaa-0000-4000-8000-000000000004"]],
+  ["22222222-2222-4222-8222-222222222222", ["aaaaaaaa-0000-4000-8000-000000000002", "aaaaaaaa-0000-4000-8000-000000000005"]],
+  ["33333333-3333-4333-8333-333333333333", ["aaaaaaaa-0000-4000-8000-000000000003"]],
+]);
+
+const communities: Community[] = [
+  {
+    id: "bbbbbbbb-0000-4000-8000-000000000001",
+    slug: "atelier-nebula",
+    name: "Atelier Nebula",
+    description: "Fanart, procesos creativos y misiones de dibujo semanal.",
+    avatar_url: null,
+    banner_url: null,
+    owner_id: "11111111-1111-4111-8111-111111111111",
+    visibility: "public",
+    category: "Arte",
+    rules: ["Acredita referencias", "Critica con respeto", "No publiques arte de terceros como propio"],
+    created_at: now(),
+    updated_at: now(),
+  },
+  {
+    id: "bbbbbbbb-0000-4000-8000-000000000002",
+    slug: "checkpoint-cafe",
+    name: "Checkpoint Cafe",
+    description: "Gaming tranquilo, recomendaciones y ayuda sin spoilers.",
+    avatar_url: null,
+    banner_url: null,
+    owner_id: "22222222-2222-4222-8222-222222222222",
+    visibility: "public",
+    category: "Gaming",
+    rules: ["Marca spoilers", "No flame wars", "Comparte guias con contexto"],
+    created_at: now(),
+    updated_at: now(),
+  },
+  {
+    id: "bbbbbbbb-0000-4000-8000-000000000003",
+    slug: "club-orbita",
+    name: "Club Orbita",
+    description: "Lecturas, historias cortas y debates de mundos imaginarios.",
+    avatar_url: null,
+    banner_url: null,
+    owner_id: "33333333-3333-4333-8333-333333333333",
+    visibility: "unlisted",
+    category: "Lectura",
+    rules: ["Debate ideas, no personas", "Usa avisos de contenido", "Respeta ritmos de lectura"],
+    created_at: now(),
+    updated_at: now(),
+  },
+];
+
+const members: CommunityMember[] = [
+  { community_id: communities[0]!.id, user_id: profiles[0]!.id, role: "owner", joined_at: now() },
+  { community_id: communities[0]!.id, user_id: profiles[1]!.id, role: "member", joined_at: now() },
+  { community_id: communities[0]!.id, user_id: profiles[2]!.id, role: "mod", joined_at: now() },
+  { community_id: communities[1]!.id, user_id: profiles[1]!.id, role: "owner", joined_at: now() },
+  { community_id: communities[1]!.id, user_id: profiles[0]!.id, role: "helper", joined_at: now() },
+  { community_id: communities[2]!.id, user_id: profiles[2]!.id, role: "owner", joined_at: now() },
+  { community_id: communities[2]!.id, user_id: profiles[0]!.id, role: "member", joined_at: now() },
+];
+
+const posts: Post[] = [
+  {
+    id: "cccccccc-0000-4000-8000-000000000001",
+    community_id: communities[0]!.id,
+    author_id: profiles[0]!.id,
+    type: "event",
+    title: "Mision semanal: paleta imposible",
+    body: "Crea una pieza usando solo violeta, cian y verde. Sube proceso y una nota de aprendizaje.",
+    media_urls: [],
+    status: "published",
+    created_at: now(),
+    updated_at: now(),
+  },
+  {
+    id: "cccccccc-0000-4000-8000-000000000002",
+    community_id: communities[1]!.id,
+    author_id: profiles[1]!.id,
+    type: "recommendation",
+    title: "Juego cooperativo corto para este finde",
+    body: "Busco algo de 2 a 4 horas, con buena conversacion y poca friccion para gente nueva.",
+    media_urls: [],
+    status: "published",
+    created_at: now(),
+    updated_at: now(),
+  },
+  {
+    id: "cccccccc-0000-4000-8000-000000000003",
+    community_id: communities[2]!.id,
+    author_id: profiles[2]!.id,
+    type: "debate",
+    title: "Finales abiertos: genialidad o salida facil?",
+    body: "Me gustan cuando cambian la lectura completa de la historia, pero no cuando parecen evadir cierre.",
+    media_urls: [],
+    status: "published",
+    created_at: now(),
+    updated_at: now(),
+  },
+];
+
+const reactions: Array<{ post_id: string; user_id: string; reaction: ReactionType; created_at: string }> = [
+  { post_id: posts[0]!.id, user_id: profiles[1]!.id, reaction: "inspire", created_at: now() },
+  { post_id: posts[0]!.id, user_id: profiles[2]!.id, reaction: "support", created_at: now() },
+  { post_id: posts[1]!.id, user_id: profiles[0]!.id, reaction: "curious", created_at: now() },
+  { post_id: posts[2]!.id, user_id: profiles[0]!.id, reaction: "relate", created_at: now() },
+];
+
+const comments: Comment[] = [
+  {
+    id: "dddddddd-0000-4000-8000-000000000001",
+    post_id: posts[0]!.id,
+    author_id: profiles[1]!.id,
+    parent_id: null,
+    body: "Me apunto. Voy a probar con siluetas grandes primero.",
+    status: "published",
+    created_at: now(),
+    updated_at: now(),
+  },
+  {
+    id: "dddddddd-0000-4000-8000-000000000002",
+    post_id: posts[1]!.id,
+    author_id: profiles[0]!.id,
+    parent_id: null,
+    body: "Si quereis algo amable, probad una aventura cooperativa de puzzles cortos.",
+    status: "published",
+    created_at: now(),
+    updated_at: now(),
+  },
+];
+
+const savedPosts = new Set<string>([`${profiles[0]!.id}:${posts[1]!.id}`]);
+const follows = new Set<string>([`${profiles[0]!.id}:${profiles[1]!.id}`]);
+const blocks = new Set<string>();
+
+const conversations: Conversation[] = [
+  { id: "eeeeeeee-0000-4000-8000-000000000001", type: "community", community_id: communities[0]!.id, created_at: now() },
+  { id: "eeeeeeee-0000-4000-8000-000000000002", type: "community", community_id: communities[1]!.id, created_at: now() },
+];
+
+const conversationMembers: Array<{ conversation_id: string; user_id: string; joined_at: string }> = [];
+
+for (const conversation of conversations) {
+  for (const member of members.filter((item) => item.community_id === conversation.community_id)) {
+    conversationMembers.push({
+      conversation_id: conversation.id,
+      user_id: member.user_id,
+      joined_at: now(),
+    });
+  }
+}
+
+const messages: Message[] = [
+  {
+    id: uuid(),
+    conversation_id: conversations[0]!.id,
+    sender_id: profiles[0]!.id,
+    body: "Bienvenidas a la sala del Atelier. Esta semana abrimos critica suave.",
+    media_urls: [],
+    status: "sent",
+    created_at: now(),
+  },
+  {
+    id: uuid(),
+    conversation_id: conversations[0]!.id,
+    sender_id: profiles[2]!.id,
+    body: "Puedo moderar el hilo de feedback del viernes.",
+    media_urls: [],
+    status: "sent",
+    created_at: now(),
+  },
+  {
+    id: uuid(),
+    conversation_id: conversations[1]!.id,
+    sender_id: profiles[1]!.id,
+    body: "Dejad recomendaciones sin spoilers aqui.",
+    media_urls: [],
+    status: "sent",
+    created_at: now(),
+  },
+];
+
+const reports: Report[] = [];
+
+function notifyAuth(session: Session | null) {
+  for (const listener of authListeners) {
+    listener(session);
+  }
+}
+
+function findProfile(id: string) {
+  const profile = profiles.find((item) => item.id === id);
+  if (!profile) {
+    throw new Error("Perfil demo no encontrado.");
+  }
+  return profile;
+}
+
+function findCommunity(idOrSlug: string) {
+  const community = communities.find(
+    (item) => item.id === idOrSlug || item.slug === idOrSlug,
+  );
+  if (!community) {
+    throw new Error("Orbita demo no encontrada.");
+  }
+  return community;
+}
+
+function communityMeta(community: Community, userId?: string | null): CommunityWithMeta {
+  const membership = userId
+    ? members.find((item) => item.community_id === community.id && item.user_id === userId)
+    : undefined;
+
+  return {
+    ...community,
+    member_count: members.filter((item) => item.community_id === community.id).length,
+    online_count: Math.max(
+      1,
+      Math.ceil(members.filter((item) => item.community_id === community.id).length * 0.45),
+    ),
+    user_role: membership?.role ?? null,
+  };
+}
+
+function postMeta(post: Post, userId?: string | null): PostWithMeta {
+  const counts = createEmptyReactionCounts();
+  const postReactions = reactions.filter((item) => item.post_id === post.id);
+
+  for (const reaction of postReactions) {
+    counts[reaction.reaction] += 1;
+  }
+
+  return {
+    ...post,
+    author: profiles.find((item) => item.id === post.author_id) ?? null,
+    community: communities.find((item) => item.id === post.community_id) ?? null,
+    reaction_counts: counts,
+    user_reactions: userId
+      ? postReactions
+          .filter((item) => item.user_id === userId)
+          .map((item) => item.reaction)
+      : [],
+    is_saved: userId ? savedPosts.has(`${userId}:${post.id}`) : false,
+  };
+}
+
+function createDemoSession(profile: Profile, email: string): Session {
+  return {
+    access_token: `demo-token-${profile.id}`,
+    refresh_token: `demo-refresh-${profile.id}`,
+    expires_in: 60 * 60 * 24 * 30,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30,
+    token_type: "bearer",
+    user: {
+      id: profile.id,
+      app_metadata: { provider: "email", providers: ["email"] },
+      user_metadata: { display_name: profile.display_name },
+      aud: "authenticated",
+      email,
+      created_at: profile.created_at,
+    },
+  } as Session;
+}
+
+export function onDemoAuthStateChange(listener: DemoAuthListener) {
+  authListeners.add(listener);
+  return () => authListeners.delete(listener);
+}
+
+export async function demoSignInWithEmail(input: AuthLoginInput) {
+  const email = input.email.trim().toLowerCase();
+  const password = input.password.trim();
+  const user = demoUsers.find(
+    (item) => item.email.toLowerCase() === email,
+  );
+
+  if (!user || password !== DEMO_PASSWORD) {
+    throw new Error("Credenciales demo invalidas. Usa Password123!.");
+  }
+
+  const session = createDemoSession(findProfile(user.id), user.email);
+  await AsyncStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(session));
+  notifyAuth(session);
+  return { session, user: session.user };
+}
+
+export async function demoSignUpWithEmail(input: AuthRegisterInput) {
+  const id = uuid();
+  const email = input.email.toLowerCase();
+  demoUsers.push({ email, id });
+  profiles.push({
+    id,
+    username: `nexo_${id.replaceAll("-", "").slice(0, 10)}`,
+    display_name: input.displayName,
+    bio: null,
+    avatar_url: null,
+    banner_url: null,
+    created_at: now(),
+    updated_at: now(),
+    is_banned: false,
+  });
+
+  const session = createDemoSession(findProfile(id), email);
+  await AsyncStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(session));
+  notifyAuth(session);
+  return { session, user: session.user };
+}
+
+export async function demoResetPassword(_input: ResetPasswordInput) {
+  return {};
+}
+
+export async function demoSignOut() {
+  await AsyncStorage.removeItem(DEMO_SESSION_KEY);
+  notifyAuth(null);
+}
+
+export async function demoGetCurrentSession() {
+  const raw = await AsyncStorage.getItem(DEMO_SESSION_KEY);
+  return raw ? (JSON.parse(raw) as Session) : null;
+}
+
+export async function demoGetProfile(userId: string) {
+  return findProfile(userId);
+}
+
+export async function demoListInterests() {
+  return interests;
+}
+
+export async function demoCompleteOnboarding(userId: string, input: OnboardingInput) {
+  const profile = findProfile(userId);
+  profile.username = input.username;
+  profile.display_name = input.displayName;
+  profile.bio = input.bio ?? null;
+  profile.avatar_url = input.avatarUrl ?? null;
+  profile.updated_at = now();
+  userInterests.set(userId, input.interestIds);
+  return profile;
+}
+
+export async function demoListCommunities(params?: {
+  query?: string | undefined;
+  category?: string | undefined;
+}) {
+  const term = params?.query?.trim().toLowerCase();
+  return communities
+    .filter((item) => item.visibility !== "private")
+    .filter((item) => !params?.category || item.category === params.category)
+    .filter(
+      (item) =>
+        !term ||
+        item.name.toLowerCase().includes(term) ||
+        item.description?.toLowerCase().includes(term) ||
+        item.category?.toLowerCase().includes(term),
+    )
+    .map((item) => communityMeta(item));
+}
+
+export async function demoCreateCommunity(input: CreateCommunityInput, ownerId: string) {
+  const id = uuid();
+  const slugBase = input.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 56);
+  const slug = `${slugBase || "orbita"}-${id.slice(0, 6)}`;
+  const rules = input.rulesText
+    ? input.rulesText
+        .split("\n")
+        .map((rule) => sanitizePlainText(rule).trim())
+        .filter(Boolean)
+    : ["Respeta a otras personas.", "Evita spam.", "Reporta contenido de riesgo."];
+
+  const community: Community = {
+    id,
+    slug,
+    name: sanitizePlainText(input.name),
+    description: sanitizePlainText(input.description),
+    avatar_url: input.avatarUrl ?? null,
+    banner_url: input.bannerUrl ?? null,
+    owner_id: ownerId,
+    visibility: input.visibility,
+    category: sanitizePlainText(input.category),
+    rules,
+    created_at: now(),
+    updated_at: now(),
+  };
+
+  communities.unshift(community);
+  members.unshift({
+    community_id: id,
+    user_id: ownerId,
+    role: "owner",
+    joined_at: now(),
+  });
+
+  const conversation: Conversation = {
+    id: uuid(),
+    type: "community",
+    community_id: id,
+    created_at: now(),
+  };
+  conversations.unshift(conversation);
+  conversationMembers.push({
+    conversation_id: conversation.id,
+    user_id: ownerId,
+    joined_at: now(),
+  });
+
+  return communityMeta(community, ownerId);
+}
+
+export async function demoGetCommunity(communityIdOrSlug: string) {
+  return communityMeta(findCommunity(communityIdOrSlug));
+}
+
+export async function demoGetCommunityMembership(communityId: string, userId: string) {
+  return (
+    members.find(
+      (item) => item.community_id === communityId && item.user_id === userId,
+    ) ?? null
+  );
+}
+
+export async function demoListJoinedCommunities(userId: string) {
+  return members
+    .filter((item) => item.user_id === userId)
+    .map((item) => communityMeta(findCommunity(item.community_id), userId));
+}
+
+export async function demoListCommunityMembers(communityId: string) {
+  return members
+    .filter((item) => item.community_id === communityId)
+    .map((item) => ({
+      ...item,
+      profile: profiles.find((profile) => profile.id === item.user_id) ?? null,
+    }));
+}
+
+export async function demoJoinCommunity(communityId: string, userId: string) {
+  if (!(await demoGetCommunityMembership(communityId, userId))) {
+    members.push({ community_id: communityId, user_id: userId, role: "member", joined_at: now() });
+  }
+}
+
+export async function demoLeaveCommunity(communityId: string, userId: string) {
+  const index = members.findIndex(
+    (item) => item.community_id === communityId && item.user_id === userId,
+  );
+  if (index >= 0) {
+    members.splice(index, 1);
+  }
+}
+
+export async function demoListCommunityPosts({
+  communityId,
+  userId,
+}: {
+  communityId: string;
+  userId?: string | null | undefined;
+}) {
+  return posts
+    .filter((item) => item.community_id === communityId && item.status === "published")
+    .map((item) => postMeta(item, userId));
+}
+
+export async function demoListFeed({
+  mode,
+  userId,
+  pageParam = 0,
+}: {
+  mode: FeedMode;
+  userId?: string | null | undefined;
+  pageParam?: number;
+}) {
+  const pageSize = 12;
+  let visible = posts.filter((item) => item.status === "published");
+
+  if (mode === "following" && userId) {
+    const following = Array.from(follows)
+      .filter((item) => item.startsWith(`${userId}:`))
+      .map((item) => item.split(":")[1]);
+    visible = visible.filter((item) => following.includes(item.author_id));
+  }
+
+  let mapped = visible.map((item) => {
+    const post = postMeta(item, userId);
+    post.recommendation_reason =
+      mode === "following"
+        ? "Aparece porque sigues a este perfil."
+        : mode === "trending"
+          ? "Aparece por actividad reciente en Ecos."
+          : `Aparece por tu actividad en ${post.community?.category ?? "Nexo"}.`;
+    return post;
+  });
+
+  if (mode === "trending") {
+    mapped = mapped.sort(
+      (a, b) =>
+        Object.values(b.reaction_counts).reduce((sum, count) => sum + count, 0) -
+        Object.values(a.reaction_counts).reduce((sum, count) => sum + count, 0),
+    );
+  }
+
+  const start = pageParam * pageSize;
+  const page = mapped.slice(start, start + pageSize);
+  return { posts: page, nextPage: page.length === pageSize ? pageParam + 1 : null };
+}
+
+export async function demoCreatePost(input: PostFormInput, authorId: string) {
+  const post: Post = {
+    id: uuid(),
+    community_id: input.communityId,
+    author_id: authorId,
+    type: input.type,
+    title: input.title ? sanitizePlainText(input.title) : null,
+    body: sanitizePlainText(input.body),
+    media_urls: input.mediaUrls,
+    status: "published",
+    created_at: now(),
+    updated_at: now(),
+  };
+  posts.unshift(post);
+  return post;
+}
+
+export async function demoGetPost(postId: string, userId?: string | null) {
+  const post = posts.find((item) => item.id === postId);
+  if (!post) {
+    throw new Error("Publicacion demo no encontrada.");
+  }
+  return postMeta(post, userId);
+}
+
+export async function demoToggleReaction({
+  post,
+  userId,
+  reaction,
+}: {
+  post: PostWithMeta;
+  userId: string;
+  reaction: ReactionType;
+}) {
+  const index = reactions.findIndex(
+    (item) => item.post_id === post.id && item.user_id === userId && item.reaction === reaction,
+  );
+  if (index >= 0) {
+    reactions.splice(index, 1);
+  } else {
+    reactions.push({ post_id: post.id, user_id: userId, reaction, created_at: now() });
+  }
+}
+
+export async function demoToggleSavedPost({
+  postId,
+  userId,
+  isSaved,
+}: {
+  postId: string;
+  userId: string;
+  isSaved: boolean;
+}) {
+  const key = `${userId}:${postId}`;
+  if (isSaved) {
+    savedPosts.delete(key);
+  } else {
+    savedPosts.add(key);
+  }
+}
+
+export async function demoListComments(postId: string) {
+  const flat = comments
+    .filter((item) => item.post_id === postId && item.status === "published")
+    .map<CommentWithAuthor>((comment) => ({
+      ...comment,
+      author: profiles.find((item) => item.id === comment.author_id) ?? null,
+      replies: [],
+    }));
+
+  const byParent = new Map<string | null, CommentWithAuthor[]>();
+  for (const comment of flat) {
+    const key = comment.parent_id ?? null;
+    byParent.set(key, [...(byParent.get(key) ?? []), comment]);
+  }
+
+  return (byParent.get(null) ?? []).map((comment) => ({
+    ...comment,
+    replies: byParent.get(comment.id) ?? [],
+  }));
+}
+
+export async function demoCreateComment({
+  postId,
+  authorId,
+  input,
+}: {
+  postId: string;
+  authorId: string;
+  input: CommentInput;
+}) {
+  const comment: Comment = {
+    id: uuid(),
+    post_id: postId,
+    author_id: authorId,
+    parent_id: input.parentId ?? null,
+    body: sanitizePlainText(input.body),
+    status: "published",
+    created_at: now(),
+    updated_at: now(),
+  };
+  comments.push(comment);
+  return comment;
+}
+
+export async function demoListConversations(userId: string): Promise<ConversationPreview[]> {
+  return conversationMembers
+    .filter((item) => item.user_id === userId)
+    .map((item) => {
+      const conversation = conversations.find((entry) => entry.id === item.conversation_id)!;
+      const community = conversation.community_id
+        ? communities.find((entry) => entry.id === conversation.community_id) ?? null
+        : null;
+      const lastMessage =
+        messages
+          .filter((entry) => entry.conversation_id === conversation.id && entry.status === "sent")
+          .at(-1) ?? null;
+      return { ...conversation, community, last_message: lastMessage, unread_count: 0 };
+    });
+}
+
+export async function demoGetOrCreateCommunityConversation(communityId: string) {
+  let conversation = conversations.find(
+    (item) => item.type === "community" && item.community_id === communityId,
+  );
+  if (!conversation) {
+    conversation = { id: uuid(), type: "community", community_id: communityId, created_at: now() };
+    conversations.push(conversation);
+  }
+
+  for (const member of members.filter((item) => item.community_id === communityId)) {
+    if (
+      !conversationMembers.some(
+        (item) => item.conversation_id === conversation!.id && item.user_id === member.user_id,
+      )
+    ) {
+      conversationMembers.push({
+        conversation_id: conversation.id,
+        user_id: member.user_id,
+        joined_at: now(),
+      });
+    }
+  }
+
+  return conversation.id;
+}
+
+export async function demoGetOrCreateDirectConversation(userId: string, otherUserId: string) {
+  const existing = conversations.find((conversation) => {
+    if (conversation.type !== "direct") {
+      return false;
+    }
+
+    const conversationUserIds = conversationMembers
+      .filter((item) => item.conversation_id === conversation.id)
+      .map((item) => item.user_id);
+
+    return conversationUserIds.includes(userId) && conversationUserIds.includes(otherUserId);
+  });
+
+  if (existing) {
+    return existing.id;
+  }
+
+  const conversation: Conversation = {
+    id: uuid(),
+    type: "direct",
+    community_id: null,
+    created_at: now(),
+  };
+  conversations.unshift(conversation);
+  conversationMembers.push(
+    { conversation_id: conversation.id, user_id: userId, joined_at: now() },
+    { conversation_id: conversation.id, user_id: otherUserId, joined_at: now() },
+  );
+
+  return conversation.id;
+}
+
+export async function demoListMessages(conversationId: string) {
+  return messages
+    .filter((item) => item.conversation_id === conversationId && item.status === "sent")
+    .map((message) => ({
+      ...message,
+      sender: profiles.find((item) => item.id === message.sender_id),
+    }));
+}
+
+export async function demoSendMessage({
+  conversationId,
+  senderId,
+  input,
+}: {
+  conversationId: string;
+  senderId: string;
+  input: MessageInput;
+}) {
+  const message: Message = {
+    id: uuid(),
+    conversation_id: conversationId,
+    sender_id: senderId,
+    body: sanitizePlainText(input.body),
+    media_urls: [],
+    status: "sent",
+    created_at: now(),
+  };
+  messages.push(message);
+
+  for (const listener of messageListeners.get(conversationId) ?? []) {
+    listener(message);
+  }
+
+  return message;
+}
+
+export function demoSubscribeToMessages(
+  conversationId: string,
+  onMessage: (message: Message) => void,
+) {
+  const listeners = messageListeners.get(conversationId) ?? new Set<MessageListener>();
+  listeners.add(onMessage);
+  messageListeners.set(conversationId, listeners);
+  return {
+    unsubscribe: () => {
+      listeners.delete(onMessage);
+      return Promise.resolve();
+    },
+  };
+}
+
+export async function demoGetProfileById(profileId: string) {
+  return findProfile(profileId);
+}
+
+export async function demoListProfilePosts(profileId: string, viewerId?: string | null) {
+  return posts
+    .filter((item) => item.author_id === profileId && item.status === "published")
+    .map((item) => postMeta(item, viewerId));
+}
+
+export async function demoListProfilePostsInCommunity({
+  profileId,
+  communityId,
+  viewerId,
+}: {
+  profileId: string;
+  communityId: string;
+  viewerId?: string | null | undefined;
+}) {
+  return posts
+    .filter(
+      (item) =>
+        item.author_id === profileId &&
+        item.community_id === communityId &&
+        item.status === "published",
+    )
+    .map((item) => postMeta(item, viewerId));
+}
+
+export async function demoUpdateProfile(profileId: string, input: ProfileInput) {
+  const profile = findProfile(profileId);
+  profile.username = input.username;
+  profile.display_name = sanitizePlainText(input.displayName);
+  profile.bio = input.bio ? sanitizePlainText(input.bio) : null;
+  profile.avatar_url = input.avatarUrl ?? null;
+  profile.banner_url = input.bannerUrl ?? null;
+  profile.updated_at = now();
+  return profile;
+}
+
+export async function demoFollowProfile({
+  followerId,
+  followingId,
+}: {
+  followerId: string;
+  followingId: string;
+}) {
+  follows.add(`${followerId}:${followingId}`);
+}
+
+export async function demoUnfollowProfile({
+  followerId,
+  followingId,
+}: {
+  followerId: string;
+  followingId: string;
+}) {
+  follows.delete(`${followerId}:${followingId}`);
+}
+
+export async function demoBlockProfile({
+  blockerId,
+  blockedId,
+}: {
+  blockerId: string;
+  blockedId: string;
+}) {
+  blocks.add(`${blockerId}:${blockedId}`);
+}
+
+export async function demoCreateReport({
+  reporterId,
+  targetType,
+  targetId,
+  reason,
+  details,
+}: {
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  details?: string | undefined;
+}) {
+  const report: Report = {
+    id: uuid(),
+    reporter_id: reporterId,
+    target_type: targetType,
+    target_id: targetId,
+    reason,
+    details: details ? sanitizePlainText(details) : null,
+    status: "open",
+    created_at: now(),
+    resolved_by: null,
+    resolved_at: null,
+  };
+  reports.unshift(report);
+  return report;
+}
+
+export async function demoListReportsForModerator() {
+  return reports;
+}
+
+export async function demoUpdateReportStatus({
+  reportId,
+  status,
+  moderatorId,
+}: {
+  reportId: string;
+  status: ReportStatus;
+  moderatorId: string;
+}) {
+  const report = reports.find((item) => item.id === reportId);
+  if (!report) {
+    throw new Error("Reporte demo no encontrado.");
+  }
+  report.status = status;
+  report.resolved_by = ["resolved", "rejected"].includes(status) ? moderatorId : null;
+  report.resolved_at = ["resolved", "rejected"].includes(status) ? now() : null;
+  return report;
+}
+
+export async function demoHidePost(postId: string) {
+  const post = posts.find((item) => item.id === postId);
+  if (post) {
+    post.status = "hidden";
+  }
+}
+
+export async function demoHideComment(commentId: string) {
+  const comment = comments.find((item) => item.id === commentId);
+  if (comment) {
+    comment.status = "hidden";
+  }
+}
+
+export async function demoHideMessage(messageId: string) {
+  const message = messages.find((item) => item.id === messageId);
+  if (message) {
+    message.status = "hidden";
+  }
+}
+
+export async function demoWarnUser(_userId: string, _moderatorId: string, _reason: string) {
+  return {};
+}
