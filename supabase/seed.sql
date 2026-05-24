@@ -58,9 +58,9 @@ insert into public.communities (
   rules
 )
 values
-  ('bbbbbbbb-0000-4000-8000-000000000001', 'atelier-nebula', 'Atelier Nebula', 'Fanart, procesos creativos y misiones de dibujo semanal.', '11111111-1111-4111-8111-111111111111', 'public', 'Arte', '["Acredita referencias", "Critica con respeto", "No publiques arte de terceros como propio"]'),
-  ('bbbbbbbb-0000-4000-8000-000000000002', 'checkpoint-cafe', 'Checkpoint Cafe', 'Gaming tranquilo, recomendaciones y ayuda sin spoilers.', '22222222-2222-4222-8222-222222222222', 'public', 'Gaming', '["Marca spoilers", "No flame wars", "Comparte guias con contexto"]'),
-  ('bbbbbbbb-0000-4000-8000-000000000003', 'club-orbita', 'Club Orbita', 'Lecturas, historias cortas y debates de mundos imaginarios.', '33333333-3333-4333-8333-333333333333', 'unlisted', 'Lectura', '["Debate ideas, no personas", "Usa avisos de contenido", "Respeta ritmos de lectura"]')
+  ('bbbbbbbb-0000-4000-8000-000000000001', 'atelier-nebula', 'Atelier Nebula', 'Comunidad para fanarts, procesos creativos y retos semanales con feedback cuidado.', '11111111-1111-4111-8111-111111111111', 'public', 'Arte', '["Acredita referencias", "Critica con respeto", "No publiques arte de terceros como propio"]'),
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'checkpoint-cafe', 'Checkpoint Cafe', 'Gaming tranquilo para recomendaciones, quedadas y ayuda sin spoilers.', '22222222-2222-4222-8222-222222222222', 'public', 'Gaming', '["Marca spoilers", "No flame wars", "Comparte guias con contexto"]'),
+  ('bbbbbbbb-0000-4000-8000-000000000003', 'club-orbita', 'Club Orbita', 'Lecturas, teorias y debates sobre mundos imaginarios sin prisas.', '33333333-3333-4333-8333-333333333333', 'unlisted', 'Lectura', '["Debate ideas, no personas", "Usa avisos de contenido", "Respeta ritmos de lectura"]')
 on conflict (id) do update set
   name = excluded.name,
   description = excluded.description,

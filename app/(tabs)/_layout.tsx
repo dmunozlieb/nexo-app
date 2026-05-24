@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { Home, MessageSquare, Search, UserRound } from "lucide-react-native";
+import { AppNavigationFrame } from "../../src/components/navigation/AppNavigationFrame";
 import { LoadingState } from "../../src/components/ui/LoadingState";
 import { useAuth } from "../../src/features/auth/hooks/useAuth";
 import { useTheme } from "../../src/theme/useTheme";
@@ -21,60 +21,23 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
-      initialRouteName="home"
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.secondary,
-        tabBarInactiveTintColor: theme.colors.textFaint,
-        tabBarHideOnKeyboard: true,
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          borderTopWidth: 1,
-          minHeight: 70,
-          paddingTop: 8,
-          paddingBottom: 10,
-        },
-        tabBarItemStyle: {
-          borderRadius: 16,
-          marginHorizontal: 3,
-        },
-        tabBarLabelStyle: {
-          fontWeight: "800",
-          fontSize: 11,
-          marginTop: 2,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: "Inicio",
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+    <AppNavigationFrame>
+      <Tabs
+        initialRouteName="home"
+        tabBar={() => null}
+        screenOptions={{
+          headerShown: false,
+          animation: "shift",
+          tabBarHideOnKeyboard: true,
+          sceneStyle: { backgroundColor: theme.colors.background },
         }}
-      />
-      <Tabs.Screen
-        name="discover"
-        options={{
-          title: "Descubrir",
-          tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: "Chat",
-          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Perfil",
-          tabBarIcon: ({ color, size }) => <UserRound color={color} size={size} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen name="home" options={{ title: "Inicio" }} />
+        <Tabs.Screen name="discover" options={{ title: "Explorar" }} />
+        <Tabs.Screen name="create" options={{ title: "Crear" }} />
+        <Tabs.Screen name="chat" options={{ title: "Chats" }} />
+        <Tabs.Screen name="profile" options={{ title: "Perfil" }} />
+      </Tabs>
+    </AppNavigationFrame>
   );
 }

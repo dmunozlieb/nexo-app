@@ -24,14 +24,21 @@ import { mapPostRow } from "../../posts/services/post-mapper";
 
 function mapCommunity(row: unknown): CommunityWithMeta {
   const source = row as Record<string, unknown>;
-  const members = (source.community_members ?? []) as Array<{ count?: number; role?: CommunityRole }>;
+  const members = (source.community_members ?? []) as Array<{
+    count?: number;
+    role?: CommunityRole;
+  }>;
   const firstMember = members[0];
+  const postRows = (source.posts ?? []) as Array<{ count?: number }>;
+  const recentPostCount = postRows[0]?.count;
+  const memberCount = firstMember?.count ?? 0;
 
   return {
     ...(source as unknown as CommunityWithMeta),
-    member_count: firstMember?.count ?? 0,
-    online_count: Math.max(1, Math.ceil((firstMember?.count ?? 0) * 0.35)),
+    member_count: memberCount,
+    online_count: Math.max(1, Math.ceil(memberCount * 0.35)),
     user_role: firstMember?.role ?? null,
+    recent_post_count: recentPostCount,
   };
 }
 
@@ -45,7 +52,7 @@ export async function listCommunities(params?: {
 
   let query = supabase
     .from("communities")
-    .select("*, community_members(count)")
+    .select("*, community_members(count), posts(count)")
     .in("visibility", ["public", "unlisted"])
     .order("created_at", { ascending: false });
 
@@ -68,7 +75,10 @@ export async function listCommunities(params?: {
   return (data ?? []).map(mapCommunity);
 }
 
-export async function createCommunity(input: CreateCommunityInput, ownerId: string) {
+export async function createCommunity(
+  input: CreateCommunityInput,
+  ownerId: string,
+) {
   if (env.demoMode) {
     return demoCreateCommunity(input, ownerId);
   }
@@ -79,7 +89,11 @@ export async function createCommunity(input: CreateCommunityInput, ownerId: stri
         .split("\n")
         .map((rule) => sanitizePlainText(rule).trim())
         .filter(Boolean)
-    : ["Respeta a otras personas.", "Evita spam.", "Reporta contenido de riesgo."];
+    : [
+        "Respeta a otras personas.",
+        "Evita spam.",
+        "Reporta contenido de riesgo.",
+      ];
 
   const { data: community, error: communityError } = await supabase
     .from("communities")
@@ -94,19 +108,21 @@ export async function createCommunity(input: CreateCommunityInput, ownerId: stri
       category: sanitizePlainText(input.category),
       rules,
     })
-    .select("*, community_members(count)")
+    .select("*, community_members(count), posts(count)")
     .single();
 
   if (communityError) {
     throw communityError;
   }
 
-  const { error: memberError } = await supabase.from("community_members").insert({
-    community_id: community.id,
-    user_id: ownerId,
-    role: "owner",
-    joined_at: new Date().toISOString(),
-  });
+  const { error: memberError } = await supabase
+    .from("community_members")
+    .insert({
+      community_id: community.id,
+      user_id: ownerId,
+      role: "owner",
+      joined_at: new Date().toISOString(),
+    });
 
   if (memberError) {
     throw memberError;
@@ -126,7 +142,7 @@ export async function getCommunity(communityIdOrSlug: string) {
 
   const { data, error } = await supabase
     .from("communities")
-    .select("*, community_members(count)")
+    .select("*, community_members(count), posts(count)")
     .or(`id.eq.${communityIdOrSlug},slug.eq.${communityIdOrSlug}`)
     .single();
 
@@ -137,7 +153,10 @@ export async function getCommunity(communityIdOrSlug: string) {
   return mapCommunity(data);
 }
 
-export async function getCommunityMembership(communityId: string, userId: string) {
+export async function getCommunityMembership(
+  communityId: string,
+  userId: string,
+) {
   if (env.demoMode) {
     return demoGetCommunityMembership(communityId, userId);
   }
@@ -172,7 +191,7 @@ export async function listJoinedCommunities(userId: string) {
   }
 
   return (data ?? []).map((row) => ({
-    ...((row as unknown as { communities: CommunityWithMeta }).communities),
+    ...(row as unknown as { communities: CommunityWithMeta }).communities,
     user_role: (row as unknown as { role: CommunityRole }).role,
     member_count: 0,
   }));

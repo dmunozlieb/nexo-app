@@ -5,10 +5,12 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { queryClient } from "../src/lib/query-client";
 import { AuthProvider } from "../src/features/auth/hooks/useAuth";
 import { useTheme } from "../src/theme/useTheme";
+import { WebInteractionReset } from "../src/components/layout/WebInteractionReset";
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
+      <WebInteractionReset />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <RootStack />

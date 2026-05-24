@@ -1,14 +1,23 @@
+import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { Orbit, Sparkles } from "lucide-react-native";
+import { Camera, ImagePlus, Orbit, Sparkles, Trash2 } from "lucide-react-native";
 import { NexoMascot } from "../../../components/brand/NexoMascot";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
+import { Avatar } from "../../../components/ui/Avatar";
 import { Button } from "../../../components/ui/Button";
 import { GradientCard } from "../../../components/ui/GradientCard";
 import { TagPill } from "../../../components/ui/TagPill";
 import { TextInput } from "../../../components/ui/TextInput";
+import {
+  pickImage,
+  uploadBase64Image,
+  type PickImageOptions,
+} from "../../../services/storage-service";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import type { Visibility } from "../../../types/domain";
@@ -26,11 +35,14 @@ const VISIBILITY: Array<{ label: string; value: Visibility }> = [
   { label: "Privada", value: "private" },
   { label: "Oculta", value: "unlisted" },
 ];
+const MAX_BANNER_IMAGE_BYTES = 8 * 1024 * 1024;
 
 export function CreateCommunityScreen() {
   const theme = useTheme();
   const auth = useAuth();
   const createCommunity = useCreateCommunityMutation(auth.session?.user.id);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const form = useForm<CreateCommunityInput>({
     resolver: zodResolver(createCommunitySchema),
     defaultValues: {
@@ -46,6 +58,64 @@ export function CreateCommunityScreen() {
 
   const selectedCategory = form.watch("category");
   const selectedVisibility = form.watch("visibility");
+  const avatarUrl = form.watch("avatarUrl");
+  const bannerUrl = form.watch("bannerUrl");
+  const namePreview = form.watch("name");
+  const visibilityLabel =
+    VISIBILITY.find((item) => item.value === selectedVisibility)?.label ?? "Publica";
+
+  async function handlePickAsset(kind: "avatar" | "banner") {
+    try {
+      if (!auth.session?.user.id) {
+        return;
+      }
+
+      const isAvatar = kind === "avatar";
+      const setUploading = isAvatar ? setUploadingAvatar : setUploadingBanner;
+      setUploading(true);
+
+      const pickOptions: PickImageOptions = {
+        aspect: isAvatar ? [1, 1] : [16, 9],
+      };
+
+      if (!isAvatar) {
+        pickOptions.maxBytes = MAX_BANNER_IMAGE_BYTES;
+      }
+
+      const asset = await pickImage(pickOptions);
+
+      if (!asset?.base64) {
+        return;
+      }
+
+      const url = await uploadBase64Image({
+        bucket: isAvatar ? "avatars" : "banners",
+        path: `${auth.session.user.id}/communities/${Date.now()}-${kind}.jpg`,
+        base64: asset.base64,
+        contentType: asset.mimeType ?? "image/jpeg",
+      });
+
+      form.setValue(isAvatar ? "avatarUrl" : "bannerUrl", url, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } catch (error) {
+      Alert.alert("No se pudo subir la imagen", getErrorMessage(error));
+    } finally {
+      if (kind === "avatar") {
+        setUploadingAvatar(false);
+      } else {
+        setUploadingBanner(false);
+      }
+    }
+  }
+
+  function clearAsset(kind: "avatar" | "banner") {
+    form.setValue(kind === "avatar" ? "avatarUrl" : "bannerUrl", null, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }
 
   async function handleSubmit(input: CreateCommunityInput) {
     try {
@@ -80,6 +150,81 @@ export function CreateCommunityScreen() {
           </View>
           <NexoMascot size={118} />
         </GradientCard>
+
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.colors.text }]}>Identidad visual</Text>
+          <View
+            style={[
+              styles.mediaEditor,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={styles.bannerPreview}>
+              {bannerUrl ? (
+                <Image source={{ uri: bannerUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+              ) : (
+                <LinearGradient
+                  colors={[theme.colors.primary, theme.colors.secondary, theme.colors.accent]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
+              <View style={styles.bannerShade} />
+            </View>
+            <View style={styles.mediaBody}>
+              <View style={styles.identityPreview}>
+                <View style={[styles.avatarLift, { backgroundColor: theme.colors.surface }]}>
+                  <Avatar uri={avatarUrl} label={namePreview || "Orbita"} size={74} />
+                </View>
+                <View style={styles.identityCopy}>
+                  <Text style={[styles.previewName, { color: theme.colors.text }]} numberOfLines={1}>
+                    {namePreview || "Tu nueva Orbita"}
+                  </Text>
+                  <Text style={[styles.previewMeta, { color: theme.colors.textMuted }]} numberOfLines={1}>
+                    {selectedCategory} - {visibilityLabel}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.mediaActions}>
+                <Button
+                  title="Avatar"
+                  variant="secondary"
+                  size="sm"
+                  loading={uploadingAvatar}
+                  icon={<Camera size={16} color={theme.colors.text} />}
+                  onPress={() => void handlePickAsset("avatar")}
+                />
+                {avatarUrl ? (
+                  <Button
+                    title="Quitar"
+                    variant="ghost"
+                    size="sm"
+                    icon={<Trash2 size={16} color={theme.colors.text} />}
+                    onPress={() => clearAsset("avatar")}
+                  />
+                ) : null}
+                <Button
+                  title="Banner"
+                  variant="secondary"
+                  size="sm"
+                  loading={uploadingBanner}
+                  icon={<ImagePlus size={16} color={theme.colors.text} />}
+                  onPress={() => void handlePickAsset("banner")}
+                />
+                {bannerUrl ? (
+                  <Button
+                    title="Quitar"
+                    variant="ghost"
+                    size="sm"
+                    icon={<Trash2 size={16} color={theme.colors.text} />}
+                    onPress={() => clearAsset("banner")}
+                  />
+                ) : null}
+              </View>
+            </View>
+          </View>
+        </View>
 
         <Controller
           control={form.control}
@@ -224,6 +369,61 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   pills: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  mediaEditor: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    overflow: "hidden",
+  },
+  bannerPreview: {
+    height: 148,
+    width: "100%",
+    overflow: "hidden",
+  },
+  bannerShade: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(9,10,18,0.22)",
+  },
+  mediaBody: {
+    gap: 12,
+    padding: 12,
+    paddingTop: 0,
+  },
+  identityPreview: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 12,
+  },
+  avatarLift: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -38,
+  },
+  identityCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+    paddingBottom: 8,
+  },
+  previewName: {
+    fontSize: typography.h2,
+    fontWeight: "900",
+  },
+  previewMeta: {
+    fontSize: typography.small,
+    fontWeight: "800",
+  },
+  mediaActions: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,

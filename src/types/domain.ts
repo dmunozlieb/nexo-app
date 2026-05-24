@@ -142,8 +142,13 @@ export type NotificationRecord = {
 
 export type CommunityWithMeta = Community & {
   member_count: number;
-  online_count?: number;
-  user_role?: CommunityRole | null;
+  online_count?: number | undefined;
+  user_role?: CommunityRole | null | undefined;
+  recent_post_count?: number | undefined;
+  new_posts_count?: number | undefined;
+  active_chat?: boolean | undefined;
+  event_today?: boolean | undefined;
+  mission_active?: boolean | undefined;
 };
 
 export type CommunityMemberWithProfile = CommunityMember & {

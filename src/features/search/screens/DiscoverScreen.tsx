@@ -1,20 +1,23 @@
 import { useMemo, useState } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { router } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import { Compass, Plus, Radio, Search, Sparkles, Users } from "lucide-react-native";
+import { Search } from "lucide-react-native";
 import { CommunityCard } from "../../../components/content/CommunityCard";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
-import { EmptyState } from "../../../components/ui/EmptyState";
-import { ErrorState } from "../../../components/ui/ErrorState";
-import { LoadingState } from "../../../components/ui/LoadingState";
-import { TagPill } from "../../../components/ui/TagPill";
-import { TextInput } from "../../../components/ui/TextInput";
+import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { Button } from "../../../components/ui/Button";
+import { ErrorState } from "../../../components/ui/ErrorState";
+import { TextInput } from "../../../components/ui/TextInput";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
-import { radius, typography } from "../../../theme/tokens";
+import { radius } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
+import type { CommunityWithMeta } from "../../../types/domain";
 import { useCommunities } from "../../communities/hooks/useCommunities";
+import { CategoryChips } from "../components/CategoryChips";
+import { ExploreHero } from "../components/ExploreHero";
+import { ExploreRightPanel } from "../components/ExploreRightPanel";
+import { SectionHeader } from "../components/SectionHeader";
+import { SkeletonCommunityCard } from "../components/SkeletonCommunityCard";
 
 const CATEGORIES = [
   "Arte",
@@ -26,254 +29,230 @@ const CATEGORIES = [
   "Tecnologia",
 ];
 
+const stars = [
+  { top: 18, left: "8%", size: 2, opacity: 0.24 },
+  { top: 104, left: "62%", size: 2, opacity: 0.18 },
+  { top: 248, left: "28%", size: 3, opacity: 0.14 },
+  { top: 422, left: "86%", size: 2, opacity: 0.20 },
+  { top: 560, left: "12%", size: 2, opacity: 0.16 },
+] as const;
+
 export function DiscoverScreen() {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string | undefined>();
   const debouncedQuery = useDebouncedValue(query, 280);
   const communities = useCommunities(debouncedQuery, category);
-  const communityCount = communities.data?.length ?? 0;
+  const data = communities.data ?? [];
+  const showRightPanel = width >= 1240;
+  const twoColumns = width >= 1180;
+  const hasFilters = Boolean(debouncedQuery.trim() || category);
+  const communityCount = data.length;
   const memberCount = useMemo(
+    () => data.reduce((sum, community) => sum + community.member_count, 0),
+    [data],
+  );
+  const onlineCount = useMemo(
     () =>
-      (communities.data ?? []).reduce(
-        (sum, community) => sum + community.member_count,
+      data.reduce(
+        (sum, community) =>
+          sum + (community.online_count ?? Math.max(1, Math.ceil(community.member_count * 0.35))),
         0,
       ),
-    [communities.data],
+    [data],
+  );
+  const popular = useMemo(
+    () => [...data].sort((a, b) => b.member_count - a.member_count),
+    [data],
+  );
+  const mostOnline = useMemo(
+    () =>
+      [...data].sort(
+        (a, b) => (b.online_count ?? 1) - (a.online_count ?? 1),
+      ),
+    [data],
+  );
+  const newest = useMemo(
+    () =>
+      [...data].sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      ),
+    [data],
   );
 
+  function openCommunity(community: CommunityWithMeta) {
+    router.push({ pathname: "/community/[id]", params: { id: community.id } });
+  }
+
   return (
-    <ScreenContainer>
-      <View
-        style={[
-          styles.hero,
-          { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-        ]}
-      >
-        <LinearGradient
-          colors={[theme.colors.primary, theme.colors.secondary, theme.colors.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.heroGradient}
-        />
-        <View style={styles.heroTop}>
-          <View style={styles.heroIcon}>
-            <Compass size={24} color="#FFFFFF" />
-          </View>
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroKicker}>Explorar orbitas</Text>
-            <Text style={styles.heroTitle}>Encuentra tu proximo circulo</Text>
-          </View>
-        </View>
-        <Text style={styles.heroText}>
-          Comunidades con normas, moderacion y energia propia para cada tema.
-        </Text>
-        <View style={styles.heroAction}>
-          <Button
-            title="Crear Orbita"
-            size="sm"
-            variant="secondary"
-            icon={<Plus size={16} color={theme.colors.text} />}
-            style={styles.heroButton}
-            onPress={() => router.push("/community/create")}
-          />
-        </View>
-        <View style={styles.heroStats}>
-          <View style={styles.heroStat}>
-            <Radio size={15} color="#FFFFFF" />
-            <Text style={styles.heroStatValue}>{communityCount}</Text>
-            <Text style={styles.heroStatLabel}>activas</Text>
-          </View>
-          <View style={styles.heroStat}>
-            <Users size={15} color="#FFFFFF" />
-            <Text style={styles.heroStatValue}>{memberCount}</Text>
-            <Text style={styles.heroStatLabel}>miembros</Text>
-          </View>
-          <View style={styles.heroStat}>
-            <Sparkles size={15} color="#FFFFFF" />
-            <Text style={styles.heroStatValue}>{category ?? "Todas"}</Text>
-            <Text style={styles.heroStatLabel}>categoria</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.searchBlock}>
-        <TextInput
-          accessibilityLabel="Buscar Orbitas"
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Buscar por nombre, categoria o descripcion"
-          icon={<Search size={18} color={theme.colors.textFaint} />}
-        />
-      </View>
-
-      <View style={styles.categories}>
-        <TagPill
-          label="Todas"
-          selected={!category}
-          onPress={() => setCategory(undefined)}
-        />
-        {CATEGORIES.map((item) => (
-          <TagPill
-            key={item}
-            label={item}
-            selected={category === item}
-            onPress={() => setCategory(item)}
+    <ScreenContainer contentStyle={styles.screen}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        {stars.map((star) => (
+          <View
+            key={`${star.top}-${star.left}`}
+            style={[
+              styles.star,
+              {
+                top: star.top,
+                left: star.left,
+                width: star.size,
+                height: star.size,
+                borderRadius: star.size / 2,
+                opacity: star.opacity,
+              },
+            ]}
           />
         ))}
       </View>
-
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-          Orbitas recomendadas
-        </Text>
-        <Text style={[styles.sectionMeta, { color: theme.colors.textFaint }]}>
-          {communityCount} resultados
-        </Text>
-      </View>
-
-      {communities.isLoading ? (
-        <LoadingState label="Buscando Orbitas..." />
-      ) : communities.isError ? (
-        <ErrorState onRetry={() => void communities.refetch()} />
-      ) : (
-        <FlatList
-          data={communities.data ?? []}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.list}
-          ListEmptyComponent={
-            <EmptyState
-              title="No encontramos Orbitas"
-              message="Prueba otra busqueda o crea la primera comunidad de ese tema."
-            />
-          }
-          renderItem={({ item }) => (
-            <CommunityCard
-              community={item}
-              onPress={() =>
-                router.push({ pathname: "/community/[id]", params: { id: item.id } })
-              }
-            />
-          )}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+      >
+        <ExploreHero
+          communityCount={communityCount}
+          memberCount={memberCount}
+          onlineCount={onlineCount}
+          selectedCategory={category}
+          onCreate={() => router.push("/community/create")}
         />
-      )}
+
+        <View style={styles.layout}>
+          <View style={styles.mainColumn}>
+            <View
+              style={[
+                styles.filters,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              ]}
+            >
+              <TextInput
+                accessibilityLabel="Buscar Orbitas"
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Buscar por nombre, categoria o descripcion"
+                icon={<Search size={18} color={theme.colors.textFaint} />}
+              />
+              <CategoryChips
+                categories={CATEGORIES}
+                selected={category}
+                onSelect={setCategory}
+              />
+            </View>
+
+            <SectionHeader
+              title={hasFilters ? "Resultados encontrados" : "Orbitas recomendadas"}
+              subtitle={
+                hasFilters
+                  ? "Senales que coinciden con tu busqueda."
+                  : "Comunidades con actividad, identidad clara y espacio para conectar."
+              }
+              meta={`${communityCount} resultados`}
+            />
+
+            {communities.isError ? (
+              <ErrorState onRetry={() => void communities.refetch()} />
+            ) : communities.isLoading ? (
+              <View style={styles.grid}>
+                {Array.from({ length: twoColumns ? 4 : 3 }).map((_, index) => (
+                  <View
+                    key={index}
+                    style={[styles.cardSlot, twoColumns ? styles.cardSlotTwo : null]}
+                  >
+                    <SkeletonCommunityCard />
+                  </View>
+                ))}
+              </View>
+            ) : data.length === 0 ? (
+              <AlienEmptyState
+                title={
+                  hasFilters
+                    ? "Nex no encontro orbitas por aqui..."
+                    : "Todavia no hay orbitas activas"
+                }
+                message={
+                  hasFilters
+                    ? "Prueba otra busqueda o crea una nueva comunidad para lanzar la senal."
+                    : "Esta zona del espacio esta tranquila por ahora. Lanza la primera senal."
+                }
+                action={
+                  <Button
+                    title="Crear Orbita"
+                    onPress={() => router.push("/community/create")}
+                  />
+                }
+              />
+            ) : (
+              <View style={styles.grid}>
+                {data.map((community) => (
+                  <View
+                    key={community.id}
+                    style={[styles.cardSlot, twoColumns ? styles.cardSlotTwo : null]}
+                  >
+                    <CommunityCard
+                      community={community}
+                      onPress={() => openCommunity(community)}
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {showRightPanel && data.length > 0 ? (
+            <ExploreRightPanel
+              popular={popular}
+              online={mostOnline}
+              newest={newest}
+              onOpenCommunity={openCommunity}
+            />
+          ) : null}
+        </View>
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: 8,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    overflow: "hidden",
+  screen: {
+    maxWidth: 1360,
+    paddingHorizontal: 18,
   },
-  heroGradient: {
+  scroll: {
+    gap: 16,
+    paddingTop: 10,
+    paddingBottom: 28,
+  },
+  star: {
     position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    opacity: 0.72,
+    backgroundColor: "#FFFFFF",
   },
-  heroTop: {
+  layout: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 16,
-    paddingBottom: 10,
+    alignItems: "flex-start",
+    gap: 16,
   },
-  heroIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(9,10,18,0.28)",
-  },
-  heroCopy: {
+  mainColumn: {
     flex: 1,
     minWidth: 0,
+    gap: 14,
   },
-  heroKicker: {
-    color: "rgba(255,255,255,0.76)",
-    fontSize: typography.tiny,
-    fontWeight: "900",
-    textTransform: "uppercase",
+  filters: {
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: 12,
+    gap: 12,
   },
-  heroTitle: {
-    color: "#FFFFFF",
-    fontSize: typography.h1,
-    fontWeight: "900",
-    lineHeight: 29,
-  },
-  heroText: {
-    color: "rgba(255,255,255,0.86)",
-    fontSize: typography.body,
-    lineHeight: 22,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  heroAction: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  heroButton: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderColor: "rgba(255,255,255,0.22)",
-  },
-  heroStats: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.18)",
-    backgroundColor: "rgba(9,10,18,0.28)",
-  },
-  heroStat: {
-    flex: 1,
-    minHeight: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
-  },
-  heroStatValue: {
-    color: "#FFFFFF",
-    fontSize: typography.small,
-    fontWeight: "900",
-  },
-  heroStatLabel: {
-    color: "rgba(255,255,255,0.68)",
-    fontSize: typography.tiny,
-    fontWeight: "800",
-    textTransform: "uppercase",
-  },
-  searchBlock: {
-    paddingBottom: 12,
-  },
-  categories: {
+  grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    paddingBottom: 14,
+    gap: 14,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: 10,
+  cardSlot: {
+    width: "100%",
   },
-  sectionTitle: {
-    fontSize: typography.h2,
-    fontWeight: "900",
-  },
-  sectionMeta: {
-    fontSize: typography.small,
-    fontWeight: "800",
-  },
-  list: {
-    gap: 12,
-    paddingBottom: 28,
+  cardSlotTwo: {
+    flexBasis: "48.6%",
+    flexGrow: 1,
   },
 });

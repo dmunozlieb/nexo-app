@@ -4,15 +4,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  Info,
   MessageSquare,
   Plus,
-  Radio,
   Settings,
   ShieldCheck,
   Users,
 } from "lucide-react-native";
-import { NexoMascot } from "../../../components/brand/NexoMascot";
 import { OnlineUsersBar } from "../../../components/community/OnlineUsersBar";
 import { RoleBadge } from "../../../components/community/RoleBadge";
 import { PostCard } from "../../../components/content/PostCard";
@@ -21,11 +18,11 @@ import { ScreenContainer } from "../../../components/layout/ScreenContainer";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Badge } from "../../../components/ui/Badge";
 import { Button } from "../../../components/ui/Button";
-import { EmptyState } from "../../../components/ui/EmptyState";
+import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { GradientCard } from "../../../components/ui/GradientCard";
 import { LoadingState } from "../../../components/ui/LoadingState";
-import { SectionTabs } from "../../../components/ui/SectionTabs";
+import { CommunityTabs } from "../../../components/navigation/CommunityTabs";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import type {
@@ -52,14 +49,13 @@ import {
   useLeaveCommunityMutation,
 } from "../hooks/useCommunities";
 
-type CommunityTab = "posts" | "chats" | "members" | "rules" | "info";
+type CommunityTab = "posts" | "chats" | "members" | "rules" | "management";
 
 const TABS: Array<{ label: string; value: CommunityTab }> = [
   { label: "Posts", value: "posts" },
   { label: "Chats", value: "chats" },
   { label: "Miembros", value: "members" },
   { label: "Normas", value: "rules" },
-  { label: "Info", value: "info" },
 ];
 
 export function CommunityDetailScreen() {
@@ -107,6 +103,10 @@ export function CommunityDetailScreen() {
 
   const role = membership.data?.role ?? community.data.user_role ?? null;
   const isMember = Boolean(membership.data);
+  const canManageCommunity = canViewModTools(role);
+  const communityTabs = canManageCommunity
+    ? [...TABS, { label: "Gestion", value: "management" as const }]
+    : TABS;
   const rules = Array.isArray(community.data.rules)
     ? (community.data.rules as string[])
     : [];
@@ -200,27 +200,7 @@ export function CommunityDetailScreen() {
               onlineCount={community.data.online_count}
             />
 
-            {canViewModTools(role) ? (
-              <GradientCard contentStyle={styles.modPanel}>
-                <View style={styles.panelTitleRow}>
-                  <Settings size={18} color={theme.colors.secondary} />
-                  <Text style={[styles.panelTitle, { color: theme.colors.text }]}>
-                    Herramientas de comunidad
-                  </Text>
-                </View>
-                <Text style={[styles.copy, { color: theme.colors.textMuted }]}>
-                  Puedes revisar reportes, ocultar contenido y ayudar a mantener sana esta Orbita.
-                </Text>
-                <Button
-                  title="Abrir moderacion"
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => router.push("/moderation")}
-                />
-              </GradientCard>
-            ) : null}
-
-            <SectionTabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
+            <CommunityTabs tabs={communityTabs} value={activeTab} onChange={setActiveTab} />
 
             {activeTab !== "posts" ? (
               <CommunityTabContent
@@ -242,8 +222,7 @@ export function CommunityDetailScreen() {
             posts.isLoading ? (
               <LoadingState label="Cargando publicaciones..." />
             ) : (
-              <EmptyState
-                icon={<NexoMascot size={110} />}
+              <AlienEmptyState
                 title="Esta Orbita esta en silencio"
                 message="Publica una pregunta, historia o recomendacion para activar la conversacion."
                 action={
@@ -380,19 +359,20 @@ function CommunityTabContent({
   return (
     <GradientCard contentStyle={styles.tabPanel}>
       <View style={styles.panelTitleRow}>
-        <Info size={18} color={theme.colors.secondary} />
-        <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Info</Text>
-      </View>
-      <Text style={[styles.copy, { color: theme.colors.textMuted }]}>
-        Las Orbitas tienen feed propio, sala general, miembros con roles y normas visibles.
-        Esta estructura permite crecer hacia canales, perfiles por comunidad y misiones.
-      </Text>
-      <View style={styles.liveHint}>
-        <Radio size={15} color={theme.colors.success} />
-        <Text style={[styles.memberMeta, { color: theme.colors.textFaint }]}>
-          Actividad aproximada con presencia inicial.
+        <Settings size={18} color={theme.colors.secondary} />
+        <Text style={[styles.panelTitle, { color: theme.colors.text }]}>
+          Gestion de comunidad
         </Text>
       </View>
+      <Text style={[styles.copy, { color: theme.colors.textMuted }]}>
+        Revisa reportes, oculta contenido y ayuda a mantener sana esta Orbita.
+      </Text>
+      <Button
+        title="Abrir moderacion"
+        variant="secondary"
+        size="sm"
+        onPress={() => router.push("/moderation")}
+      />
     </GradientCard>
   );
 }
@@ -473,9 +453,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 9,
   },
-  modPanel: {
-    gap: 10,
-  },
   panelTitleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -523,10 +500,5 @@ const styles = StyleSheet.create({
   rule: {
     fontSize: typography.body,
     lineHeight: 21,
-  },
-  liveHint: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
   },
 });

@@ -1,8 +1,8 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
-import { MessageSquare } from "lucide-react-native";
 import { Avatar } from "../../../components/ui/Avatar";
-import { EmptyState } from "../../../components/ui/EmptyState";
+import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
+import { Button } from "../../../components/ui/Button";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { LoadingState } from "../../../components/ui/LoadingState";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
@@ -37,10 +37,10 @@ export function ChatListScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <EmptyState
-            icon={<MessageSquare size={36} color={theme.colors.secondary} />}
-            title="Sin conversaciones"
-            message="Entra a una Orbita y abre su sala para empezar."
+          <AlienEmptyState
+            title="Esta zona del espacio esta tranquila"
+            message="Entra a una Orbita y abre su sala para empezar una conversacion."
+            action={<Button title="Explorar Orbitas" onPress={() => router.push("/discover")} />}
           />
         }
         renderItem={({ item }) => (

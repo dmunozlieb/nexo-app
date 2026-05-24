@@ -48,6 +48,55 @@ const uuid = () =>
   globalThis.crypto?.randomUUID?.() ??
   `00000000-0000-4000-8000-${Math.random().toString(16).slice(2, 14)}`;
 
+function createDemoCommunityAvatar({
+  initials,
+  primary,
+  secondary,
+  accent,
+  motif,
+}: {
+  initials: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  motif: "brush" | "gamepad" | "book";
+}) {
+  const motifSvg =
+    motif === "brush"
+      ? `<path d="M150 235c44-42 64-89 90-133 7-12 25-5 22 9-12 58-34 104-80 144-23 20-54 17-72-6 15 0 29-4 40-14Z" fill="${accent}" opacity=".82"/><path d="M112 289c25-10 41-22 52-41 10 17 25 28 44 33-24 20-55 29-96 8Z" fill="#F4F7FB" opacity=".82"/>`
+      : motif === "gamepad"
+        ? `<path d="M89 178c9-40 30-57 66-47l35 10c11 3 22 3 33 0l35-10c36-10 57 7 66 47l12 54c9 41-25 69-58 43l-25-20c-8-6-17-10-27-10h-64c-10 0-19 4-27 10l-25 20c-33 26-67-2-58-43l12-54Z" fill="#F4F7FB" opacity=".86"/><path d="M130 194h50M155 169v50" stroke="${primary}" stroke-width="14" stroke-linecap="round"/><circle cx="263" cy="183" r="13" fill="${accent}"/><circle cx="296" cy="211" r="13" fill="${secondary}"/>`
+        : `<path d="M94 122c55-18 89-8 117 26 28-34 62-44 117-26v166c-50-17-86-9-117 23-31-32-67-40-117-23V122Z" fill="#F4F7FB" opacity=".86"/><path d="M211 148v163M126 158c34-7 58-1 76 19M252 177c18-20 42-26 76-19" stroke="${primary}" stroke-width="10" stroke-linecap="round" opacity=".8"/>`;
+
+  const svg = `<svg width="384" height="384" viewBox="0 0 384 384" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="384" height="384" rx="96" fill="#090A12"/><circle cx="192" cy="192" r="156" fill="url(#g)"/><circle cx="264" cy="142" r="104" fill="#090A12" opacity=".18"/><path d="M48 213c48-42 98-64 151-66 53-2 99 15 137 50" stroke="#F4F7FB" stroke-width="9" stroke-linecap="round" opacity=".22"/><path d="M58 254c42 36 91 54 146 51 55-3 98-25 128-66" stroke="#F4F7FB" stroke-width="9" stroke-linecap="round" opacity=".16"/>${motifSvg}<circle cx="296" cy="84" r="17" fill="${accent}"/><circle cx="78" cy="270" r="12" fill="${secondary}"/><text x="192" y="232" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="900">${initials}</text><defs><linearGradient id="g" x1="48" y1="48" x2="336" y2="336" gradientUnits="userSpaceOnUse"><stop stop-color="${primary}"/><stop offset=".54" stop-color="${secondary}"/><stop offset="1" stop-color="${accent}"/></linearGradient></defs></svg>`;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+const demoCommunityAvatars = {
+  atelierNebula: createDemoCommunityAvatar({
+    initials: "AN",
+    primary: "#7C5CFF",
+    secondary: "#00D4FF",
+    accent: "#FF4FD8",
+    motif: "brush",
+  }),
+  checkpointCafe: createDemoCommunityAvatar({
+    initials: "CC",
+    primary: "#00D4FF",
+    secondary: "#37E29F",
+    accent: "#FFB020",
+    motif: "gamepad",
+  }),
+  clubOrbita: createDemoCommunityAvatar({
+    initials: "CO",
+    primary: "#FF4FD8",
+    secondary: "#7C5CFF",
+    accent: "#00D4FF",
+    motif: "book",
+  }),
+};
+
 const demoUsers: Array<{ email: string; id: string }> = [
   { email: "luna@nexo.local", id: "11111111-1111-4111-8111-111111111111" },
   { email: "kai@nexo.local", id: "22222222-2222-4222-8222-222222222222" },
@@ -91,18 +140,63 @@ const profiles: Profile[] = [
 ];
 
 const interests: Interest[] = [
-  { id: "aaaaaaaa-0000-4000-8000-000000000001", name: "Arte", slug: "arte", icon: "art" },
-  { id: "aaaaaaaa-0000-4000-8000-000000000002", name: "Gaming", slug: "gaming", icon: "game" },
-  { id: "aaaaaaaa-0000-4000-8000-000000000003", name: "Lectura", slug: "lectura", icon: "book" },
-  { id: "aaaaaaaa-0000-4000-8000-000000000004", name: "Musica", slug: "musica", icon: "music" },
-  { id: "aaaaaaaa-0000-4000-8000-000000000005", name: "Tecnologia", slug: "tecnologia", icon: "code" },
-  { id: "aaaaaaaa-0000-4000-8000-000000000006", name: "Cine", slug: "cine", icon: "film" },
+  {
+    id: "aaaaaaaa-0000-4000-8000-000000000001",
+    name: "Arte",
+    slug: "arte",
+    icon: "art",
+  },
+  {
+    id: "aaaaaaaa-0000-4000-8000-000000000002",
+    name: "Gaming",
+    slug: "gaming",
+    icon: "game",
+  },
+  {
+    id: "aaaaaaaa-0000-4000-8000-000000000003",
+    name: "Lectura",
+    slug: "lectura",
+    icon: "book",
+  },
+  {
+    id: "aaaaaaaa-0000-4000-8000-000000000004",
+    name: "Musica",
+    slug: "musica",
+    icon: "music",
+  },
+  {
+    id: "aaaaaaaa-0000-4000-8000-000000000005",
+    name: "Tecnologia",
+    slug: "tecnologia",
+    icon: "code",
+  },
+  {
+    id: "aaaaaaaa-0000-4000-8000-000000000006",
+    name: "Cine",
+    slug: "cine",
+    icon: "film",
+  },
 ];
 
 const userInterests = new Map<string, string[]>([
-  ["11111111-1111-4111-8111-111111111111", ["aaaaaaaa-0000-4000-8000-000000000001", "aaaaaaaa-0000-4000-8000-000000000004"]],
-  ["22222222-2222-4222-8222-222222222222", ["aaaaaaaa-0000-4000-8000-000000000002", "aaaaaaaa-0000-4000-8000-000000000005"]],
-  ["33333333-3333-4333-8333-333333333333", ["aaaaaaaa-0000-4000-8000-000000000003"]],
+  [
+    "11111111-1111-4111-8111-111111111111",
+    [
+      "aaaaaaaa-0000-4000-8000-000000000001",
+      "aaaaaaaa-0000-4000-8000-000000000004",
+    ],
+  ],
+  [
+    "22222222-2222-4222-8222-222222222222",
+    [
+      "aaaaaaaa-0000-4000-8000-000000000002",
+      "aaaaaaaa-0000-4000-8000-000000000005",
+    ],
+  ],
+  [
+    "33333333-3333-4333-8333-333333333333",
+    ["aaaaaaaa-0000-4000-8000-000000000003"],
+  ],
 ]);
 
 const communities: Community[] = [
@@ -110,13 +204,18 @@ const communities: Community[] = [
     id: "bbbbbbbb-0000-4000-8000-000000000001",
     slug: "atelier-nebula",
     name: "Atelier Nebula",
-    description: "Fanart, procesos creativos y misiones de dibujo semanal.",
-    avatar_url: null,
+    description:
+      "Comunidad para fanarts, procesos creativos y retos semanales con feedback cuidado.",
+    avatar_url: demoCommunityAvatars.atelierNebula,
     banner_url: null,
     owner_id: "11111111-1111-4111-8111-111111111111",
     visibility: "public",
     category: "Arte",
-    rules: ["Acredita referencias", "Critica con respeto", "No publiques arte de terceros como propio"],
+    rules: [
+      "Acredita referencias",
+      "Critica con respeto",
+      "No publiques arte de terceros como propio",
+    ],
     created_at: now(),
     updated_at: now(),
   },
@@ -124,8 +223,9 @@ const communities: Community[] = [
     id: "bbbbbbbb-0000-4000-8000-000000000002",
     slug: "checkpoint-cafe",
     name: "Checkpoint Cafe",
-    description: "Gaming tranquilo, recomendaciones y ayuda sin spoilers.",
-    avatar_url: null,
+    description:
+      "Gaming tranquilo para recomendaciones, quedadas y ayuda sin spoilers.",
+    avatar_url: demoCommunityAvatars.checkpointCafe,
     banner_url: null,
     owner_id: "22222222-2222-4222-8222-222222222222",
     visibility: "public",
@@ -138,26 +238,66 @@ const communities: Community[] = [
     id: "bbbbbbbb-0000-4000-8000-000000000003",
     slug: "club-orbita",
     name: "Club Orbita",
-    description: "Lecturas, historias cortas y debates de mundos imaginarios.",
-    avatar_url: null,
+    description:
+      "Lecturas, teorias y debates sobre mundos imaginarios sin prisas.",
+    avatar_url: demoCommunityAvatars.clubOrbita,
     banner_url: null,
     owner_id: "33333333-3333-4333-8333-333333333333",
     visibility: "unlisted",
     category: "Lectura",
-    rules: ["Debate ideas, no personas", "Usa avisos de contenido", "Respeta ritmos de lectura"],
+    rules: [
+      "Debate ideas, no personas",
+      "Usa avisos de contenido",
+      "Respeta ritmos de lectura",
+    ],
     created_at: now(),
     updated_at: now(),
   },
 ];
 
 const members: CommunityMember[] = [
-  { community_id: communities[0]!.id, user_id: profiles[0]!.id, role: "owner", joined_at: now() },
-  { community_id: communities[0]!.id, user_id: profiles[1]!.id, role: "member", joined_at: now() },
-  { community_id: communities[0]!.id, user_id: profiles[2]!.id, role: "mod", joined_at: now() },
-  { community_id: communities[1]!.id, user_id: profiles[1]!.id, role: "owner", joined_at: now() },
-  { community_id: communities[1]!.id, user_id: profiles[0]!.id, role: "helper", joined_at: now() },
-  { community_id: communities[2]!.id, user_id: profiles[2]!.id, role: "owner", joined_at: now() },
-  { community_id: communities[2]!.id, user_id: profiles[0]!.id, role: "member", joined_at: now() },
+  {
+    community_id: communities[0]!.id,
+    user_id: profiles[0]!.id,
+    role: "owner",
+    joined_at: now(),
+  },
+  {
+    community_id: communities[0]!.id,
+    user_id: profiles[1]!.id,
+    role: "member",
+    joined_at: now(),
+  },
+  {
+    community_id: communities[0]!.id,
+    user_id: profiles[2]!.id,
+    role: "mod",
+    joined_at: now(),
+  },
+  {
+    community_id: communities[1]!.id,
+    user_id: profiles[1]!.id,
+    role: "owner",
+    joined_at: now(),
+  },
+  {
+    community_id: communities[1]!.id,
+    user_id: profiles[0]!.id,
+    role: "helper",
+    joined_at: now(),
+  },
+  {
+    community_id: communities[2]!.id,
+    user_id: profiles[2]!.id,
+    role: "owner",
+    joined_at: now(),
+  },
+  {
+    community_id: communities[2]!.id,
+    user_id: profiles[0]!.id,
+    role: "member",
+    joined_at: now(),
+  },
 ];
 
 const posts: Post[] = [
@@ -199,11 +339,36 @@ const posts: Post[] = [
   },
 ];
 
-const reactions: Array<{ post_id: string; user_id: string; reaction: ReactionType; created_at: string }> = [
-  { post_id: posts[0]!.id, user_id: profiles[1]!.id, reaction: "inspire", created_at: now() },
-  { post_id: posts[0]!.id, user_id: profiles[2]!.id, reaction: "support", created_at: now() },
-  { post_id: posts[1]!.id, user_id: profiles[0]!.id, reaction: "curious", created_at: now() },
-  { post_id: posts[2]!.id, user_id: profiles[0]!.id, reaction: "relate", created_at: now() },
+const reactions: Array<{
+  post_id: string;
+  user_id: string;
+  reaction: ReactionType;
+  created_at: string;
+}> = [
+  {
+    post_id: posts[0]!.id,
+    user_id: profiles[1]!.id,
+    reaction: "inspire",
+    created_at: now(),
+  },
+  {
+    post_id: posts[0]!.id,
+    user_id: profiles[2]!.id,
+    reaction: "support",
+    created_at: now(),
+  },
+  {
+    post_id: posts[1]!.id,
+    user_id: profiles[0]!.id,
+    reaction: "curious",
+    created_at: now(),
+  },
+  {
+    post_id: posts[2]!.id,
+    user_id: profiles[0]!.id,
+    reaction: "relate",
+    created_at: now(),
+  },
 ];
 
 const comments: Comment[] = [
@@ -234,14 +399,30 @@ const follows = new Set<string>([`${profiles[0]!.id}:${profiles[1]!.id}`]);
 const blocks = new Set<string>();
 
 const conversations: Conversation[] = [
-  { id: "eeeeeeee-0000-4000-8000-000000000001", type: "community", community_id: communities[0]!.id, created_at: now() },
-  { id: "eeeeeeee-0000-4000-8000-000000000002", type: "community", community_id: communities[1]!.id, created_at: now() },
+  {
+    id: "eeeeeeee-0000-4000-8000-000000000001",
+    type: "community",
+    community_id: communities[0]!.id,
+    created_at: now(),
+  },
+  {
+    id: "eeeeeeee-0000-4000-8000-000000000002",
+    type: "community",
+    community_id: communities[1]!.id,
+    created_at: now(),
+  },
 ];
 
-const conversationMembers: Array<{ conversation_id: string; user_id: string; joined_at: string }> = [];
+const conversationMembers: Array<{
+  conversation_id: string;
+  user_id: string;
+  joined_at: string;
+}> = [];
 
 for (const conversation of conversations) {
-  for (const member of members.filter((item) => item.community_id === conversation.community_id)) {
+  for (const member of members.filter(
+    (item) => item.community_id === conversation.community_id,
+  )) {
     conversationMembers.push({
       conversation_id: conversation.id,
       user_id: member.user_id,
@@ -306,19 +487,47 @@ function findCommunity(idOrSlug: string) {
   return community;
 }
 
-function communityMeta(community: Community, userId?: string | null): CommunityWithMeta {
+function communityMeta(
+  community: Community,
+  userId?: string | null,
+): CommunityWithMeta {
   const membership = userId
-    ? members.find((item) => item.community_id === community.id && item.user_id === userId)
+    ? members.find(
+        (item) => item.community_id === community.id && item.user_id === userId,
+      )
     : undefined;
+  const communityPosts = posts.filter(
+    (item) => item.community_id === community.id && item.status === "published",
+  );
+  const conversation = conversations.find(
+    (item) => item.type === "community" && item.community_id === community.id,
+  );
+  const hasChatActivity = conversation
+    ? messages.some(
+        (item) =>
+          item.conversation_id === conversation.id && item.status === "sent",
+      )
+    : false;
 
   return {
     ...community,
-    member_count: members.filter((item) => item.community_id === community.id).length,
+    member_count: members.filter((item) => item.community_id === community.id)
+      .length,
     online_count: Math.max(
       1,
-      Math.ceil(members.filter((item) => item.community_id === community.id).length * 0.45),
+      Math.ceil(
+        members.filter((item) => item.community_id === community.id).length *
+          0.45,
+      ),
     ),
     user_role: membership?.role ?? null,
+    recent_post_count: communityPosts.length,
+    new_posts_count: communityPosts.length,
+    active_chat: hasChatActivity,
+    event_today: communityPosts.some((item) => item.type === "event"),
+    mission_active: communityPosts.some((item) =>
+      `${item.title ?? ""} ${item.body ?? ""}`.toLowerCase().includes("mision"),
+    ),
   };
 }
 
@@ -333,7 +542,8 @@ function postMeta(post: Post, userId?: string | null): PostWithMeta {
   return {
     ...post,
     author: profiles.find((item) => item.id === post.author_id) ?? null,
-    community: communities.find((item) => item.id === post.community_id) ?? null,
+    community:
+      communities.find((item) => item.id === post.community_id) ?? null,
     reaction_counts: counts,
     user_reactions: userId
       ? postReactions
@@ -370,9 +580,7 @@ export function onDemoAuthStateChange(listener: DemoAuthListener) {
 export async function demoSignInWithEmail(input: AuthLoginInput) {
   const email = input.email.trim().toLowerCase();
   const password = input.password.trim();
-  const user = demoUsers.find(
-    (item) => item.email.toLowerCase() === email,
-  );
+  const user = demoUsers.find((item) => item.email.toLowerCase() === email);
 
   if (!user || password !== DEMO_PASSWORD) {
     throw new Error("Credenciales demo invalidas. Usa Password123!.");
@@ -428,7 +636,10 @@ export async function demoListInterests() {
   return interests;
 }
 
-export async function demoCompleteOnboarding(userId: string, input: OnboardingInput) {
+export async function demoCompleteOnboarding(
+  userId: string,
+  input: OnboardingInput,
+) {
   const profile = findProfile(userId);
   profile.username = input.username;
   profile.display_name = input.displayName;
@@ -457,7 +668,10 @@ export async function demoListCommunities(params?: {
     .map((item) => communityMeta(item));
 }
 
-export async function demoCreateCommunity(input: CreateCommunityInput, ownerId: string) {
+export async function demoCreateCommunity(
+  input: CreateCommunityInput,
+  ownerId: string,
+) {
   const id = uuid();
   const slugBase = input.name
     .normalize("NFD")
@@ -473,7 +687,11 @@ export async function demoCreateCommunity(input: CreateCommunityInput, ownerId: 
         .split("\n")
         .map((rule) => sanitizePlainText(rule).trim())
         .filter(Boolean)
-    : ["Respeta a otras personas.", "Evita spam.", "Reporta contenido de riesgo."];
+    : [
+        "Respeta a otras personas.",
+        "Evita spam.",
+        "Reporta contenido de riesgo.",
+      ];
 
   const community: Community = {
     id,
@@ -518,7 +736,10 @@ export async function demoGetCommunity(communityIdOrSlug: string) {
   return communityMeta(findCommunity(communityIdOrSlug));
 }
 
-export async function demoGetCommunityMembership(communityId: string, userId: string) {
+export async function demoGetCommunityMembership(
+  communityId: string,
+  userId: string,
+) {
   return (
     members.find(
       (item) => item.community_id === communityId && item.user_id === userId,
@@ -543,7 +764,12 @@ export async function demoListCommunityMembers(communityId: string) {
 
 export async function demoJoinCommunity(communityId: string, userId: string) {
   if (!(await demoGetCommunityMembership(communityId, userId))) {
-    members.push({ community_id: communityId, user_id: userId, role: "member", joined_at: now() });
+    members.push({
+      community_id: communityId,
+      user_id: userId,
+      role: "member",
+      joined_at: now(),
+    });
   }
 }
 
@@ -564,7 +790,10 @@ export async function demoListCommunityPosts({
   userId?: string | null | undefined;
 }) {
   return posts
-    .filter((item) => item.community_id === communityId && item.status === "published")
+    .filter(
+      (item) =>
+        item.community_id === communityId && item.status === "published",
+    )
     .map((item) => postMeta(item, userId));
 }
 
@@ -601,14 +830,20 @@ export async function demoListFeed({
   if (mode === "trending") {
     mapped = mapped.sort(
       (a, b) =>
-        Object.values(b.reaction_counts).reduce((sum, count) => sum + count, 0) -
+        Object.values(b.reaction_counts).reduce(
+          (sum, count) => sum + count,
+          0,
+        ) -
         Object.values(a.reaction_counts).reduce((sum, count) => sum + count, 0),
     );
   }
 
   const start = pageParam * pageSize;
   const page = mapped.slice(start, start + pageSize);
-  return { posts: page, nextPage: page.length === pageSize ? pageParam + 1 : null };
+  return {
+    posts: page,
+    nextPage: page.length === pageSize ? pageParam + 1 : null,
+  };
 }
 
 export async function demoCreatePost(input: PostFormInput, authorId: string) {
@@ -646,12 +881,20 @@ export async function demoToggleReaction({
   reaction: ReactionType;
 }) {
   const index = reactions.findIndex(
-    (item) => item.post_id === post.id && item.user_id === userId && item.reaction === reaction,
+    (item) =>
+      item.post_id === post.id &&
+      item.user_id === userId &&
+      item.reaction === reaction,
   );
   if (index >= 0) {
     reactions.splice(index, 1);
   } else {
-    reactions.push({ post_id: post.id, user_id: userId, reaction, created_at: now() });
+    reactions.push({
+      post_id: post.id,
+      user_id: userId,
+      reaction,
+      created_at: now(),
+    });
   }
 }
 
@@ -716,35 +959,61 @@ export async function demoCreateComment({
   return comment;
 }
 
-export async function demoListConversations(userId: string): Promise<ConversationPreview[]> {
+export async function demoListConversations(
+  userId: string,
+): Promise<ConversationPreview[]> {
   return conversationMembers
     .filter((item) => item.user_id === userId)
     .map((item) => {
-      const conversation = conversations.find((entry) => entry.id === item.conversation_id)!;
+      const conversation = conversations.find(
+        (entry) => entry.id === item.conversation_id,
+      )!;
       const community = conversation.community_id
-        ? communities.find((entry) => entry.id === conversation.community_id) ?? null
+        ? (communities.find(
+            (entry) => entry.id === conversation.community_id,
+          ) ?? null)
         : null;
       const lastMessage =
         messages
-          .filter((entry) => entry.conversation_id === conversation.id && entry.status === "sent")
+          .filter(
+            (entry) =>
+              entry.conversation_id === conversation.id &&
+              entry.status === "sent",
+          )
           .at(-1) ?? null;
-      return { ...conversation, community, last_message: lastMessage, unread_count: 0 };
+      return {
+        ...conversation,
+        community,
+        last_message: lastMessage,
+        unread_count: 0,
+      };
     });
 }
 
-export async function demoGetOrCreateCommunityConversation(communityId: string) {
+export async function demoGetOrCreateCommunityConversation(
+  communityId: string,
+) {
   let conversation = conversations.find(
     (item) => item.type === "community" && item.community_id === communityId,
   );
   if (!conversation) {
-    conversation = { id: uuid(), type: "community", community_id: communityId, created_at: now() };
+    conversation = {
+      id: uuid(),
+      type: "community",
+      community_id: communityId,
+      created_at: now(),
+    };
     conversations.push(conversation);
   }
 
-  for (const member of members.filter((item) => item.community_id === communityId)) {
+  for (const member of members.filter(
+    (item) => item.community_id === communityId,
+  )) {
     if (
       !conversationMembers.some(
-        (item) => item.conversation_id === conversation!.id && item.user_id === member.user_id,
+        (item) =>
+          item.conversation_id === conversation!.id &&
+          item.user_id === member.user_id,
       )
     ) {
       conversationMembers.push({
@@ -758,7 +1027,10 @@ export async function demoGetOrCreateCommunityConversation(communityId: string) 
   return conversation.id;
 }
 
-export async function demoGetOrCreateDirectConversation(userId: string, otherUserId: string) {
+export async function demoGetOrCreateDirectConversation(
+  userId: string,
+  otherUserId: string,
+) {
   const existing = conversations.find((conversation) => {
     if (conversation.type !== "direct") {
       return false;
@@ -768,7 +1040,10 @@ export async function demoGetOrCreateDirectConversation(userId: string, otherUse
       .filter((item) => item.conversation_id === conversation.id)
       .map((item) => item.user_id);
 
-    return conversationUserIds.includes(userId) && conversationUserIds.includes(otherUserId);
+    return (
+      conversationUserIds.includes(userId) &&
+      conversationUserIds.includes(otherUserId)
+    );
   });
 
   if (existing) {
@@ -784,7 +1059,11 @@ export async function demoGetOrCreateDirectConversation(userId: string, otherUse
   conversations.unshift(conversation);
   conversationMembers.push(
     { conversation_id: conversation.id, user_id: userId, joined_at: now() },
-    { conversation_id: conversation.id, user_id: otherUserId, joined_at: now() },
+    {
+      conversation_id: conversation.id,
+      user_id: otherUserId,
+      joined_at: now(),
+    },
   );
 
   return conversation.id;
@@ -792,7 +1071,10 @@ export async function demoGetOrCreateDirectConversation(userId: string, otherUse
 
 export async function demoListMessages(conversationId: string) {
   return messages
-    .filter((item) => item.conversation_id === conversationId && item.status === "sent")
+    .filter(
+      (item) =>
+        item.conversation_id === conversationId && item.status === "sent",
+    )
     .map((message) => ({
       ...message,
       sender: profiles.find((item) => item.id === message.sender_id),
@@ -830,7 +1112,8 @@ export function demoSubscribeToMessages(
   conversationId: string,
   onMessage: (message: Message) => void,
 ) {
-  const listeners = messageListeners.get(conversationId) ?? new Set<MessageListener>();
+  const listeners =
+    messageListeners.get(conversationId) ?? new Set<MessageListener>();
   listeners.add(onMessage);
   messageListeners.set(conversationId, listeners);
   return {
@@ -845,9 +1128,14 @@ export async function demoGetProfileById(profileId: string) {
   return findProfile(profileId);
 }
 
-export async function demoListProfilePosts(profileId: string, viewerId?: string | null) {
+export async function demoListProfilePosts(
+  profileId: string,
+  viewerId?: string | null,
+) {
   return posts
-    .filter((item) => item.author_id === profileId && item.status === "published")
+    .filter(
+      (item) => item.author_id === profileId && item.status === "published",
+    )
     .map((item) => postMeta(item, viewerId));
 }
 
@@ -870,7 +1158,10 @@ export async function demoListProfilePostsInCommunity({
     .map((item) => postMeta(item, viewerId));
 }
 
-export async function demoUpdateProfile(profileId: string, input: ProfileInput) {
+export async function demoUpdateProfile(
+  profileId: string,
+  input: ProfileInput,
+) {
   const profile = findProfile(profileId);
   profile.username = input.username;
   profile.display_name = sanitizePlainText(input.displayName);
@@ -958,7 +1249,9 @@ export async function demoUpdateReportStatus({
     throw new Error("Reporte demo no encontrado.");
   }
   report.status = status;
-  report.resolved_by = ["resolved", "rejected"].includes(status) ? moderatorId : null;
+  report.resolved_by = ["resolved", "rejected"].includes(status)
+    ? moderatorId
+    : null;
   report.resolved_at = ["resolved", "rejected"].includes(status) ? now() : null;
   return report;
 }
@@ -984,6 +1277,10 @@ export async function demoHideMessage(messageId: string) {
   }
 }
 
-export async function demoWarnUser(_userId: string, _moderatorId: string, _reason: string) {
+export async function demoWarnUser(
+  _userId: string,
+  _moderatorId: string,
+  _reason: string,
+) {
   return {};
 }

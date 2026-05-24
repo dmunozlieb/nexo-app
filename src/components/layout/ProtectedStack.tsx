@@ -1,4 +1,5 @@
 import { Redirect, Stack } from "expo-router";
+import { AppNavigationFrame } from "../navigation/AppNavigationFrame";
 import { LoadingState } from "../ui/LoadingState";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useTheme } from "../../theme/useTheme";
@@ -20,13 +21,16 @@ export function ProtectedStack() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.colors.background },
-        headerTintColor: theme.colors.text,
-        headerShadowVisible: false,
-        contentStyle: { backgroundColor: theme.colors.background },
-      }}
-    />
+    <AppNavigationFrame>
+      <Stack
+        screenOptions={{
+          title: "",
+          headerStyle: { backgroundColor: theme.colors.background },
+          headerTintColor: theme.colors.text,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      />
+    </AppNavigationFrame>
   );
 }
