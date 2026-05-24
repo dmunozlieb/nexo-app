@@ -1,7 +1,13 @@
 import type { PropsWithChildren } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { router, usePathname, type Href } from "expo-router";
-import { Compass, Home, MessageSquare, Plus, UserRound } from "lucide-react-native";
+import {
+  Compass,
+  Home,
+  MessageSquare,
+  Plus,
+  UserRound,
+} from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useJoinedCommunities } from "../../features/communities/hooks/useCommunities";
@@ -12,7 +18,7 @@ import { AppSidebar, APP_SIDEBAR_WIDTH } from "./AppSidebar";
 import type { NavItemConfig } from "./NavItem";
 
 const DESKTOP_WIDTH = 980;
-const MOBILE_NAV_SPACE = 104;
+const MOBILE_NAV_SPACE = 90;
 
 const NAV_ITEMS: NavItemConfig[] = [
   {
@@ -29,8 +35,8 @@ const NAV_ITEMS: NavItemConfig[] = [
   },
   {
     routeName: "create",
-    label: "Crear",
-    href: "/create",
+    label: "Crear Orbita",
+    href: "/community/create",
     icon: ({ size, color }) => <Plus size={size} color={color} />,
     create: true,
   },
@@ -111,7 +117,10 @@ function getActiveRouteName(pathname: string) {
     return "discover";
   }
 
-  if (pathname.startsWith("/create") || pathname.startsWith("/community/create")) {
+  if (
+    pathname.startsWith("/create") ||
+    pathname.startsWith("/community/create")
+  ) {
     return "create";
   }
 

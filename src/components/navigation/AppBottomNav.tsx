@@ -27,7 +27,7 @@ export function AppBottomNav({
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.root, { paddingBottom: Math.max(bottomInset, 10) }]}
+      style={[styles.root, { paddingBottom: Math.max(bottomInset, 8) }]}
     >
       <View
         style={[
@@ -85,15 +85,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingTop: 12,
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
   shell: {
     width: "100%",
-    maxWidth: 430,
-    minHeight: 74,
+    maxWidth: 398,
+    minHeight: 64,
     borderWidth: 1,
-    borderRadius: 32,
+    borderRadius: 29,
     overflow: "hidden",
     shadowOpacity: 0.18,
     shadowRadius: 18,
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   blur: {
-    minHeight: 74,
+    minHeight: 64,
     justifyContent: "center",
   },
   tint: {
@@ -114,10 +114,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   row: {
-    minHeight: 74,
+    minHeight: 64,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
 });

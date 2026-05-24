@@ -28,7 +28,7 @@ export function NavItem({ item, active, layout, onPress }: NavItemProps) {
   const motion = useRef(new Animated.Value(active ? 1 : 0)).current;
   const interactive = hovered || focused;
   const iconColor = active ? "#FFFFFF" : theme.colors.textMuted;
-  const size = layout === "bottom" ? 22 : 19;
+  const size = layout === "bottom" ? 20 : 19;
   const scale = motion.interpolate({
     inputRange: [0, 1],
     outputRange: [1, layout === "bottom" ? 1.08 : 1.02],
@@ -111,8 +111,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   bottom: {
-    width: 58,
-    minHeight: 58,
+    width: 50,
+    minHeight: 52,
     borderRadius: radius.lg,
     alignItems: "center",
     justifyContent: "center",
@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
     opacity: 0.48,
   },
   bottomIconWrap: {
-    width: 30,
-    height: 30,
+    width: 27,
+    height: 27,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -156,8 +156,8 @@ const styles = StyleSheet.create({
   },
   orbitRing: {
     position: "absolute",
-    width: 28,
-    height: 15,
+    width: 25,
+    height: 14,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.74)",

@@ -20,7 +20,6 @@ import {
   ChevronRight,
   FileText,
   MessageSquare,
-  Plus,
   Radio,
   Rocket,
   Sparkles,
@@ -82,10 +81,11 @@ const planetLayouts: PlanetLayout[] = [
 ];
 
 const compactPlanetLayouts: PlanetLayout[] = [
-  { top: "29%", left: "25%", size: 78, label: "bottom", hue: 0 },
-  { top: "45%", left: "68%", size: 98, label: "bottom", hue: 1 },
-  { top: "57%", left: "29%", size: 86, label: "bottom", hue: 2 },
-  { top: "61%", left: "72%", size: 72, label: "bottom", hue: 3 },
+  { top: "26%", left: "24%", size: 54, label: "bottom", hue: 0 },
+  { top: "27%", left: "76%", size: 58, label: "bottom", hue: 1 },
+  { top: "53%", left: "50%", size: 66, label: "bottom", hue: 2 },
+  { top: "78%", left: "28%", size: 50, label: "bottom", hue: 3 },
+  { top: "77%", left: "74%", size: 52, label: "bottom", hue: 4 },
 ];
 
 const planetColors = [
@@ -132,10 +132,12 @@ export function GalaxyOrbitMap({
   const reduceMotion = useReduceMotion();
   const [selectedCommunity, setSelectedCommunity] =
     useState<GalaxyCommunity | null>(null);
-  const compact = width < 720;
+  const compact = width <= 768;
   const activeLayouts = compact ? compactPlanetLayouts : planetLayouts;
   const visibleCommunities = communities.slice(0, activeLayouts.length);
   const ambientLayouts = activeLayouts.slice(visibleCommunities.length);
+  const mobileListCommunities = communities.slice(0, 8);
+  const mobileStageHeight = Math.min(380, Math.max(292, width * 0.82));
   const totalOnline = communities.reduce(
     (sum, community) => sum + (community.online_count ?? 0),
     0,
@@ -189,6 +191,200 @@ export function GalaxyOrbitMap({
     (onViewPosts ?? onOpenCommunity)(community);
   };
 
+  const galaxyBackground = (
+    <BlurTargetView
+      ref={blurTargetRef}
+      pointerEvents="none"
+      style={StyleSheet.absoluteFill}
+    >
+      <LinearGradient
+        colors={["#070811", "#101735", "#1D1646", "#090A12"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        style={[
+          styles.nebulaOne,
+          { backgroundColor: `${theme.colors.primary}38` },
+        ]}
+      />
+      <View
+        style={[
+          styles.nebulaTwo,
+          { backgroundColor: `${theme.colors.accent}30` },
+        ]}
+      />
+      <View
+        style={[
+          styles.nebulaThree,
+          { backgroundColor: `${theme.colors.secondary}24` },
+        ]}
+      />
+      <View style={[styles.orbitRing, styles.orbitRingOne]} />
+      <View style={[styles.orbitRing, styles.orbitRingTwo]} />
+      <View style={[styles.orbitRing, styles.orbitRingThree]} />
+      <View style={[styles.orbitRing, styles.orbitRingFour]} />
+      {stars.map((star) => (
+        <View
+          key={`${star.top}-${star.left}`}
+          style={[
+            styles.star,
+            {
+              top: star.top,
+              left: star.left,
+              width: star.size,
+              height: star.size,
+              borderRadius: star.size / 2,
+            },
+          ]}
+        />
+      ))}
+    </BlurTargetView>
+  );
+
+  if (compact) {
+    return (
+      <View
+        style={[
+          styles.map,
+          fullScreen ? [styles.mapFull, styles.mapMobileFull] : null,
+          !fullScreen
+            ? {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              }
+            : null,
+        ]}
+      >
+        {galaxyBackground}
+        <ScrollView
+          style={styles.mobileScroll}
+          contentContainerStyle={styles.mobileContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.mobileHeader}>
+            <View style={styles.mobileHeaderTop}>
+              <View style={styles.mobileHeaderCopy}>
+                <View style={styles.eyebrow}>
+                  <Sparkles size={14} color={theme.colors.secondary} />
+                  <Text
+                    style={[
+                      styles.eyebrowText,
+                      { color: theme.colors.secondary },
+                    ]}
+                  >
+                    Galaxia Nexo
+                  </Text>
+                </View>
+                <Text style={styles.mobileTitle} numberOfLines={2}>
+                  Tu sistema orbital
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.mobileSubtitle}>
+              Tus comunidades y recomendaciones en un solo mapa.
+            </Text>
+            <View style={styles.mobileStatsRow}>
+              <View style={styles.mobileStatPill}>
+                <Radio size={13} color="#FFFFFF" />
+                <Text style={styles.mobileStatText}>
+                  {communities.length} Orbitas
+                </Text>
+              </View>
+              <View style={styles.mobileStatPill}>
+                <View style={styles.mobileOnlineDot} />
+                <Text style={styles.mobileStatText}>
+                  {formatCompactNumber(totalOnline)} online
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {visibleCommunities.length > 0 ? (
+            <>
+              <View
+                style={[styles.mobileOrbitStage, { height: mobileStageHeight }]}
+              >
+                <View style={styles.mobileStageGlow} />
+                <View
+                  style={[styles.mobileOrbitLine, styles.mobileOrbitLineOne]}
+                />
+                <View
+                  style={[styles.mobileOrbitLine, styles.mobileOrbitLineTwo]}
+                />
+                {visibleCommunities.map((community, index) => {
+                  const layout = activeLayouts[index]!;
+
+                  return (
+                    <MobileOrbitNode
+                      key={community.id}
+                      index={index}
+                      community={community}
+                      layout={layout}
+                      colors={
+                        planetColors[layout.hue % planetColors.length] ??
+                        planetColors[0]
+                      }
+                      reduceMotion={reduceMotion}
+                      selected={selectedCommunity?.id === community.id}
+                      onPress={() => setSelectedCommunity(community)}
+                    />
+                  );
+                })}
+              </View>
+              <MobileOrbitList
+                communities={mobileListCommunities}
+                selectedId={selectedCommunity?.id}
+                onSelect={setSelectedCommunity}
+              />
+            </>
+          ) : loading ? (
+            <View style={styles.mobileEmpty}>
+              <Text style={styles.emptyTitle}>Cargando galaxia...</Text>
+              <Text style={styles.emptyCopy}>
+                Estamos ubicando las Orbitas activas.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.mobileEmpty}>
+              <NexoMascot size={102} />
+              <Text style={styles.emptyTitle}>
+                Todavia no hay Orbitas activas
+              </Text>
+              <Text style={styles.emptyCopy}>
+                Crea el primer planeta de esta galaxia y empieza a reunir gente.
+              </Text>
+              <Button
+                title="Crear comunidad"
+                size="sm"
+                onPress={onCreateCommunity}
+              />
+            </View>
+          )}
+        </ScrollView>
+
+        <BottomSheet
+          visible={Boolean(selectedCommunity)}
+          onClose={() => setSelectedCommunity(null)}
+        >
+          {selectedCommunity ? (
+            <OrbitDetailPanel
+              community={selectedCommunity}
+              colors={selectedColors}
+              compact={compact}
+              blurTargetRef={blurTargetRef}
+              onClose={() => setSelectedCommunity(null)}
+              onEnter={handleOpenCommunity}
+              onOpenChat={onOpenChat ? handleOpenChat : undefined}
+              onViewPosts={handleViewPosts}
+            />
+          ) : null}
+        </BottomSheet>
+      </View>
+    );
+  }
+
   return (
     <View
       style={[
@@ -202,55 +398,7 @@ export function GalaxyOrbitMap({
           : null,
       ]}
     >
-      <BlurTargetView
-        ref={blurTargetRef}
-        pointerEvents="none"
-        style={StyleSheet.absoluteFill}
-      >
-        <LinearGradient
-          colors={["#070811", "#101735", "#1D1646", "#090A12"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={[
-            styles.nebulaOne,
-            { backgroundColor: `${theme.colors.primary}38` },
-          ]}
-        />
-        <View
-          style={[
-            styles.nebulaTwo,
-            { backgroundColor: `${theme.colors.accent}30` },
-          ]}
-        />
-        <View
-          style={[
-            styles.nebulaThree,
-            { backgroundColor: `${theme.colors.secondary}24` },
-          ]}
-        />
-        <View style={[styles.orbitRing, styles.orbitRingOne]} />
-        <View style={[styles.orbitRing, styles.orbitRingTwo]} />
-        <View style={[styles.orbitRing, styles.orbitRingThree]} />
-        <View style={[styles.orbitRing, styles.orbitRingFour]} />
-        {stars.map((star) => (
-          <View
-            key={`${star.top}-${star.left}`}
-            style={[
-              styles.star,
-              {
-                top: star.top,
-                left: star.left,
-                width: star.size,
-                height: star.size,
-                borderRadius: star.size / 2,
-              },
-            ]}
-          />
-        ))}
-      </BlurTargetView>
+      {galaxyBackground}
 
       <View style={[styles.header, compact ? styles.headerCompact : null]}>
         <View
@@ -272,14 +420,6 @@ export function GalaxyOrbitMap({
             recomendadas para descubrir.
           </Text>
         </View>
-        <Button
-          title="Crear Orbita"
-          size="sm"
-          variant="secondary"
-          icon={<Plus size={16} color={theme.colors.text} />}
-          style={styles.createButton}
-          onPress={onCreateCommunity}
-        />
       </View>
 
       <View style={[styles.stats, compact ? styles.statsCompact : null]}>
@@ -869,6 +1009,306 @@ function PlanetNode({
   );
 }
 
+function MobileOrbitNode({
+  community,
+  index,
+  layout,
+  colors,
+  reduceMotion,
+  selected,
+  onPress,
+}: {
+  community: GalaxyCommunity;
+  index: number;
+  layout: PlanetLayout;
+  colors: readonly [string, string];
+  reduceMotion: boolean;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+  const float = useRef(new Animated.Value(0)).current;
+  const interaction = useRef(new Animated.Value(selected ? 1 : 0)).current;
+  const initials = getInitials(community.name);
+  const imageUri = community.avatar_url ?? community.banner_url;
+  const online = (community.online_count ?? 0) > 0;
+  const nodeWidth = Math.max(layout.size + 34, 82);
+  const floatDistance = 2.4 + (index % 3) * 0.7;
+  const translateY = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, index % 2 === 0 ? -floatDistance : floatDistance],
+  });
+  const scale = interaction.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, reduceMotion ? 1.01 : 1.055],
+  });
+  const activeOpacity = interaction.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.22, 0.82],
+  });
+
+  const animateInteraction = (active: boolean) => {
+    if (reduceMotion) {
+      interaction.setValue(active ? 1 : 0);
+      return;
+    }
+
+    Animated.spring(interaction, {
+      toValue: active ? 1 : 0,
+      tension: 190,
+      friction: 17,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  useEffect(() => {
+    if (reduceMotion) {
+      float.stopAnimation();
+      float.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(float, {
+          toValue: 1,
+          duration: floatDurations[index % floatDurations.length],
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(float, {
+          toValue: 0,
+          duration: floatDurations[index % floatDurations.length],
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    const startDelay = setTimeout(
+      () => animation.start(),
+      floatDelays[index % floatDelays.length],
+    );
+
+    return () => {
+      clearTimeout(startDelay);
+      animation.stop();
+    };
+  }, [float, index, reduceMotion]);
+
+  useEffect(() => {
+    animateInteraction(selected);
+  }, [selected, reduceMotion]);
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Ver detalles de ${community.name}`}
+      onPressIn={() => animateInteraction(true)}
+      onPressOut={() => animateInteraction(selected)}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.mobilePlanetNode,
+        {
+          top: layout.top,
+          left: layout.left,
+          width: nodeWidth,
+          marginLeft: -nodeWidth / 2,
+          marginTop: -layout.size / 2,
+          opacity: pressed ? 0.88 : 1,
+        },
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.mobilePlanetMotion,
+          { transform: [{ translateY }, { scale }] },
+        ]}
+      >
+        <View
+          pointerEvents="none"
+          style={[
+            styles.mobilePlanetHalo,
+            {
+              width: layout.size * 1.42,
+              height: layout.size * 1.42,
+              borderRadius: (layout.size * 1.42) / 2,
+              backgroundColor: colors[0],
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mobilePlanetRing,
+            {
+              width: layout.size + 11,
+              height: layout.size + 11,
+              borderRadius: (layout.size + 11) / 2,
+              borderColor: selected ? colors[1] : `${colors[1]}80`,
+              opacity: activeOpacity,
+              shadowColor: colors[1],
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.mobilePlanetWrap,
+            {
+              width: layout.size,
+              height: layout.size,
+              borderRadius: layout.size / 2,
+              borderColor: selected ? `${colors[1]}E6` : `${colors[0]}88`,
+            },
+          ]}
+        >
+          {imageUri ? (
+            <Image
+              source={{ uri: imageUri }}
+              style={[
+                styles.planetImage,
+                {
+                  width: layout.size,
+                  height: layout.size,
+                  borderRadius: layout.size / 2,
+                },
+              ]}
+              contentFit="cover"
+            />
+          ) : (
+            <LinearGradient
+              colors={colors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.planet,
+                {
+                  width: layout.size,
+                  height: layout.size,
+                  borderRadius: layout.size / 2,
+                },
+              ]}
+            />
+          )}
+          <LinearGradient
+            pointerEvents="none"
+            colors={[
+              "rgba(255,255,255,0.26)",
+              "rgba(9,10,18,0.04)",
+              "rgba(9,10,18,0.36)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <Text pointerEvents="none" style={styles.mobilePlanetInitials}>
+            {initials}
+          </Text>
+          <View
+            pointerEvents="none"
+            style={[
+              styles.mobilePlanetOnline,
+              {
+                backgroundColor: online
+                  ? theme.colors.success
+                  : "rgba(255,255,255,0.42)",
+              },
+            ]}
+          />
+        </View>
+        <Text style={styles.mobilePlanetName} numberOfLines={1}>
+          {getCompactOrbitName(community.name)}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+function MobileOrbitList({
+  communities,
+  selectedId,
+  onSelect,
+}: {
+  communities: GalaxyCommunity[];
+  selectedId: string | undefined;
+  onSelect: (community: GalaxyCommunity) => void;
+}) {
+  const theme = useTheme();
+
+  if (communities.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.mobileList}>
+      <View style={styles.mobileListHeader}>
+        <Text style={styles.mobileListTitle}>Orbitas en tu mapa</Text>
+        <Text style={styles.mobileListCount}>{communities.length}</Text>
+      </View>
+      {communities.map((community, index) => {
+        const online = community.online_count ?? 0;
+        const colors =
+          planetColors[index % planetColors.length] ?? planetColors[0];
+        const selected = selectedId === community.id;
+
+        return (
+          <Pressable
+            key={community.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Ver detalles de ${community.name}`}
+            onPress={() => onSelect(community)}
+            style={({ pressed }) => [
+              styles.mobileListItem,
+              {
+                borderColor: selected
+                  ? `${colors[1]}B3`
+                  : "rgba(255,255,255,0.1)",
+                backgroundColor: selected
+                  ? `${colors[0]}24`
+                  : "rgba(255,255,255,0.06)",
+                opacity: pressed ? 0.86 : 1,
+                transform: [{ scale: pressed ? 0.985 : 1 }],
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.mobileListAvatarRing,
+                { borderColor: `${colors[1]}70` },
+              ]}
+            >
+              <Avatar
+                uri={community.avatar_url}
+                label={community.name}
+                size={42}
+              />
+            </View>
+            <View style={styles.mobileListCopy}>
+              <Text style={styles.mobileListName} numberOfLines={1}>
+                {community.name}
+              </Text>
+              <Text style={styles.mobileListMeta} numberOfLines={1}>
+                {community.category ?? "Orbita social"} -{" "}
+                {formatCompactNumber(online)} online
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.mobileListOnline,
+                {
+                  backgroundColor:
+                    online > 0 ? theme.colors.success : theme.colors.textFaint,
+                },
+              ]}
+            />
+            <ChevronRight size={17} color="rgba(255,255,255,0.7)" />
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 function OrbitDetailPanel({
   community,
   colors,
@@ -891,7 +1331,9 @@ function OrbitDetailPanel({
   const theme = useTheme();
   const orbitType = getOrbitType(community);
   const online = community.online_count ?? 0;
-  const recentPostCount = community.recent_post_count;
+  const postCount = compact
+    ? (community.new_posts_count ?? community.recent_post_count ?? 0)
+    : community.recent_post_count;
   const activitySignals = getActivitySignals(community, theme.colors);
   const canOpenChat = Boolean(community.user_role && onOpenChat);
 
@@ -961,11 +1403,9 @@ function OrbitDetailPanel({
         />
         <DetailStat label="Online" value={formatCompactNumber(online)} active />
         <DetailStat
-          label="Posts recientes"
+          label={compact ? "Posts nuevos" : "Posts recientes"}
           value={
-            recentPostCount !== undefined
-              ? formatCompactNumber(recentPostCount)
-              : "Pronto"
+            postCount !== undefined ? formatCompactNumber(postCount) : "Pronto"
           }
         />
       </View>
@@ -1017,14 +1457,16 @@ function OrbitDetailPanel({
           style={styles.detailButton}
           onPress={() => onOpenChat?.(community)}
         />
-        <Button
-          title="Ver posts"
-          size="sm"
-          variant="ghost"
-          icon={<FileText size={16} color={theme.colors.text} />}
-          style={styles.detailButton}
-          onPress={() => onViewPosts(community)}
-        />
+        {!compact ? (
+          <Button
+            title="Ver posts"
+            size="sm"
+            variant="ghost"
+            icon={<FileText size={16} color={theme.colors.text} />}
+            style={styles.detailButton}
+            onPress={() => onViewPosts(community)}
+          />
+        ) : null}
       </View>
     </View>
   );
@@ -1099,6 +1541,29 @@ function SignalIcon({ signal }: { signal: OrbitActivitySignal }) {
   }
 
   return <Rocket size={13} color={iconColor} />;
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getCompactOrbitName(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+
+  if (words.length === 0) {
+    return "Orbita";
+  }
+
+  if (words.length === 1) {
+    return words[0]!.slice(0, 10);
+  }
+
+  return words.slice(0, 2).join(" ").slice(0, 13);
 }
 
 function getOrbitType(community: GalaxyCommunity) {
@@ -1207,6 +1672,19 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     marginBottom: 0,
   },
+  mapMobileFull: {
+    minHeight: 0,
+  },
+  mobileScroll: {
+    flex: 1,
+  },
+  mobileContent: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 20,
+    gap: 14,
+  },
   nebulaOne: {
     position: "absolute",
     width: 420,
@@ -1290,6 +1768,21 @@ const styles = StyleSheet.create({
   headerCopyCompact: {
     maxWidth: "100%",
   },
+  mobileHeader: {
+    gap: 10,
+  },
+  mobileHeaderTop: {
+    minHeight: 82,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  mobileHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 8,
+  },
   eyebrow: {
     alignSelf: "flex-start",
     flexDirection: "row",
@@ -1315,15 +1808,50 @@ const styles = StyleSheet.create({
     fontSize: 34,
     lineHeight: 40,
   },
+  mobileTitle: {
+    color: "#FFFFFF",
+    fontSize: 25,
+    fontWeight: "900",
+    lineHeight: 30,
+  },
   subtitle: {
     color: "rgba(255,255,255,0.76)",
     fontSize: typography.body,
     lineHeight: 22,
     maxWidth: 580,
   },
-  createButton: {
-    backgroundColor: "rgba(255,255,255,0.14)",
-    borderColor: "rgba(255,255,255,0.22)",
+  mobileSubtitle: {
+    color: "rgba(255,255,255,0.74)",
+    fontSize: typography.small,
+    lineHeight: 19,
+  },
+  mobileStatsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  mobileStatPill: {
+    minHeight: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    borderRadius: radius.pill,
+    backgroundColor: "rgba(9,10,18,0.42)",
+    paddingHorizontal: 10,
+  },
+  mobileStatText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: typography.tiny,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  mobileOnlineDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#37E29F",
   },
   stats: {
     position: "absolute",
@@ -1370,6 +1898,52 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: "#37E29F",
+  },
+  mobileOrbitStage: {
+    position: "relative",
+    width: "100%",
+    maxWidth: 520,
+    alignSelf: "center",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: radius.lg,
+    backgroundColor: "rgba(9,10,18,0.32)",
+  },
+  mobileStageGlow: {
+    position: "absolute",
+    width: 142,
+    height: 142,
+    borderRadius: 71,
+    left: "50%",
+    top: "50%",
+    marginLeft: -71,
+    marginTop: -71,
+    backgroundColor: "rgba(0,212,255,0.08)",
+    shadowColor: "#00D4FF",
+    shadowOpacity: 0.3,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  mobileOrbitLine: {
+    position: "absolute",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.11)",
+    borderRadius: 999,
+  },
+  mobileOrbitLineOne: {
+    width: "112%",
+    height: "48%",
+    left: "-6%",
+    top: "27%",
+    transform: [{ rotate: "-12deg" }],
+  },
+  mobileOrbitLineTwo: {
+    width: "76%",
+    height: "68%",
+    left: "12%",
+    top: "16%",
+    transform: [{ rotate: "28deg" }],
   },
   ambientSlot: {
     position: "absolute",
@@ -1443,6 +2017,67 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: typography.h3,
     fontWeight: "900",
+  },
+  mobilePlanetNode: {
+    position: "absolute",
+    minHeight: 88,
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  mobilePlanetMotion: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mobilePlanetHalo: {
+    position: "absolute",
+    top: -8,
+    opacity: 0.18,
+    shadowColor: "#00D4FF",
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  mobilePlanetRing: {
+    position: "absolute",
+    top: -5,
+    borderWidth: 1,
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  mobilePlanetWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    shadowColor: "#00D4FF",
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  mobilePlanetInitials: {
+    color: "#FFFFFF",
+    fontSize: typography.small,
+    fontWeight: "900",
+  },
+  mobilePlanetOnline: {
+    position: "absolute",
+    right: 3,
+    bottom: 3,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: "#090A12",
+  },
+  mobilePlanetName: {
+    maxWidth: 78,
+    marginTop: 7,
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 10,
+    fontWeight: "900",
+    textAlign: "center",
   },
   planetLabel: {
     position: "absolute",
@@ -1552,6 +2187,65 @@ const styles = StyleSheet.create({
   planetSignalText: {
     fontSize: 10,
     fontWeight: "900",
+  },
+  mobileList: {
+    maxWidth: 560,
+    width: "100%",
+    alignSelf: "center",
+    gap: 8,
+    paddingBottom: 4,
+  },
+  mobileListHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+  },
+  mobileListTitle: {
+    color: "#FFFFFF",
+    fontSize: typography.h3,
+    fontWeight: "900",
+  },
+  mobileListCount: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: typography.tiny,
+    fontWeight: "900",
+  },
+  mobileListItem: {
+    minHeight: 62,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+  },
+  mobileListAvatarRing: {
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    padding: 2,
+    backgroundColor: "rgba(255,255,255,0.07)",
+  },
+  mobileListCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  mobileListName: {
+    color: "#FFFFFF",
+    fontSize: typography.body,
+    fontWeight: "900",
+  },
+  mobileListMeta: {
+    color: "rgba(255,255,255,0.64)",
+    fontSize: typography.tiny,
+    fontWeight: "800",
+  },
+  mobileListOnline: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   detailPanel: {
     position: "absolute",
@@ -1727,6 +2421,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 24,
+  },
+  mobileEmpty: {
+    flex: 1,
+    minHeight: 320,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 22,
   },
   emptyFull: {
     top: 0,

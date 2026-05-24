@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { maxContentWidth, radius } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
 
@@ -10,6 +11,7 @@ type BottomSheetProps = PropsWithChildren<{
 
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal
@@ -31,6 +33,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
             {
               backgroundColor: theme.colors.surface,
               borderColor: theme.colors.border,
+              paddingBottom: Math.max(insets.bottom, 16),
             },
           ]}
         >
@@ -52,6 +55,7 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxWidth: maxContentWidth,
+    maxHeight: "86%",
     alignSelf: "center",
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,

@@ -38,7 +38,7 @@ export function CreateActionButton({
     return (
       <Pressable
         accessibilityRole="tab"
-        accessibilityLabel="Crear"
+        accessibilityLabel="Crear Orbita"
         accessibilityState={{ selected: active }}
         onHoverIn={() => setHovered(true)}
         onHoverOut={() => setHovered(false)}
@@ -46,9 +46,14 @@ export function CreateActionButton({
         style={({ pressed }) => [
           styles.sidebarButton,
           {
-            backgroundColor: hovered || active ? theme.colors.surface : "rgba(255,255,255,0.04)",
+            backgroundColor:
+              hovered || active
+                ? theme.colors.surface
+                : "rgba(255,255,255,0.04)",
             opacity: pressed ? 0.82 : 1,
-            borderColor: active ? theme.colors.secondary : "rgba(255,255,255,0.14)",
+            borderColor: active
+              ? theme.colors.secondary
+              : "rgba(255,255,255,0.14)",
           },
         ]}
       >
@@ -70,46 +75,53 @@ export function CreateActionButton({
   return (
     <Pressable
       accessibilityRole="tab"
-      accessibilityLabel="Crear"
+      accessibilityLabel="Crear Orbita"
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={({ pressed }) => [styles.bottomButton, { opacity: pressed ? 0.84 : 1 }]}
+      style={({ pressed }) => [
+        styles.bottomButton,
+        { opacity: pressed ? 0.84 : 1 },
+      ]}
     >
       <Animated.View style={[styles.bottomMotion, { transform: [{ scale }] }]}>
         <View style={styles.bottomHalo} />
         <LinearGradient
-          colors={[theme.colors.primary, theme.colors.secondary, theme.colors.accent]}
+          colors={[
+            theme.colors.primary,
+            theme.colors.secondary,
+            theme.colors.accent,
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.bottomCircle}
         >
-          <Plus size={28} color="#FFFFFF" strokeWidth={3} />
+          <Plus size={24} color="#FFFFFF" strokeWidth={3} />
         </LinearGradient>
       </Animated.View>
-      <Text style={styles.bottomLabel}>Crear</Text>
+      <Text style={styles.bottomLabel}>Orbita</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   bottomButton: {
-    width: 68,
-    minHeight: 72,
+    width: 58,
+    minHeight: 62,
     alignItems: "center",
     justifyContent: "flex-start",
-    marginTop: -25,
+    marginTop: -20,
   },
   bottomMotion: {
-    width: 60,
-    height: 60,
+    width: 52,
+    height: 52,
     alignItems: "center",
     justifyContent: "center",
   },
   bottomHalo: {
     position: "absolute",
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     backgroundColor: "rgba(0,212,255,0.18)",
     shadowColor: "#00D4FF",
     shadowOpacity: 0.62,
@@ -118,9 +130,9 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   bottomCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -130,7 +142,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: typography.tiny,
     fontWeight: "900",
-    marginTop: 2,
+    marginTop: 1,
   },
   sidebarButton: {
     minHeight: 50,
