@@ -554,7 +554,11 @@ function postMeta(post: Post, userId?: string | null): PostWithMeta {
   };
 }
 
-function createDemoSession(profile: Profile, email: string): Session {
+function createDemoSession(
+  profile: Profile,
+  email: string,
+  metadata?: { display_name?: string; username?: string },
+): Session {
   return {
     access_token: `demo-token-${profile.id}`,
     refresh_token: `demo-refresh-${profile.id}`,
@@ -564,7 +568,10 @@ function createDemoSession(profile: Profile, email: string): Session {
     user: {
       id: profile.id,
       app_metadata: { provider: "email", providers: ["email"] },
-      user_metadata: { display_name: profile.display_name },
+      user_metadata: {
+        display_name: metadata?.display_name ?? profile.display_name,
+        username: metadata?.username ?? profile.username,
+      },
       aud: "authenticated",
       email,
       created_at: profile.created_at,
@@ -608,7 +615,10 @@ export async function demoSignUpWithEmail(input: AuthRegisterInput) {
     is_banned: false,
   });
 
-  const session = createDemoSession(findProfile(id), email);
+  const session = createDemoSession(findProfile(id), email, {
+    display_name: input.displayName,
+    username: input.username,
+  });
   await AsyncStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(session));
   notifyAuth(session);
   return { session, user: session.user };

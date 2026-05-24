@@ -71,6 +71,14 @@ type OrbitActivitySignal = {
   icon: "posts" | "chat" | "event" | "mission";
 };
 
+type CommunityVisualTheme = {
+  colors: readonly [string, string];
+  accent: string;
+  soft: string;
+  particle: string;
+  ringTilt: string;
+};
+
 const planetLayouts: PlanetLayout[] = [
   { top: "19%", left: "10%", size: 96, label: "right", hue: 0 },
   { top: "47%", left: "27%", size: 136, label: "right", hue: 1 },
@@ -102,6 +110,58 @@ const floatDelays = [0, 520, 1040, 260, 780, 1300] as const;
 
 const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
 
+const categoryVisualThemes: Record<string, CommunityVisualTheme> = {
+  arte: {
+    colors: ["#00D4FF", "#7C5CFF"],
+    accent: "#B9F7FF",
+    soft: "#00D4FF",
+    particle: "#D6FBFF",
+    ringTilt: "-18deg",
+  },
+  gaming: {
+    colors: ["#37E29F", "#00D4FF"],
+    accent: "#B6FFE5",
+    soft: "#37E29F",
+    particle: "#A8FFE1",
+    ringTilt: "16deg",
+  },
+  lectura: {
+    colors: ["#9A7BFF", "#FF4FD8"],
+    accent: "#E2D6FF",
+    soft: "#7C5CFF",
+    particle: "#E7DFFF",
+    ringTilt: "-9deg",
+  },
+  musica: {
+    colors: ["#FF4FD8", "#00D4FF"],
+    accent: "#FFD4F5",
+    soft: "#FF4FD8",
+    particle: "#FFB7EF",
+    ringTilt: "22deg",
+  },
+  cine: {
+    colors: ["#FFB020", "#FF4FD8"],
+    accent: "#FFE2A8",
+    soft: "#FFB020",
+    particle: "#FFE9BC",
+    ringTilt: "-24deg",
+  },
+  tecnologia: {
+    colors: ["#00D4FF", "#37E29F"],
+    accent: "#BFFAFF",
+    soft: "#00D4FF",
+    particle: "#C8FFF4",
+    ringTilt: "11deg",
+  },
+  aprendizaje: {
+    colors: ["#7C5CFF", "#37E29F"],
+    accent: "#D7CEFF",
+    soft: "#9A7BFF",
+    particle: "#D9FFE9",
+    ringTilt: "-14deg",
+  },
+};
+
 const stars = [
   { top: "13%", left: "7%", size: 2 },
   { top: "19%", left: "37%", size: 3 },
@@ -115,6 +175,27 @@ const stars = [
   { top: "26%", left: "47%", size: 2 },
   { top: "71%", left: "92%", size: 2 },
   { top: "88%", left: "42%", size: 2 },
+  { top: "15%", left: "22%", size: 1 },
+  { top: "37%", left: "31%", size: 1 },
+  { top: "46%", left: "66%", size: 2 },
+  { top: "58%", left: "6%", size: 1 },
+  { top: "67%", left: "38%", size: 1 },
+  { top: "74%", left: "63%", size: 2 },
+  { top: "92%", left: "12%", size: 1 },
+  { top: "6%", left: "91%", size: 1 },
+] as const;
+
+const cosmicDust = [
+  { top: "18%", left: "18%", width: 112, height: 1, rotate: "-22deg" },
+  { top: "34%", left: "61%", width: 148, height: 1, rotate: "14deg" },
+  { top: "69%", left: "29%", width: 124, height: 1, rotate: "-11deg" },
+  { top: "82%", left: "70%", width: 92, height: 1, rotate: "21deg" },
+] as const;
+
+const distantBodies = [
+  { top: "10%", left: "72%", size: 68, color: "rgba(0,212,255,0.12)" },
+  { top: "67%", left: "84%", size: 42, color: "rgba(255,79,216,0.1)" },
+  { top: "73%", left: "4%", size: 58, color: "rgba(124,92,255,0.1)" },
 ] as const;
 
 export function GalaxyOrbitMap({
@@ -150,10 +231,13 @@ export function GalaxyOrbitMap({
         ),
       )
     : 0;
-  const selectedColors =
+  const selectedBaseColors =
     planetColors[
       activeLayouts[selectedIndex]?.hue ?? selectedIndex % planetColors.length
     ] ?? planetColors[0];
+  const selectedColors = selectedCommunity
+    ? getCommunityVisualTheme(selectedCommunity, selectedBaseColors).colors
+    : selectedBaseColors;
 
   useEffect(() => {
     if (!selectedCommunity) {
@@ -198,11 +282,12 @@ export function GalaxyOrbitMap({
       style={StyleSheet.absoluteFill}
     >
       <LinearGradient
-        colors={["#070811", "#101735", "#1D1646", "#090A12"]}
+        colors={["#050611", "#11193B", "#241552", "#071019", "#090A12"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
+      <View style={styles.deepSpaceVeil} />
       <View
         style={[
           styles.nebulaOne,
@@ -221,23 +306,49 @@ export function GalaxyOrbitMap({
           { backgroundColor: `${theme.colors.secondary}24` },
         ]}
       />
+      <View style={styles.nebulaRibbon} />
+      <View style={styles.nebulaRibbonAlt} />
+      {distantBodies.map((body) => (
+        <View
+          key={`${body.top}-${body.left}`}
+          style={[
+            styles.distantBody,
+            {
+              top: body.top,
+              left: body.left,
+              width: body.size,
+              height: body.size,
+              borderRadius: body.size / 2,
+              backgroundColor: body.color,
+            },
+          ]}
+        />
+      ))}
       <View style={[styles.orbitRing, styles.orbitRingOne]} />
       <View style={[styles.orbitRing, styles.orbitRingTwo]} />
       <View style={[styles.orbitRing, styles.orbitRingThree]} />
       <View style={[styles.orbitRing, styles.orbitRingFour]} />
-      {stars.map((star) => (
+      {cosmicDust.map((dust) => (
         <View
-          key={`${star.top}-${star.left}`}
+          key={`${dust.top}-${dust.left}`}
           style={[
-            styles.star,
+            styles.cosmicDust,
             {
-              top: star.top,
-              left: star.left,
-              width: star.size,
-              height: star.size,
-              borderRadius: star.size / 2,
+              top: dust.top,
+              left: dust.left,
+              width: dust.width,
+              height: dust.height,
+              transform: [{ rotate: dust.rotate }],
             },
           ]}
+        />
+      ))}
+      {stars.map((star, index) => (
+        <TwinkleStar
+          key={`${star.top}-${star.left}`}
+          star={star}
+          index={index}
+          reduceMotion={reduceMotion}
         />
       ))}
     </BlurTargetView>
@@ -283,7 +394,7 @@ export function GalaxyOrbitMap({
               </View>
             </View>
             <Text style={styles.mobileSubtitle}>
-              Tus comunidades y recomendaciones en un solo mapa.
+              Tus comunidades y recomendaciones en un mapa vivo.
             </Text>
             <View style={styles.mobileStatsRow}>
               <View style={styles.mobileStatPill}>
@@ -315,6 +426,13 @@ export function GalaxyOrbitMap({
                 />
                 {visibleCommunities.map((community, index) => {
                   const layout = activeLayouts[index]!;
+                  const fallbackColors =
+                    planetColors[layout.hue % planetColors.length] ??
+                    planetColors[0];
+                  const visualTheme = getCommunityVisualTheme(
+                    community,
+                    fallbackColors,
+                  );
 
                   return (
                     <MobileOrbitNode
@@ -322,10 +440,8 @@ export function GalaxyOrbitMap({
                       index={index}
                       community={community}
                       layout={layout}
-                      colors={
-                        planetColors[layout.hue % planetColors.length] ??
-                        planetColors[0]
-                      }
+                      colors={visualTheme.colors}
+                      visualTheme={visualTheme}
                       reduceMotion={reduceMotion}
                       selected={selectedCommunity?.id === community.id}
                       onPress={() => setSelectedCommunity(community)}
@@ -416,8 +532,8 @@ export function GalaxyOrbitMap({
             Tu sistema orbital
           </Text>
           <Text style={styles.subtitle}>
-            Tus Orbitas aparecen primero. Si hay huecos, Nexo acerca comunidades
-            recomendadas para descubrir.
+            Tu galaxia social en movimiento: entra en tus Orbitas o descubre
+            nuevas senales alrededor.
           </Text>
         </View>
       </View>
@@ -456,6 +572,12 @@ export function GalaxyOrbitMap({
           ))}
           {visibleCommunities.map((community, index) => {
             const layout = activeLayouts[index]!;
+            const fallbackColors =
+              planetColors[layout.hue % planetColors.length] ?? planetColors[0];
+            const visualTheme = getCommunityVisualTheme(
+              community,
+              fallbackColors,
+            );
 
             return (
               <PlanetNode
@@ -464,10 +586,8 @@ export function GalaxyOrbitMap({
                 compact={compact}
                 community={community}
                 layout={layout}
-                colors={
-                  planetColors[layout.hue % planetColors.length] ??
-                  planetColors[0]
-                }
+                colors={visualTheme.colors}
+                visualTheme={visualTheme}
                 blurTargetRef={blurTargetRef}
                 reduceMotion={reduceMotion}
                 selected={selectedCommunity?.id === community.id}
@@ -558,6 +678,75 @@ function useReduceMotion() {
   return reduceMotion;
 }
 
+function TwinkleStar({
+  star,
+  index,
+  reduceMotion,
+}: {
+  star: { top: DimensionValue; left: DimensionValue; size: number };
+  index: number;
+  reduceMotion: boolean;
+}) {
+  const twinkle = useRef(new Animated.Value(0.56 + (index % 3) * 0.12)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      twinkle.stopAnimation();
+      twinkle.setValue(0.72);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(twinkle, {
+          toValue: 1,
+          duration: 2200 + (index % 5) * 320,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(twinkle, {
+          toValue: 0.44,
+          duration: 2600 + (index % 4) * 360,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    const startDelay = setTimeout(() => animation.start(), index * 130);
+
+    return () => {
+      clearTimeout(startDelay);
+      animation.stop();
+    };
+  }, [index, reduceMotion, twinkle]);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.star,
+        {
+          top: star.top,
+          left: star.left,
+          width: star.size,
+          height: star.size,
+          borderRadius: star.size / 2,
+          opacity: twinkle,
+          transform: [
+            {
+              scale: twinkle.interpolate({
+                inputRange: [0.44, 1],
+                outputRange: [0.82, 1.42],
+              }),
+            },
+          ],
+        },
+      ]}
+    />
+  );
+}
+
 function AmbientOrbitSlot({
   layout,
   colors,
@@ -603,6 +792,18 @@ function AmbientOrbitSlot({
       />
       <View
         style={[
+          styles.ambientSlotRing,
+          {
+            width: slotSize * 1.58,
+            height: slotSize * 0.48,
+            borderRadius: slotSize,
+            borderColor: `${colors[1]}40`,
+            transform: [{ rotate: index % 2 === 0 ? "-18deg" : "18deg" }],
+          },
+        ]}
+      />
+      <View
+        style={[
           styles.ambientSlotPlanet,
           {
             width: slotSize,
@@ -632,6 +833,7 @@ function PlanetNode({
   index,
   layout,
   colors,
+  visualTheme,
   compact,
   blurTargetRef,
   reduceMotion,
@@ -642,6 +844,7 @@ function PlanetNode({
   index: number;
   layout: PlanetLayout;
   colors: readonly [string, string];
+  visualTheme: CommunityVisualTheme;
   compact: boolean;
   blurTargetRef: RefObject<View | null>;
   reduceMotion: boolean;
@@ -694,6 +897,18 @@ function PlanetNode({
   const planetActiveScale = interaction.interpolate({
     inputRange: [0, 1],
     outputRange: [1, reduceMotion ? 1.01 : 1.08],
+  });
+  const haloBreathScale = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, reduceMotion ? 1 : 1.08],
+  });
+  const ringDrift = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["-4deg", "4deg"],
+  });
+  const particlePulse = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.46, reduceMotion ? 0.46 : 0.92],
   });
 
   const animateInteraction = (active: boolean) => {
@@ -801,15 +1016,68 @@ function PlanetNode({
           },
         ]}
       >
-        <View
+        <Animated.View
           pointerEvents="none"
           style={[
             styles.planetHalo,
             {
-              width: layout.size * 1.22,
-              height: layout.size * 1.22,
-              borderRadius: (layout.size * 1.22) / 2,
-              backgroundColor: colors[0],
+              width: layout.size * 1.46,
+              height: layout.size * 1.46,
+              borderRadius: (layout.size * 1.46) / 2,
+              backgroundColor: visualTheme.soft,
+              transform: [{ scale: haloBreathScale }],
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.planetSaturnRing,
+            {
+              width: layout.size * 1.66,
+              height: layout.size * 0.48,
+              borderRadius: layout.size,
+              borderColor: `${visualTheme.accent}66`,
+              shadowColor: visualTheme.particle,
+              transform: [
+                { rotate: visualTheme.ringTilt },
+                { rotateZ: ringDrift },
+              ],
+            },
+          ]}
+        />
+        <View
+          pointerEvents="none"
+          style={[
+            styles.planetSaturnRingGlow,
+            {
+              width: layout.size * 1.3,
+              height: layout.size * 0.34,
+              borderRadius: layout.size,
+              borderColor: `${colors[1]}3D`,
+              transform: [{ rotate: visualTheme.ringTilt }],
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.planetParticle,
+            styles.planetParticleOne,
+            {
+              backgroundColor: visualTheme.particle,
+              opacity: particlePulse,
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.planetParticle,
+            styles.planetParticleTwo,
+            {
+              backgroundColor: colors[1],
+              opacity: particlePulse,
             },
           ]}
         />
@@ -821,9 +1089,9 @@ function PlanetNode({
               width: layout.size + 12,
               height: layout.size + 12,
               borderRadius: (layout.size + 12) / 2,
-              borderColor: colors[1],
+              borderColor: visualTheme.accent,
               opacity: planetActiveOpacity,
-              shadowColor: colors[1],
+              shadowColor: visualTheme.particle,
               transform: [{ scale: planetActiveScale }],
             },
           ]}
@@ -836,8 +1104,9 @@ function PlanetNode({
               height: layout.size,
               borderRadius: layout.size / 2,
               borderColor: selected
-                ? `${colors[1]}CC`
-                : "rgba(255,255,255,0.34)",
+                ? `${visualTheme.accent}D9`
+                : `${colors[1]}78`,
+              shadowColor: visualTheme.soft,
             },
           ]}
         >
@@ -869,16 +1138,39 @@ function PlanetNode({
               ]}
             />
           )}
+          <View
+            pointerEvents="none"
+            style={[
+              styles.planetTextureBand,
+              styles.planetTextureBandTop,
+              { backgroundColor: `${visualTheme.accent}22` },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.planetTextureBand,
+              styles.planetTextureBandBottom,
+              { backgroundColor: `${colors[0]}1F` },
+            ]}
+          />
           <LinearGradient
             pointerEvents="none"
             colors={[
-              "rgba(255,255,255,0.24)",
+              "rgba(255,255,255,0.3)",
               "rgba(9,10,18,0.08)",
-              "rgba(9,10,18,0.34)",
+              "rgba(9,10,18,0.4)",
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.planetSpecular,
+              { backgroundColor: `${visualTheme.accent}30` },
+            ]}
           />
           <View pointerEvents="none" style={styles.planetShade} />
           <Text pointerEvents="none" style={styles.planetInitials}>
@@ -899,7 +1191,7 @@ function PlanetNode({
                   },
             {
               width: labelWidth,
-              shadowColor: colors[1],
+              shadowColor: visualTheme.particle,
               transform: [{ translateY: labelLift }],
             },
           ]}
@@ -908,7 +1200,7 @@ function PlanetNode({
             pointerEvents="none"
             style={[
               styles.planetLabelGlow,
-              { backgroundColor: colors[1], opacity: labelGlowOpacity },
+              { backgroundColor: visualTheme.soft, opacity: labelGlowOpacity },
             ]}
           />
           <BlurView
@@ -921,12 +1213,15 @@ function PlanetNode({
               styles.planetLabelGlass,
               {
                 backgroundColor: theme.colors.overlay,
-                borderColor: selected ? colors[1] : `${colors[0]}9C`,
+                borderColor: selected ? visualTheme.accent : `${colors[1]}9C`,
               },
             ]}
           >
             <View
-              style={[styles.planetLabelAccent, { backgroundColor: colors[1] }]}
+              style={[
+                styles.planetLabelAccent,
+                { backgroundColor: visualTheme.accent },
+              ]}
             />
             <View style={styles.planetLabelTop}>
               <Text
@@ -940,13 +1235,16 @@ function PlanetNode({
                   style={[
                     styles.orbitTypePill,
                     {
-                      backgroundColor: `${colors[0]}20`,
-                      borderColor: `${colors[1]}66`,
+                      backgroundColor: `${visualTheme.soft}22`,
+                      borderColor: `${visualTheme.accent}66`,
                     },
                   ]}
                 >
                   <Text
-                    style={[styles.orbitTypeText, { color: colors[1] }]}
+                    style={[
+                      styles.orbitTypeText,
+                      { color: visualTheme.accent },
+                    ]}
                     numberOfLines={1}
                   >
                     {orbitType}
@@ -987,7 +1285,12 @@ function PlanetNode({
             {newPostsCount > 0 || activitySignals.length > 0 ? (
               <View style={styles.planetSignalRow}>
                 {newPostsCount > 0 ? (
-                  <Text style={[styles.planetSignalText, { color: colors[1] }]}>
+                  <Text
+                    style={[
+                      styles.planetSignalText,
+                      { color: visualTheme.accent },
+                    ]}
+                  >
                     +{formatCompactNumber(newPostsCount)} posts
                   </Text>
                 ) : null}
@@ -1014,6 +1317,7 @@ function MobileOrbitNode({
   index,
   layout,
   colors,
+  visualTheme,
   reduceMotion,
   selected,
   onPress,
@@ -1022,6 +1326,7 @@ function MobileOrbitNode({
   index: number;
   layout: PlanetLayout;
   colors: readonly [string, string];
+  visualTheme: CommunityVisualTheme;
   reduceMotion: boolean;
   selected: boolean;
   onPress: () => void;
@@ -1045,6 +1350,18 @@ function MobileOrbitNode({
   const activeOpacity = interaction.interpolate({
     inputRange: [0, 1],
     outputRange: [0.22, 0.82],
+  });
+  const haloBreathScale = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, reduceMotion ? 1 : 1.07],
+  });
+  const ringDrift = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["-5deg", "5deg"],
+  });
+  const particlePulse = float.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.5, reduceMotion ? 0.5 : 0.9],
   });
 
   const animateInteraction = (active: boolean) => {
@@ -1125,7 +1442,7 @@ function MobileOrbitNode({
           { transform: [{ translateY }, { scale }] },
         ]}
       >
-        <View
+        <Animated.View
           pointerEvents="none"
           style={[
             styles.mobilePlanetHalo,
@@ -1133,7 +1450,47 @@ function MobileOrbitNode({
               width: layout.size * 1.42,
               height: layout.size * 1.42,
               borderRadius: (layout.size * 1.42) / 2,
-              backgroundColor: colors[0],
+              backgroundColor: visualTheme.soft,
+              transform: [{ scale: haloBreathScale }],
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mobilePlanetSaturnRing,
+            {
+              width: layout.size * 1.56,
+              height: layout.size * 0.48,
+              borderRadius: layout.size,
+              borderColor: `${visualTheme.accent}68`,
+              shadowColor: visualTheme.particle,
+              transform: [
+                { rotate: visualTheme.ringTilt },
+                { rotateZ: ringDrift },
+              ],
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mobilePlanetParticle,
+            styles.mobilePlanetParticleOne,
+            {
+              backgroundColor: visualTheme.particle,
+              opacity: particlePulse,
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mobilePlanetParticle,
+            styles.mobilePlanetParticleTwo,
+            {
+              backgroundColor: colors[1],
+              opacity: particlePulse,
             },
           ]}
         />
@@ -1145,9 +1502,9 @@ function MobileOrbitNode({
               width: layout.size + 11,
               height: layout.size + 11,
               borderRadius: (layout.size + 11) / 2,
-              borderColor: selected ? colors[1] : `${colors[1]}80`,
+              borderColor: selected ? visualTheme.accent : `${colors[1]}80`,
               opacity: activeOpacity,
-              shadowColor: colors[1],
+              shadowColor: visualTheme.particle,
             },
           ]}
         />
@@ -1158,7 +1515,10 @@ function MobileOrbitNode({
               width: layout.size,
               height: layout.size,
               borderRadius: layout.size / 2,
-              borderColor: selected ? `${colors[1]}E6` : `${colors[0]}88`,
+              borderColor: selected
+                ? `${visualTheme.accent}E6`
+                : `${colors[1]}88`,
+              shadowColor: visualTheme.soft,
             },
           ]}
         >
@@ -1190,16 +1550,39 @@ function MobileOrbitNode({
               ]}
             />
           )}
+          <View
+            pointerEvents="none"
+            style={[
+              styles.mobilePlanetTextureBand,
+              styles.mobilePlanetTextureTop,
+              { backgroundColor: `${visualTheme.accent}24` },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.mobilePlanetTextureBand,
+              styles.mobilePlanetTextureBottom,
+              { backgroundColor: `${colors[0]}24` },
+            ]}
+          />
           <LinearGradient
             pointerEvents="none"
             colors={[
-              "rgba(255,255,255,0.26)",
+              "rgba(255,255,255,0.32)",
               "rgba(9,10,18,0.04)",
-              "rgba(9,10,18,0.36)",
+              "rgba(9,10,18,0.42)",
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.mobilePlanetSpecular,
+              { backgroundColor: `${visualTheme.accent}30` },
+            ]}
           />
           <Text pointerEvents="none" style={styles.mobilePlanetInitials}>
             {initials}
@@ -1247,8 +1630,10 @@ function MobileOrbitList({
       </View>
       {communities.map((community, index) => {
         const online = community.online_count ?? 0;
-        const colors =
+        const fallbackColors =
           planetColors[index % planetColors.length] ?? planetColors[0];
+        const visualTheme = getCommunityVisualTheme(community, fallbackColors);
+        const colors = visualTheme.colors;
         const selected = selectedId === community.id;
 
         return (
@@ -1261,10 +1646,10 @@ function MobileOrbitList({
               styles.mobileListItem,
               {
                 borderColor: selected
-                  ? `${colors[1]}B3`
+                  ? `${visualTheme.accent}B3`
                   : "rgba(255,255,255,0.1)",
                 backgroundColor: selected
-                  ? `${colors[0]}24`
+                  ? `${visualTheme.soft}24`
                   : "rgba(255,255,255,0.06)",
                 opacity: pressed ? 0.86 : 1,
                 transform: [{ scale: pressed ? 0.985 : 1 }],
@@ -1274,7 +1659,7 @@ function MobileOrbitList({
             <View
               style={[
                 styles.mobileListAvatarRing,
-                { borderColor: `${colors[1]}70` },
+                { borderColor: `${visualTheme.accent}70` },
               ]}
             >
               <Avatar
@@ -1339,6 +1724,14 @@ function OrbitDetailPanel({
 
   const content = (
     <View style={styles.detailContent}>
+      <View
+        pointerEvents="none"
+        style={[styles.detailMoodWash, { backgroundColor: `${colors[0]}18` }]}
+      />
+      <View
+        pointerEvents="none"
+        style={[styles.detailMoodLine, { backgroundColor: colors[1] }]}
+      />
       <View style={styles.detailHeader}>
         <View
           style={[styles.detailAvatarRing, { borderColor: `${colors[1]}88` }]}
@@ -1566,6 +1959,34 @@ function getCompactOrbitName(name: string) {
   return words.slice(0, 2).join(" ").slice(0, 13);
 }
 
+function getCommunityVisualTheme(
+  community: GalaxyCommunity,
+  fallbackColors: readonly [string, string],
+): CommunityVisualTheme {
+  const category = normalizeCategory(community.category);
+  const theme = category ? categoryVisualThemes[category] : undefined;
+
+  if (theme) {
+    return theme;
+  }
+
+  return {
+    colors: fallbackColors,
+    accent: "#FFFFFF",
+    soft: fallbackColors[0],
+    particle: fallbackColors[1],
+    ringTilt: "12deg",
+  };
+}
+
+function normalizeCategory(category: string | null | undefined) {
+  return category
+    ?.normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 function getOrbitType(community: GalaxyCommunity) {
   if (community.user_role) {
     return "Tu Orbita";
@@ -1685,6 +2106,14 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     gap: 14,
   },
+  deepSpaceVeil: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: "rgba(2,3,10,0.28)",
+  },
   nebulaOne: {
     position: "absolute",
     width: 420,
@@ -1709,10 +2138,39 @@ const styles = StyleSheet.create({
     top: "38%",
     left: "42%",
   },
+  nebulaRibbon: {
+    position: "absolute",
+    width: "82%",
+    height: 88,
+    left: "-10%",
+    top: "44%",
+    borderRadius: 999,
+    backgroundColor: "rgba(0,212,255,0.07)",
+    transform: [{ rotate: "-19deg" }],
+  },
+  nebulaRibbonAlt: {
+    position: "absolute",
+    width: "72%",
+    height: 72,
+    right: "-18%",
+    top: "25%",
+    borderRadius: 999,
+    backgroundColor: "rgba(255,79,216,0.06)",
+    transform: [{ rotate: "24deg" }],
+  },
+  distantBody: {
+    position: "absolute",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    shadowColor: "#00D4FF",
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
   orbitRing: {
     position: "absolute",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(255,255,255,0.1)",
     borderRadius: 999,
   },
   orbitRingOne: {
@@ -1745,7 +2203,16 @@ const styles = StyleSheet.create({
   },
   star: {
     position: "absolute",
-    backgroundColor: "rgba(255,255,255,0.82)",
+    backgroundColor: "rgba(255,255,255,0.9)",
+    shadowColor: "#FFFFFF",
+    shadowOpacity: 0.42,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  cosmicDust: {
+    position: "absolute",
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.16)",
   },
   header: {
     paddingHorizontal: 26,
@@ -1959,6 +2426,11 @@ const styles = StyleSheet.create({
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 0 },
   },
+  ambientSlotRing: {
+    position: "absolute",
+    borderWidth: 1,
+    opacity: 0.42,
+  },
   ambientSlotPlanet: {
     borderWidth: 1,
     overflow: "hidden",
@@ -1980,6 +2452,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.34,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 0 },
+  },
+  planetSaturnRing: {
+    position: "absolute",
+    borderWidth: 1,
+    opacity: 0.62,
+    shadowOpacity: 0.26,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  planetSaturnRingGlow: {
+    position: "absolute",
+    borderWidth: 1,
+    opacity: 0.3,
+  },
+  planetParticle: {
+    position: "absolute",
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    shadowOpacity: 0.34,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  planetParticleOne: {
+    top: -18,
+    right: 22,
+  },
+  planetParticleTwo: {
+    left: 16,
+    bottom: -14,
   },
   planetActiveRing: {
     position: "absolute",
@@ -2003,6 +2505,31 @@ const styles = StyleSheet.create({
   },
   planetImage: {
     position: "absolute",
+  },
+  planetTextureBand: {
+    position: "absolute",
+    width: "122%",
+    height: "16%",
+    borderRadius: 999,
+    opacity: 0.72,
+  },
+  planetTextureBandTop: {
+    top: "20%",
+    left: "-12%",
+    transform: [{ rotate: "-18deg" }],
+  },
+  planetTextureBandBottom: {
+    bottom: "22%",
+    right: "-14%",
+    transform: [{ rotate: "-16deg" }],
+  },
+  planetSpecular: {
+    position: "absolute",
+    top: "18%",
+    left: "22%",
+    width: "20%",
+    height: "20%",
+    borderRadius: 999,
   },
   planetShade: {
     position: "absolute",
@@ -2037,6 +2564,32 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 0 },
   },
+  mobilePlanetSaturnRing: {
+    position: "absolute",
+    top: 5,
+    borderWidth: 1,
+    opacity: 0.54,
+    shadowOpacity: 0.24,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  mobilePlanetParticle: {
+    position: "absolute",
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    shadowOpacity: 0.3,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  mobilePlanetParticleOne: {
+    top: -10,
+    right: 30,
+  },
+  mobilePlanetParticleTwo: {
+    bottom: 18,
+    left: 27,
+  },
   mobilePlanetRing: {
     position: "absolute",
     top: -5,
@@ -2055,6 +2608,31 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.28,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
+  },
+  mobilePlanetTextureBand: {
+    position: "absolute",
+    width: "120%",
+    height: "15%",
+    borderRadius: 999,
+    opacity: 0.68,
+  },
+  mobilePlanetTextureTop: {
+    top: "20%",
+    left: "-10%",
+    transform: [{ rotate: "-17deg" }],
+  },
+  mobilePlanetTextureBottom: {
+    bottom: "23%",
+    right: "-13%",
+    transform: [{ rotate: "-15deg" }],
+  },
+  mobilePlanetSpecular: {
+    position: "absolute",
+    top: "18%",
+    left: "23%",
+    width: "19%",
+    height: "19%",
+    borderRadius: 999,
   },
   mobilePlanetInitials: {
     color: "#FFFFFF",
@@ -2280,6 +2858,24 @@ const styles = StyleSheet.create({
   },
   detailContent: {
     gap: 14,
+    overflow: "hidden",
+  },
+  detailMoodWash: {
+    position: "absolute",
+    top: -28,
+    right: -34,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    opacity: 0.78,
+  },
+  detailMoodLine: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    opacity: 0.72,
   },
   detailHeader: {
     flexDirection: "row",

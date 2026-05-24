@@ -7,10 +7,7 @@ export const usernameSchema = z
   .toLowerCase()
   .min(3, "El username necesita al menos 3 caracteres.")
   .max(24, "El username no puede superar 24 caracteres.")
-  .regex(
-    /^[a-z0-9_]+$/,
-    "Usa solo letras minusculas, numeros y guion bajo.",
-  );
+  .regex(/^[a-z0-9_]+$/, "Usa solo letras minusculas, numeros y guion bajo.");
 
 export const displayNameSchema = z
   .string()
@@ -23,9 +20,26 @@ export const authLoginSchema = z.object({
   password: z.string().min(8, "La contrasena necesita al menos 8 caracteres."),
 });
 
-export const authRegisterSchema = authLoginSchema.extend({
-  displayName: displayNameSchema,
-});
+export const authRegisterSchema = z
+  .object({
+    displayName: displayNameSchema,
+    username: usernameSchema,
+    email: z.string().trim().email("Introduce un email valido."),
+    password: z
+      .string()
+      .min(8, "La contrasena necesita al menos 8 caracteres.")
+      .regex(/[A-Z]/, "Incluye al menos una mayuscula.")
+      .regex(/[a-z]/, "Incluye al menos una minuscula.")
+      .regex(/[0-9]/, "Incluye al menos un numero."),
+    confirmPassword: z.string().min(1, "Confirma tu contrasena."),
+    acceptedTerms: z.boolean().refine(Boolean, {
+      message: "Acepta los terminos y la politica de privacidad.",
+    }),
+  })
+  .refine((input) => input.password === input.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Las contrasenas no coinciden.",
+  });
 
 export const resetPasswordSchema = z.object({
   email: z.string().trim().email("Introduce un email valido."),
@@ -34,7 +48,11 @@ export const resetPasswordSchema = z.object({
 export const onboardingSchema = z.object({
   username: usernameSchema,
   displayName: displayNameSchema,
-  bio: z.string().trim().max(160, "La bio no puede superar 160 caracteres.").optional(),
+  bio: z
+    .string()
+    .trim()
+    .max(160, "La bio no puede superar 160 caracteres.")
+    .optional(),
   interestIds: z.array(z.string().uuid()).min(1, "Elige al menos un interes."),
   avatarUrl: z.string().url().optional().nullable(),
 });
@@ -42,7 +60,11 @@ export const onboardingSchema = z.object({
 export const profileSchema = z.object({
   displayName: displayNameSchema,
   username: usernameSchema,
-  bio: z.string().trim().max(160, "La bio no puede superar 160 caracteres.").nullable(),
+  bio: z
+    .string()
+    .trim()
+    .max(160, "La bio no puede superar 160 caracteres.")
+    .nullable(),
   avatarUrl: z.string().url().nullable().optional(),
   bannerUrl: z.string().url().nullable().optional(),
 });

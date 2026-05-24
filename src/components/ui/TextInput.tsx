@@ -1,10 +1,12 @@
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef, useState, type ReactNode } from "react";
 import {
+  NativeSyntheticEvent,
   Platform,
   StyleSheet,
   Text,
   TextInput as RNTextInput,
   View,
+  type TargetedEvent,
   type TextStyle,
   type TextInputProps as RNTextInputProps,
 } from "react-native";
@@ -16,6 +18,7 @@ type TextInputProps = RNTextInputProps & {
   error?: string | undefined;
   icon?: ReactNode | undefined;
   rightElement?: ReactNode | undefined;
+  compact?: boolean | undefined;
 };
 
 export const TextInput = forwardRef<RNTextInput, TextInputProps>(
@@ -25,6 +28,7 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
       error,
       icon,
       rightElement,
+      compact = false,
       style,
       onFocus,
       onBlur,
@@ -34,6 +38,7 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
   ) => {
     const theme = useTheme();
     const isMultiline = Boolean(props.multiline);
+    const [focused, setFocused] = useState(false);
 
     function setRefs(instance: RNTextInput | null) {
       if (typeof ref === "function") {
@@ -43,10 +48,32 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
       }
     }
 
+    function handleFocus(event: NativeSyntheticEvent<TargetedEvent>) {
+      setFocused(true);
+      onFocus?.(event);
+    }
+
+    function handleBlur(event: NativeSyntheticEvent<TargetedEvent>) {
+      setFocused(false);
+      onBlur?.(event);
+    }
+
+    const borderColor = error
+      ? theme.colors.error
+      : focused
+        ? theme.colors.secondary
+        : "rgba(255,255,255,0.1)";
+
     return (
-      <View style={styles.wrapper}>
+      <View style={[styles.wrapper, compact ? styles.wrapperCompact : null]}>
         {label ? (
-          <Text style={[styles.label, { color: theme.colors.textMuted }]}>
+          <Text
+            style={[
+              styles.label,
+              compact ? styles.labelCompact : null,
+              { color: theme.colors.textMuted },
+            ]}
+          >
             {label}
           </Text>
         ) : null}
@@ -55,9 +82,14 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
           style={[
             styles.inputRow,
             isMultiline ? styles.inputRowMultiline : styles.inputRowSingleLine,
+            compact && !isMultiline ? styles.inputRowSingleLineCompact : null,
             {
-              backgroundColor: theme.colors.elevated,
-              borderColor: error ? theme.colors.error : "transparent",
+              backgroundColor: focused
+                ? "rgba(27,30,53,0.92)"
+                : theme.colors.elevated,
+              borderColor,
+              shadowColor: focused ? theme.colors.secondary : "transparent",
+              shadowOpacity: focused ? 0.24 : 0,
             },
           ]}
         >
@@ -65,8 +97,14 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             <View
               style={[
                 styles.iconWrap,
+                compact ? styles.iconWrapCompact : null,
                 {
-                  backgroundColor: theme.colors.surface,
+                  backgroundColor: focused
+                    ? `${theme.colors.secondary}18`
+                    : theme.colors.surface,
+                  borderColor: focused
+                    ? `${theme.colors.secondary}55`
+                    : "transparent",
                 },
               ]}
             >
@@ -78,24 +116,38 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             placeholderTextColor={theme.colors.textFaint}
             selectionColor={theme.colors.secondary}
             cursorColor={theme.colors.secondary}
-            onFocus={onFocus}
-            onBlur={onBlur}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             style={[
               styles.input,
               webInputReset,
               Platform.OS === "web"
-                ? ({ caretColor: theme.colors.secondary } as unknown as TextStyle)
+                ? ({
+                    caretColor: theme.colors.secondary,
+                  } as unknown as TextStyle)
                 : undefined,
               isMultiline ? styles.inputMultiline : styles.inputSingleLine,
+              compact && !isMultiline ? styles.inputSingleLineCompact : null,
               { color: theme.colors.text },
               style,
             ]}
             {...props}
           />
-          {rightElement ? <View style={styles.rightWrap}>{rightElement}</View> : null}
+          {rightElement ? (
+            <View style={styles.rightWrap}>{rightElement}</View>
+          ) : null}
         </View>
         {error ? (
-          <Text style={[styles.error, { color: theme.colors.error }]}>{error}</Text>
+          <Text
+            numberOfLines={compact ? 1 : 2}
+            style={[
+              styles.error,
+              compact ? styles.errorCompact : null,
+              { color: theme.colors.error },
+            ]}
+          >
+            {error}
+          </Text>
         ) : null}
       </View>
     );
@@ -121,10 +173,16 @@ const styles = StyleSheet.create({
   wrapper: {
     gap: 7,
   },
+  wrapperCompact: {
+    gap: 5,
+  },
   label: {
     fontSize: typography.small,
     fontWeight: "700",
     letterSpacing: 0,
+  },
+  labelCompact: {
+    fontSize: 12,
   },
   inputRow: {
     borderWidth: 1,
@@ -133,10 +191,18 @@ const styles = StyleSheet.create({
     paddingRight: 10,
     flexDirection: "row",
     gap: 10,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
   },
   inputRowSingleLine: {
     height: 56,
     alignItems: "center",
+  },
+  inputRowSingleLineCompact: {
+    height: 48,
+    paddingLeft: 8,
+    paddingRight: 8,
+    gap: 8,
   },
   inputRowMultiline: {
     minHeight: 112,
@@ -150,6 +216,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+  },
+  iconWrapCompact: {
+    width: 30,
+    height: 30,
   },
   input: {
     flex: 1,
@@ -166,6 +237,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     textAlignVertical: "center",
   },
+  inputSingleLineCompact: {
+    height: 48,
+    minHeight: 48,
+    fontSize: typography.small,
+  },
   inputMultiline: {
     minHeight: 88,
     paddingTop: 0,
@@ -179,5 +255,10 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: typography.small,
+    lineHeight: 17,
+  },
+  errorCompact: {
+    fontSize: 11,
+    lineHeight: 14,
   },
 });

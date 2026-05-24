@@ -47,6 +47,7 @@ export async function signUpWithEmail(input: AuthRegisterInput) {
     options: {
       data: {
         display_name: input.displayName,
+        username: input.username,
       },
     },
   });
@@ -78,9 +79,12 @@ export async function resetPassword(input: ResetPasswordInput) {
     return demoResetPassword(input);
   }
 
-  const { data, error } = await supabase.auth.resetPasswordForEmail(input.email, {
-    redirectTo: "nexo://settings/account",
-  });
+  const { data, error } = await supabase.auth.resetPasswordForEmail(
+    input.email,
+    {
+      redirectTo: "nexo://settings/account",
+    },
+  );
 
   if (error) {
     throw error;
@@ -151,7 +155,10 @@ export async function listInterests() {
   return (data ?? []) as Interest[];
 }
 
-export async function completeOnboarding(userId: string, input: OnboardingInput) {
+export async function completeOnboarding(
+  userId: string,
+  input: OnboardingInput,
+) {
   if (env.demoMode) {
     return demoCompleteOnboarding(userId, input);
   }
@@ -199,7 +206,7 @@ export async function completeOnboarding(userId: string, input: OnboardingInput)
 export function isProfileComplete(profile: Profile | null) {
   return Boolean(
     profile?.username &&
-      profile.display_name &&
-      !profile.username.startsWith("nexo_"),
+    profile.display_name &&
+    !profile.username.startsWith("nexo_"),
   );
 }

@@ -1,12 +1,17 @@
-import type { PropsWithChildren } from "react";
+import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
   type ViewStyle,
 } from "react-native";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Orbit, ShieldCheck, Sparkles } from "lucide-react-native";
 import { NexoMascot } from "../../../components/brand/NexoMascot";
@@ -18,27 +23,159 @@ import { useTheme } from "../../../theme/useTheme";
 type AuthScaffoldProps = PropsWithChildren<{
   title: string;
   subtitle: string;
+  eyebrow?: string | undefined;
+  storyTitle?: string | undefined;
+  storyCopy?: string | undefined;
+  panelVariant?: "docked" | "compact" | undefined;
+  formScrollable?: boolean | undefined;
 }>;
 
-export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
+const particles = [
+  { top: "10%", left: "16%", size: 2, opacity: 0.42 },
+  { top: "18%", left: "76%", size: 3, opacity: 0.5 },
+  { top: "37%", left: "9%", size: 2, opacity: 0.34 },
+  { top: "56%", left: "84%", size: 2, opacity: 0.38 },
+  { top: "74%", left: "21%", size: 3, opacity: 0.46 },
+  { top: "86%", left: "68%", size: 2, opacity: 0.36 },
+] as const;
+
+export function AuthScaffold({
+  title,
+  subtitle,
+  eyebrow,
+  storyTitle = "Vuelve a tu orbita",
+  storyCopy = "Entra a tus Orbitas, retoma conversaciones y descubre senales nuevas sin perder el hilo.",
+  panelVariant = "docked",
+  formScrollable = false,
+  children,
+}: AuthScaffoldProps) {
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
-  const isDesktop = width >= 980 && height >= 680;
+  const isDesktop = width >= 980;
+  const isDockedDesktop = isDesktop && height >= 720;
+  const isShortDesktop = isDesktop && height < 900;
+  const isVeryShortDesktop = isDesktop && height < 780;
   const isNarrow = width < 390;
   const isShort = height < 720;
   const isVeryShort = height < 640;
-  const mobileMascotSize = isVeryShort ? 100 : isShort ? 122 : isNarrow ? 134 : 154;
-  const desktopMascotSize = Math.min(330, Math.max(230, width * 0.18));
+  const compactDesktopPanel = isDockedDesktop && panelVariant === "compact";
+  const dockedDesktopPanel = isDockedDesktop && !compactDesktopPanel;
+  const scrollFormInsidePanel = dockedDesktopPanel && formScrollable;
+  const desktopInsetX = isVeryShortDesktop ? 16 : isShortDesktop ? 20 : 28;
+  const desktopInsetY = isVeryShortDesktop ? 12 : isShortDesktop ? 18 : 24;
+  const reduceMotion = useReduceMotion();
+  const mascotFloat = useRef(new Animated.Value(0)).current;
+  const particlePulse = useRef(new Animated.Value(0)).current;
+  const mobileMascotSize = isVeryShort
+    ? 76
+    : isShort
+      ? 92
+      : isNarrow
+        ? 104
+        : 118;
+  const desktopMascotSize = isVeryShortDesktop
+    ? 210
+    : isShortDesktop
+      ? Math.min(270, Math.max(220, width * 0.15))
+      : Math.min(330, Math.max(230, width * 0.18));
+  const mascotTranslateY = mascotFloat.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, isDesktop ? -8 : -5],
+  });
+  const particleOpacity = particlePulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.28, 0.68],
+  });
+  const headerGap = compactDesktopPanel
+    ? 7
+    : isDockedDesktop && isShortDesktop
+      ? 3
+      : isShort && !isDesktop
+        ? 4
+        : 6;
+  const formGap = isDockedDesktop
+    ? compactDesktopPanel
+      ? 14
+      : isVeryShortDesktop
+        ? 7
+        : isShortDesktop
+          ? 9
+          : 11
+    : isShort && !isDesktop
+      ? 10
+      : 13;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      mascotFloat.setValue(0);
+      particlePulse.setValue(0);
+      return;
+    }
+
+    const floating = Animated.loop(
+      Animated.sequence([
+        Animated.timing(mascotFloat, {
+          toValue: 1,
+          duration: 5200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(mascotFloat, {
+          toValue: 0,
+          duration: 5200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    const pulsing = Animated.loop(
+      Animated.sequence([
+        Animated.timing(particlePulse, {
+          toValue: 1,
+          duration: 3400,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(particlePulse, {
+          toValue: 0,
+          duration: 3400,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    floating.start();
+    pulsing.start();
+
+    return () => {
+      floating.stop();
+      pulsing.stop();
+    };
+  }, [mascotFloat, particlePulse, reduceMotion]);
 
   return (
     <ScreenContainer
-      scroll
+      scroll={!isDockedDesktop}
       contentStyle={[
         styles.screen,
+        isDockedDesktop ? styles.screenDocked : null,
         {
-          maxWidth: isDesktop ? 1160 : 430,
+          maxWidth: "100%",
           justifyContent: isShort && !isDesktop ? "flex-start" : "center",
-          paddingVertical: isDesktop ? 34 : isShort ? 16 : 28,
+          paddingVertical: isDockedDesktop
+            ? desktopInsetY
+            : isDesktop
+              ? 18
+              : isShort
+                ? 14
+                : 22,
+          paddingHorizontal: isDockedDesktop
+            ? desktopInsetX
+            : isNarrow
+              ? 14
+              : 18,
+          paddingBottom: isDockedDesktop ? desktopInsetY : undefined,
         },
       ]}
     >
@@ -67,6 +204,29 @@ export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
         />
         <View
           style={[
+            styles.glowCyan,
+            {
+              backgroundColor: `${theme.colors.secondary}14`,
+              width: isDesktop ? 360 : 220,
+              height: isDesktop ? 360 : 220,
+              borderRadius: isDesktop ? 180 : 110,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.glowPanel,
+            {
+              backgroundColor: `${theme.colors.primary}12`,
+              width: isDesktop ? 430 : 260,
+              height: isDesktop ? 430 : 260,
+              borderRadius: isDesktop ? 215 : 130,
+            },
+          ]}
+        />
+        <View style={styles.grainVeil} />
+        <View
+          style={[
             styles.orbitStroke,
             { borderColor: `${theme.colors.secondary}3D` },
             isDesktop ? styles.orbitStrokeDesktop : null,
@@ -79,45 +239,88 @@ export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
             isDesktop ? styles.orbitStrokeAltDesktop : null,
           ]}
         />
+        {particles.map((particle) => (
+          <Animated.View
+            key={`${particle.top}-${particle.left}`}
+            style={[
+              styles.particle,
+              {
+                top: particle.top,
+                left: particle.left,
+                width: particle.size,
+                height: particle.size,
+                borderRadius: particle.size / 2,
+                opacity: reduceMotion ? particle.opacity : particleOpacity,
+              },
+            ]}
+          />
+        ))}
       </View>
 
-      <View style={[styles.layout, isDesktop ? styles.layoutDesktop : styles.layoutMobile]}>
+      <View
+        style={[
+          styles.layout,
+          isDesktop ? styles.layoutDesktop : styles.layoutMobile,
+        ]}
+      >
         {isDesktop ? (
           <View pointerEvents="none" style={[styles.storyPanel, webNoSelect]}>
             <View style={styles.storyBrand}>
               <View style={styles.storyLogo}>
                 <NexoMark size={58} />
               </View>
-              <View>
-                <Text style={[styles.storyKicker, { color: theme.colors.secondary }]}>
+              <View style={styles.storyBrandCopy}>
+                <Text
+                  style={[
+                    styles.storyKicker,
+                    { color: theme.colors.secondary },
+                  ]}
+                >
                   Nexo
                 </Text>
-                <Text style={[styles.storyTitle, { color: theme.colors.text }]}>
-                  Tu mapa de orbitas sociales
+                <Text
+                  style={[
+                    styles.storyTitle,
+                    isShortDesktop ? styles.storyTitleCompact : null,
+                    { color: theme.colors.text },
+                  ]}
+                >
+                  {storyTitle}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.desktopMascotStage}>
+            <View
+              style={[
+                styles.desktopMascotStage,
+                isShortDesktop ? styles.desktopMascotStageCompact : null,
+              ]}
+            >
               <View
                 style={[
                   styles.desktopMascotHalo,
                   { backgroundColor: `${theme.colors.primary}18` },
                 ]}
               />
-              <NexoMascot size={desktopMascotSize} />
+              <Animated.View
+                style={{ transform: [{ translateY: mascotTranslateY }] }}
+              >
+                <NexoMascot size={desktopMascotSize} animated={!reduceMotion} />
+              </Animated.View>
             </View>
 
             <Text style={[styles.storyCopy, { color: theme.colors.textMuted }]}>
-              Descubre comunidades, comparte ecos con energia y participa en espacios
-              moderados desde el primer dia.
+              {storyCopy}
             </Text>
 
             <View style={styles.storySignals}>
               <View
                 style={[
                   styles.signalItem,
-                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
                 ]}
               >
                 <Orbit size={18} color={theme.colors.secondary} />
@@ -128,7 +331,10 @@ export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
               <View
                 style={[
                   styles.signalItem,
-                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
                 ]}
               >
                 <Sparkles size={18} color={theme.colors.accent} />
@@ -139,7 +345,10 @@ export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
               <View
                 style={[
                   styles.signalItem,
-                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
                 ]}
               >
                 <ShieldCheck size={18} color={theme.colors.success} />
@@ -154,19 +363,59 @@ export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
         <View
           style={[
             styles.card,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
             {
-              maxWidth: isDesktop ? 430 : isNarrow ? 356 : 392,
-              padding: isDesktop ? 22 : isShort ? 14 : 18,
-              gap: isDesktop ? 18 : isShort ? 11 : 16,
+              backgroundColor: "rgba(12,14,28,0.74)",
+              borderColor: "rgba(255,255,255,0.14)",
+              shadowColor: theme.colors.secondary,
             },
+            {
+              maxWidth: isDockedDesktop ? 470 : isDesktop ? 440 : isNarrow ? 348 : 394,
+              padding: isDockedDesktop
+                ? compactDesktopPanel
+                  ? isShortDesktop
+                    ? 22
+                    : 28
+                  : isVeryShortDesktop
+                    ? 16
+                    : isShortDesktop
+                      ? 18
+                      : 24
+                : isDesktop
+                  ? 24
+                  : isShort
+                    ? 16
+                    : 18,
+              gap: isDockedDesktop
+                ? compactDesktopPanel
+                  ? isShortDesktop
+                    ? 13
+                    : 16
+                  : isVeryShortDesktop
+                    ? 9
+                    : isShortDesktop
+                      ? 11
+                      : 14
+                : isDesktop
+                  ? 18
+                  : isShort
+                    ? 12
+                    : 15,
+            },
+            dockedDesktopPanel ? styles.cardDocked : null,
+            compactDesktopPanel ? styles.cardCompactDocked : null,
           ]}
         >
+          <BlurView
+            intensity={46}
+            tint="dark"
+            blurMethod="dimezisBlurViewSdk31Plus"
+            style={styles.cardBlur}
+          />
           <LinearGradient
             colors={[
-              `${theme.colors.primary}24`,
-              `${theme.colors.secondary}14`,
-              `${theme.colors.accent}1F`,
+              `${theme.colors.primary}26`,
+              `${theme.colors.secondary}12`,
+              `${theme.colors.accent}1C`,
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -177,7 +426,9 @@ export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
             <View style={styles.brandIcon}>
               <NexoMark size={44} />
             </View>
-            <Text style={[styles.brandText, { color: theme.colors.text }]}>Nexo</Text>
+            <Text style={[styles.brandText, { color: theme.colors.text }]}>
+              Nexo
+            </Text>
           </View>
 
           {!isDesktop ? (
@@ -196,24 +447,93 @@ export function AuthScaffold({ title, subtitle, children }: AuthScaffoldProps) {
                   },
                 ]}
               />
-              <NexoMascot size={mobileMascotSize} />
+              <Animated.View
+                style={{ transform: [{ translateY: mascotTranslateY }] }}
+              >
+                <NexoMascot size={mobileMascotSize} animated={!reduceMotion} />
+              </Animated.View>
             </View>
           ) : null}
 
-          <View style={[styles.header, { gap: isShort && !isDesktop ? 4 : 6 }]}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>{title}</Text>
+          <View
+            style={[
+              styles.header,
+              {
+                gap: headerGap,
+              },
+            ]}
+          >
+            {eyebrow ? (
+              <Text
+                style={[
+                  styles.cardEyebrow,
+                  {
+                    color: theme.colors.secondary,
+                    backgroundColor: `${theme.colors.secondary}14`,
+                    borderColor: `${theme.colors.secondary}42`,
+                  },
+                ]}
+              >
+                {eyebrow}
+              </Text>
+            ) : null}
+            <Text style={[styles.title, { color: theme.colors.text }]}>
+              {title}
+            </Text>
             {isVeryShort && !isDesktop ? null : (
-              <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
+              <Text
+                style={[styles.subtitle, { color: theme.colors.textMuted }]}
+              >
                 {subtitle}
               </Text>
             )}
           </View>
 
-          <View style={styles.form}>{children}</View>
+          {scrollFormInsidePanel ? (
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={styles.formScroller}
+              contentContainerStyle={[
+                styles.formScrollerContent,
+                { gap: formGap },
+              ]}
+            >
+              {children}
+            </ScrollView>
+          ) : (
+            <View style={[styles.form, { gap: formGap }]}>{children}</View>
+          )}
         </View>
       </View>
     </ScreenContainer>
   );
+}
+
+function useReduceMotion() {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (mounted) {
+        setReduceMotion(enabled);
+      }
+    });
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduceMotion,
+    );
+
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+
+  return reduceMotion;
 }
 
 const webNoSelect =
@@ -229,6 +549,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 18,
   },
+  screenDocked: {
+    flex: 1,
+    alignSelf: "stretch",
+    width: "100%",
+  },
   backgroundArt: {
     position: "absolute",
     top: 0,
@@ -236,6 +561,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     overflow: "hidden",
+  },
+  particle: {
+    position: "absolute",
+    backgroundColor: "rgba(255,255,255,0.86)",
   },
   glowLarge: {
     position: "absolute",
@@ -246,6 +575,27 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 34,
     left: -70,
+  },
+  glowCyan: {
+    position: "absolute",
+    top: "34%",
+    left: "18%",
+    opacity: 0.82,
+  },
+  glowPanel: {
+    position: "absolute",
+    right: -80,
+    bottom: "18%",
+    opacity: 0.72,
+  },
+  grainVeil: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    opacity: 0.28,
+    backgroundColor: "rgba(255,255,255,0.012)",
   },
   orbitStroke: {
     position: "absolute",
@@ -289,22 +639,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   layoutDesktop: {
+    flex: 1,
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 42,
+    alignItems: "stretch",
+    justifyContent: "space-between",
+    gap: 0,
   },
   storyPanel: {
     flex: 1,
     minWidth: 0,
-    maxWidth: 620,
-    minHeight: 560,
+    maxWidth: 820,
+    minHeight: 0,
     justifyContent: "center",
-    gap: 24,
+    gap: 22,
+    paddingHorizontal: 56,
+    paddingVertical: 28,
   },
   storyBrand: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+  },
+  storyBrandCopy: {
+    flex: 1,
   },
   storyLogo: {
     width: 58,
@@ -319,14 +676,21 @@ const styles = StyleSheet.create({
   },
   storyTitle: {
     maxWidth: 460,
-    fontSize: 44,
-    lineHeight: 49,
+    fontSize: 46,
+    lineHeight: 50,
     fontWeight: "900",
+  },
+  storyTitleCompact: {
+    fontSize: 40,
+    lineHeight: 44,
   },
   desktopMascotStage: {
     minHeight: 330,
     alignItems: "center",
     justifyContent: "center",
+  },
+  desktopMascotStageCompact: {
+    minHeight: 260,
   },
   desktopMascotHalo: {
     position: "absolute",
@@ -335,9 +699,9 @@ const styles = StyleSheet.create({
     borderRadius: 150,
   },
   storyCopy: {
-    maxWidth: 520,
-    fontSize: typography.h3,
-    lineHeight: 25,
+    maxWidth: 500,
+    fontSize: typography.body,
+    lineHeight: 23,
     fontWeight: "700",
   },
   storySignals: {
@@ -364,6 +728,33 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     gap: 16,
     overflow: "hidden",
+    shadowOpacity: 0.22,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 16 },
+    elevation: 12,
+  },
+  cardDocked: {
+    width: 470,
+    height: "100%",
+    minHeight: 0,
+    alignSelf: "stretch",
+    justifyContent: "center",
+    borderRadius: 24,
+    shadowOpacity: 0.26,
+  },
+  cardCompactDocked: {
+    width: 470,
+    alignSelf: "center",
+    justifyContent: "center",
+    borderRadius: 24,
+    shadowOpacity: 0.26,
+  },
+  cardBlur: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   cardGlow: {
     position: "absolute",
@@ -388,7 +779,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   mascotStage: {
-    minHeight: 154,
+    minHeight: 118,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -401,8 +792,19 @@ const styles = StyleSheet.create({
   header: {
     gap: 6,
   },
+  cardEyebrow: {
+    alignSelf: "center",
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: typography.tiny,
+    fontWeight: "900",
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
   title: {
-    fontSize: typography.h2,
+    fontSize: typography.h1,
     fontWeight: "900",
     textAlign: "center",
   },
@@ -413,5 +815,13 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 13,
+  },
+  formScroller: {
+    width: "100%",
+    minHeight: 0,
+    flexShrink: 1,
+  },
+  formScrollerContent: {
+    paddingBottom: 2,
   },
 });

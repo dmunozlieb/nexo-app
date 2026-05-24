@@ -2,6 +2,7 @@
 
 import {
   authLoginSchema,
+  authRegisterSchema,
   commentSchema,
   postFormSchema,
   usernameSchema,
@@ -41,7 +42,35 @@ describe("validaciones de Nexo", () => {
     ).toThrow();
   });
 
+  it("valida registro con username, confirmacion y terminos", () => {
+    const parsed = authRegisterSchema.parse({
+      displayName: "Luna Vega",
+      username: "Luna_123",
+      email: "luna@nexo.local",
+      password: "Password123",
+      confirmPassword: "Password123",
+      acceptedTerms: true,
+    });
+
+    expect(parsed.username).toBe("luna_123");
+  });
+
+  it("rechaza registro si la contrasena no coincide", () => {
+    expect(() =>
+      authRegisterSchema.parse({
+        displayName: "Luna Vega",
+        username: "luna_123",
+        email: "luna@nexo.local",
+        password: "Password123",
+        confirmPassword: "Password124",
+        acceptedTerms: true,
+      }),
+    ).toThrow();
+  });
+
   it("sanitiza texto plano para web", () => {
-    expect(sanitizePlainText(" <script>hola</script> ")).toBe("scripthola/script");
+    expect(sanitizePlainText(" <script>hola</script> ")).toBe(
+      "scripthola/script",
+    );
   });
 });

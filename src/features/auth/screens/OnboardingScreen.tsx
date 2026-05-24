@@ -4,7 +4,14 @@ import { router } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
-import { Camera, MessageSquare, Orbit, Palette, Sparkles, Users } from "lucide-react-native";
+import {
+  Camera,
+  MessageSquare,
+  Orbit,
+  Palette,
+  Sparkles,
+  Users,
+} from "lucide-react-native";
 import { NexoMascot } from "../../../components/brand/NexoMascot";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Button } from "../../../components/ui/Button";
@@ -13,11 +20,17 @@ import { LoadingState } from "../../../components/ui/LoadingState";
 import { TagPill } from "../../../components/ui/TagPill";
 import { TextInput } from "../../../components/ui/TextInput";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
-import { pickImage, uploadBase64Image } from "../../../services/storage-service";
+import {
+  pickImage,
+  uploadBase64Image,
+} from "../../../services/storage-service";
 import { typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import { getErrorMessage } from "../../../utils/errors";
-import { onboardingSchema, type OnboardingInput } from "../../../utils/validation";
+import {
+  onboardingSchema,
+  type OnboardingInput,
+} from "../../../utils/validation";
 import { useAuth } from "../hooks/useAuth";
 import { completeOnboarding, listInterests } from "../services/auth-service";
 
@@ -47,15 +60,22 @@ export function OnboardingScreen() {
 
   useEffect(() => {
     if (auth.profile) {
+      const pendingUsername =
+        typeof auth.session?.user.user_metadata?.username === "string"
+          ? auth.session.user.user_metadata.username
+          : "";
+
       form.reset({
-        username: auth.profile.username.startsWith("nexo_") ? "" : auth.profile.username,
+        username: auth.profile.username.startsWith("nexo_")
+          ? pendingUsername
+          : auth.profile.username,
         displayName: auth.profile.display_name ?? "",
         bio: auth.profile.bio ?? "",
         interestIds: [],
         avatarUrl: auth.profile.avatar_url,
       });
     }
-  }, [auth.profile, form]);
+  }, [auth.profile, auth.session?.user.user_metadata?.username, form]);
 
   async function handlePickAvatar() {
     try {
@@ -120,7 +140,9 @@ export function OnboardingScreen() {
           <View style={styles.welcomeCopy}>
             <View style={styles.eyebrow}>
               <Sparkles size={15} color={theme.colors.secondary} />
-              <Text style={[styles.eyebrowText, { color: theme.colors.secondary }]}>
+              <Text
+                style={[styles.eyebrowText, { color: theme.colors.secondary }]}
+              >
                 Primer salto
               </Text>
             </View>
@@ -128,16 +150,29 @@ export function OnboardingScreen() {
               Ajusta tu senal inicial
             </Text>
             <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
-              Elige intereses, crea tu identidad y entra en Orbitas con gente afin.
+              Elige intereses, crea tu identidad y entra en Orbitas con gente
+              afin.
             </Text>
           </View>
           <NexoMascot size={118} />
         </GradientCard>
         <View style={styles.featureGrid}>
-          <Feature icon={<Orbit size={17} color={theme.colors.secondary} />} label="Explora comunidades" />
-          <Feature icon={<Palette size={17} color={theme.colors.accent} />} label="Publica ideas" />
-          <Feature icon={<MessageSquare size={17} color={theme.colors.success} />} label="Chatea por intereses" />
-          <Feature icon={<Users size={17} color={theme.colors.warning} />} label="Crea tu perfil" />
+          <Feature
+            icon={<Orbit size={17} color={theme.colors.secondary} />}
+            label="Explora comunidades"
+          />
+          <Feature
+            icon={<Palette size={17} color={theme.colors.accent} />}
+            label="Publica ideas"
+          />
+          <Feature
+            icon={<MessageSquare size={17} color={theme.colors.success} />}
+            label="Chatea por intereses"
+          />
+          <Feature
+            icon={<Users size={17} color={theme.colors.warning} />}
+            label="Crea tu perfil"
+          />
         </View>
       </View>
 
@@ -199,7 +234,9 @@ export function OnboardingScreen() {
       />
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Intereses</Text>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+          Intereses
+        </Text>
         <View style={styles.interests}>
           {(interests.data ?? []).map((interest) => (
             <TagPill
@@ -234,11 +271,16 @@ function Feature({ icon, label }: { icon: ReactNode; label: string }) {
     <View
       style={[
         styles.feature,
-        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
       ]}
     >
       {icon}
-      <Text style={[styles.featureText, { color: theme.colors.textMuted }]}>{label}</Text>
+      <Text style={[styles.featureText, { color: theme.colors.textMuted }]}>
+        {label}
+      </Text>
     </View>
   );
 }
