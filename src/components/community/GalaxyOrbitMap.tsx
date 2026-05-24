@@ -97,12 +97,12 @@ const compactPlanetLayouts: PlanetLayout[] = [
 ];
 
 const planetColors = [
-  ["#7C5CFF", "#00D4FF"],
-  ["#00D4FF", "#FF4FD8"],
-  ["#FF4FD8", "#7C5CFF"],
-  ["#37E29F", "#00D4FF"],
-  ["#FFB020", "#FF4FD8"],
-  ["#9A7BFF", "#37E29F"],
+  ["#7B5CFF", "#18D7FF"],
+  ["#18D7FF", "#FF4FD8"],
+  ["#FF4FD8", "#B18CFF"],
+  ["#22E6B9", "#18D7FF"],
+  ["#FF7AA8", "#FF4FD8"],
+  ["#B18CFF", "#22E6B9"],
 ] as const;
 
 const floatDurations = [4800, 5600, 6400, 7200, 8000, 6800] as const;
@@ -112,67 +112,76 @@ const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
 
 const categoryVisualThemes: Record<string, CommunityVisualTheme> = {
   arte: {
-    colors: ["#00D4FF", "#7C5CFF"],
+    colors: ["#18D7FF", "#7B5CFF"],
     accent: "#B9F7FF",
-    soft: "#00D4FF",
+    soft: "#18D7FF",
     particle: "#D6FBFF",
     ringTilt: "-18deg",
   },
   gaming: {
-    colors: ["#37E29F", "#00D4FF"],
+    colors: ["#22E6B9", "#18D7FF"],
     accent: "#B6FFE5",
-    soft: "#37E29F",
+    soft: "#22E6B9",
     particle: "#A8FFE1",
     ringTilt: "16deg",
   },
   lectura: {
-    colors: ["#9A7BFF", "#FF4FD8"],
+    colors: ["#B18CFF", "#FF4FD8"],
     accent: "#E2D6FF",
-    soft: "#7C5CFF",
+    soft: "#7B5CFF",
     particle: "#E7DFFF",
     ringTilt: "-9deg",
   },
   musica: {
-    colors: ["#FF4FD8", "#00D4FF"],
+    colors: ["#FF4FD8", "#18D7FF"],
     accent: "#FFD4F5",
     soft: "#FF4FD8",
     particle: "#FFB7EF",
     ringTilt: "22deg",
   },
   cine: {
-    colors: ["#FFB020", "#FF4FD8"],
-    accent: "#FFE2A8",
-    soft: "#FFB020",
-    particle: "#FFE9BC",
+    colors: ["#FF7AA8", "#FF4FD8"],
+    accent: "#FFD0DE",
+    soft: "#FF7AA8",
+    particle: "#FFE0EA",
     ringTilt: "-24deg",
   },
   tecnologia: {
-    colors: ["#00D4FF", "#37E29F"],
+    colors: ["#18D7FF", "#22E6B9"],
     accent: "#BFFAFF",
-    soft: "#00D4FF",
+    soft: "#18D7FF",
     particle: "#C8FFF4",
     ringTilt: "11deg",
   },
   aprendizaje: {
-    colors: ["#7C5CFF", "#37E29F"],
+    colors: ["#7B5CFF", "#22E6B9"],
     accent: "#D7CEFF",
-    soft: "#9A7BFF",
+    soft: "#B18CFF",
     particle: "#D9FFE9",
     ringTilt: "-14deg",
   },
 };
 
 const stars = [
+  { top: "4%", left: "16%", size: 1 },
+  { top: "6%", left: "91%", size: 1 },
   { top: "13%", left: "7%", size: 2 },
+  { top: "12%", left: "48%", size: 1 },
   { top: "19%", left: "37%", size: 3 },
   { top: "9%", left: "68%", size: 2 },
+  { top: "18%", left: "77%", size: 1 },
+  { top: "23%", left: "13%", size: 1 },
   { top: "31%", left: "88%", size: 2 },
+  { top: "32%", left: "53%", size: 1 },
   { top: "42%", left: "14%", size: 3 },
+  { top: "39%", left: "73%", size: 1 },
   { top: "62%", left: "52%", size: 2 },
+  { top: "64%", left: "18%", size: 1 },
   { top: "78%", left: "22%", size: 2 },
   { top: "83%", left: "78%", size: 3 },
   { top: "51%", left: "94%", size: 2 },
   { top: "26%", left: "47%", size: 2 },
+  { top: "29%", left: "4%", size: 1 },
   { top: "71%", left: "92%", size: 2 },
   { top: "88%", left: "42%", size: 2 },
   { top: "15%", left: "22%", size: 1 },
@@ -182,20 +191,41 @@ const stars = [
   { top: "67%", left: "38%", size: 1 },
   { top: "74%", left: "63%", size: 2 },
   { top: "92%", left: "12%", size: 1 },
-  { top: "6%", left: "91%", size: 1 },
+  { top: "91%", left: "70%", size: 1 },
+  { top: "86%", left: "93%", size: 1 },
+  { top: "53%", left: "33%", size: 1 },
+  { top: "44%", left: "84%", size: 1 },
+  { top: "21%", left: "58%", size: 1 },
 ] as const;
 
 const cosmicDust = [
-  { top: "18%", left: "18%", width: 112, height: 1, rotate: "-22deg" },
-  { top: "34%", left: "61%", width: 148, height: 1, rotate: "14deg" },
-  { top: "69%", left: "29%", width: 124, height: 1, rotate: "-11deg" },
-  { top: "82%", left: "70%", width: 92, height: 1, rotate: "21deg" },
+  { top: "18%", left: "16%", width: 92, height: 1, rotate: "-22deg" },
+  { top: "34%", left: "58%", width: 128, height: 1, rotate: "14deg" },
+  { top: "69%", left: "29%", width: 104, height: 1, rotate: "-11deg" },
+  { top: "82%", left: "68%", width: 76, height: 1, rotate: "21deg" },
+  { top: "48%", left: "9%", width: 54, height: 1, rotate: "9deg" },
+  { top: "25%", left: "81%", width: 58, height: 1, rotate: "-31deg" },
 ] as const;
 
-const distantBodies = [
-  { top: "10%", left: "72%", size: 68, color: "rgba(0,212,255,0.12)" },
-  { top: "67%", left: "84%", size: 42, color: "rgba(255,79,216,0.1)" },
-  { top: "73%", left: "4%", size: 58, color: "rgba(124,92,255,0.1)" },
+const spaceDust = [
+  { top: "11%", left: "33%", size: 1, opacity: 0.28 },
+  { top: "16%", left: "86%", size: 2, opacity: 0.22 },
+  { top: "24%", left: "28%", size: 1, opacity: 0.24 },
+  { top: "30%", left: "66%", size: 2, opacity: 0.18 },
+  { top: "36%", left: "19%", size: 1, opacity: 0.22 },
+  { top: "43%", left: "46%", size: 2, opacity: 0.2 },
+  { top: "49%", left: "79%", size: 1, opacity: 0.24 },
+  { top: "57%", left: "24%", size: 2, opacity: 0.18 },
+  { top: "61%", left: "72%", size: 1, opacity: 0.26 },
+  { top: "73%", left: "8%", size: 2, opacity: 0.18 },
+  { top: "76%", left: "55%", size: 1, opacity: 0.28 },
+  { top: "84%", left: "31%", size: 2, opacity: 0.2 },
+] as const;
+
+const lightFlares = [
+  { top: "11%", left: "76%", size: 22, color: "rgba(24,215,255,0.16)" },
+  { top: "66%", left: "84%", size: 18, color: "rgba(255,79,216,0.14)" },
+  { top: "73%", left: "6%", size: 24, color: "rgba(177,140,255,0.13)" },
 ] as const;
 
 export function GalaxyOrbitMap({
@@ -282,37 +312,64 @@ export function GalaxyOrbitMap({
       style={StyleSheet.absoluteFill}
     >
       <LinearGradient
-        colors={["#050611", "#11193B", "#241552", "#071019", "#090A12"]}
+        colors={["#070B1A", "#0D1230", "#171044", "#08162F", "#070B1A"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.deepSpaceVeil} />
-      <View
-        style={[
-          styles.nebulaOne,
-          { backgroundColor: `${theme.colors.primary}38` },
+      <LinearGradient
+        colors={[
+          "rgba(177,140,255,0)",
+          "rgba(177,140,255,0.22)",
+          "rgba(24,215,255,0.16)",
+          "rgba(255,79,216,0)",
         ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={[styles.nebulaCloud, styles.nebulaCloudOne]}
       />
-      <View
-        style={[
-          styles.nebulaTwo,
-          { backgroundColor: `${theme.colors.accent}30` },
+      <LinearGradient
+        colors={[
+          "rgba(255,79,216,0)",
+          "rgba(255,79,216,0.18)",
+          "rgba(123,92,255,0.18)",
+          "rgba(34,230,185,0)",
         ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={[styles.nebulaCloud, styles.nebulaCloudTwo]}
       />
-      <View
-        style={[
-          styles.nebulaThree,
-          { backgroundColor: `${theme.colors.secondary}24` },
+      <LinearGradient
+        colors={[
+          "rgba(24,215,255,0)",
+          "rgba(24,215,255,0.12)",
+          "rgba(177,140,255,0.16)",
+          "rgba(255,122,168,0)",
         ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={[styles.nebulaCloud, styles.nebulaCloudThree]}
       />
+      <LinearGradient
+        colors={[
+          "rgba(255,255,255,0)",
+          "rgba(255,255,255,0.2)",
+          "rgba(24,215,255,0.18)",
+          "rgba(255,255,255,0)",
+        ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.galaxyCore}
+      />
+      <View style={styles.galaxyCoreGlow} />
       <View style={styles.nebulaRibbon} />
       <View style={styles.nebulaRibbonAlt} />
-      {distantBodies.map((body) => (
+      {lightFlares.map((body) => (
         <View
           key={`${body.top}-${body.left}`}
           style={[
-            styles.distantBody,
+            styles.lightFlare,
             {
               top: body.top,
               left: body.left,
@@ -320,6 +377,22 @@ export function GalaxyOrbitMap({
               height: body.size,
               borderRadius: body.size / 2,
               backgroundColor: body.color,
+            },
+          ]}
+        />
+      ))}
+      {spaceDust.map((dust) => (
+        <View
+          key={`${dust.top}-${dust.left}`}
+          style={[
+            styles.spaceDust,
+            {
+              top: dust.top,
+              left: dust.left,
+              width: dust.size,
+              height: dust.size,
+              borderRadius: dust.size / 2,
+              opacity: dust.opacity,
             },
           ]}
         />
@@ -1158,8 +1231,8 @@ function PlanetNode({
             pointerEvents="none"
             colors={[
               "rgba(255,255,255,0.3)",
-              "rgba(9,10,18,0.08)",
-              "rgba(9,10,18,0.4)",
+              "rgba(7,11,26,0.08)",
+              "rgba(7,11,26,0.4)",
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -1570,8 +1643,8 @@ function MobileOrbitNode({
             pointerEvents="none"
             colors={[
               "rgba(255,255,255,0.32)",
-              "rgba(9,10,18,0.04)",
-              "rgba(9,10,18,0.42)",
+              "rgba(7,11,26,0.04)",
+              "rgba(7,11,26,0.42)",
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -2112,65 +2185,98 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "rgba(2,3,10,0.28)",
+    backgroundColor: "rgba(2,4,15,0.18)",
   },
-  nebulaOne: {
+  nebulaCloud: {
     position: "absolute",
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    top: -138,
-    right: -82,
+    borderRadius: 999,
+    opacity: 0.9,
   },
-  nebulaTwo: {
-    position: "absolute",
-    width: 360,
-    height: 360,
-    borderRadius: 180,
-    bottom: -142,
-    left: -92,
+  nebulaCloudOne: {
+    width: "122%",
+    height: 210,
+    left: "-16%",
+    top: "16%",
+    transform: [{ rotate: "-19deg" }],
   },
-  nebulaThree: {
+  nebulaCloudTwo: {
+    width: "112%",
+    height: 170,
+    right: "-22%",
+    top: "42%",
+    transform: [{ rotate: "18deg" }],
+  },
+  nebulaCloudThree: {
+    width: "104%",
+    height: 138,
+    left: "-24%",
+    bottom: "8%",
+    transform: [{ rotate: "-10deg" }],
+  },
+  galaxyCore: {
     position: "absolute",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    top: "38%",
-    left: "42%",
+    width: "88%",
+    height: 96,
+    left: "6%",
+    top: "41%",
+    borderRadius: 999,
+    opacity: 0.58,
+    transform: [{ rotate: "-18deg" }],
+  },
+  galaxyCoreGlow: {
+    position: "absolute",
+    width: 170,
+    height: 72,
+    left: "50%",
+    top: "45%",
+    marginLeft: -85,
+    borderRadius: 999,
+    backgroundColor: "rgba(246,247,251,0.08)",
+    shadowColor: "#B18CFF",
+    shadowOpacity: 0.28,
+    shadowRadius: 34,
+    shadowOffset: { width: 0, height: 0 },
   },
   nebulaRibbon: {
     position: "absolute",
-    width: "82%",
-    height: 88,
-    left: "-10%",
-    top: "44%",
+    width: "92%",
+    height: 42,
+    left: "-18%",
+    top: "35%",
     borderRadius: 999,
-    backgroundColor: "rgba(0,212,255,0.07)",
-    transform: [{ rotate: "-19deg" }],
+    backgroundColor: "rgba(24,215,255,0.055)",
+    transform: [{ rotate: "-23deg" }],
   },
   nebulaRibbonAlt: {
     position: "absolute",
-    width: "72%",
-    height: 72,
-    right: "-18%",
-    top: "25%",
+    width: "86%",
+    height: 38,
+    right: "-24%",
+    top: "57%",
     borderRadius: 999,
-    backgroundColor: "rgba(255,79,216,0.06)",
-    transform: [{ rotate: "24deg" }],
+    backgroundColor: "rgba(255,79,216,0.052)",
+    transform: [{ rotate: "21deg" }],
   },
-  distantBody: {
+  lightFlare: {
     position: "absolute",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    shadowColor: "#00D4FF",
-    shadowOpacity: 0.1,
-    shadowRadius: 18,
+    borderWidth: 0,
+    shadowColor: "#18D7FF",
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  spaceDust: {
+    position: "absolute",
+    backgroundColor: "#F6F7FB",
+    shadowColor: "#B18CFF",
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
     shadowOffset: { width: 0, height: 0 },
   },
   orbitRing: {
     position: "absolute",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "rgba(246,247,251,0.07)",
     borderRadius: 999,
   },
   orbitRingOne: {
@@ -2203,16 +2309,16 @@ const styles = StyleSheet.create({
   },
   star: {
     position: "absolute",
-    backgroundColor: "rgba(255,255,255,0.9)",
-    shadowColor: "#FFFFFF",
-    shadowOpacity: 0.42,
-    shadowRadius: 5,
+    backgroundColor: "rgba(246,247,251,0.92)",
+    shadowColor: "#B18CFF",
+    shadowOpacity: 0.46,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
   },
   cosmicDust: {
     position: "absolute",
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.16)",
+    backgroundColor: "rgba(185,193,217,0.16)",
   },
   header: {
     paddingHorizontal: 26,
@@ -2303,13 +2409,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 7,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(246,247,251,0.13)",
     borderRadius: radius.pill,
-    backgroundColor: "rgba(9,10,18,0.42)",
+    backgroundColor: "rgba(7,11,26,0.48)",
     paddingHorizontal: 10,
   },
   mobileStatText: {
-    color: "rgba(255,255,255,0.82)",
+    color: "rgba(246,247,251,0.84)",
     fontSize: typography.tiny,
     fontWeight: "900",
     textTransform: "uppercase",
@@ -2318,7 +2424,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#37E29F",
+    backgroundColor: "#22E6B9",
   },
   stats: {
     position: "absolute",
@@ -2337,9 +2443,9 @@ const styles = StyleSheet.create({
     minWidth: 92,
     minHeight: 52,
     borderRadius: radius.md,
-    backgroundColor: "rgba(9,10,18,0.52)",
+    backgroundColor: "rgba(7,11,26,0.54)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(246,247,251,0.12)",
     alignItems: "center",
     justifyContent: "center",
     gap: 1,
@@ -2364,7 +2470,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#37E29F",
+    backgroundColor: "#22E6B9",
   },
   mobileOrbitStage: {
     position: "relative",
@@ -2373,9 +2479,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "rgba(246,247,251,0.11)",
     borderRadius: radius.lg,
-    backgroundColor: "rgba(9,10,18,0.32)",
+    backgroundColor: "rgba(7,11,26,0.24)",
   },
   mobileStageGlow: {
     position: "absolute",
@@ -2386,16 +2492,16 @@ const styles = StyleSheet.create({
     top: "50%",
     marginLeft: -71,
     marginTop: -71,
-    backgroundColor: "rgba(0,212,255,0.08)",
-    shadowColor: "#00D4FF",
-    shadowOpacity: 0.3,
+    backgroundColor: "rgba(177,140,255,0.08)",
+    shadowColor: "#B18CFF",
+    shadowOpacity: 0.28,
     shadowRadius: 26,
     shadowOffset: { width: 0, height: 0 },
   },
   mobileOrbitLine: {
     position: "absolute",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.11)",
+    borderColor: "rgba(246,247,251,0.075)",
     borderRadius: 999,
   },
   mobileOrbitLineOne: {
@@ -2421,7 +2527,7 @@ const styles = StyleSheet.create({
   ambientSlotHalo: {
     position: "absolute",
     opacity: 0.12,
-    shadowColor: "#00D4FF",
+    shadowColor: "#18D7FF",
     shadowOpacity: 0.22,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 0 },
@@ -2448,7 +2554,7 @@ const styles = StyleSheet.create({
   planetHalo: {
     position: "absolute",
     opacity: 0.18,
-    shadowColor: "#00D4FF",
+    shadowColor: "#18D7FF",
     shadowOpacity: 0.34,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 0 },
@@ -2495,7 +2601,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#00D4FF",
+    shadowColor: "#18D7FF",
     shadowOpacity: 0.32,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 0 },
@@ -2538,7 +2644,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     right: -6,
     bottom: -4,
-    backgroundColor: "rgba(9,10,18,0.20)",
+    backgroundColor: "rgba(7,11,26,0.20)",
   },
   planetInitials: {
     color: "#FFFFFF",
@@ -2559,7 +2665,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -8,
     opacity: 0.18,
-    shadowColor: "#00D4FF",
+    shadowColor: "#18D7FF",
     shadowOpacity: 0.3,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 0 },
@@ -2604,7 +2710,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
     backgroundColor: "rgba(255,255,255,0.06)",
-    shadowColor: "#00D4FF",
+    shadowColor: "#18D7FF",
     shadowOpacity: 0.28,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
@@ -2647,7 +2753,7 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: "#090A12",
+    borderColor: "#070B1A",
   },
   mobilePlanetName: {
     maxWidth: 78,
@@ -2832,7 +2938,7 @@ const styles = StyleSheet.create({
     width: 348,
     maxWidth: 360,
     borderRadius: radius.lg,
-    shadowColor: "#00D4FF",
+    shadowColor: "#18D7FF",
     shadowOpacity: 0.34,
     shadowRadius: 26,
     shadowOffset: { width: 0, height: 16 },

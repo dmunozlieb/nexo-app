@@ -42,6 +42,8 @@ export function LoginScreen() {
       password: "",
     },
   });
+  const validationErrors = form.formState.errors;
+  const hasValidationErrors = Object.keys(validationErrors).length > 0;
 
   async function handleLogin(input: AuthLoginInput) {
     try {
@@ -66,6 +68,24 @@ export function LoginScreen() {
       subtitle="Entra y retoma tus comunidades, chats y ecos pendientes."
       panelVariant="compact"
     >
+      {hasValidationErrors ? (
+        <View
+          accessibilityRole="alert"
+          style={[
+            styles.validationNotice,
+            {
+              backgroundColor: `${theme.colors.error}16`,
+              borderColor: `${theme.colors.error}66`,
+            },
+          ]}
+        >
+          <Text
+            style={[styles.validationNoticeText, { color: theme.colors.text }]}
+          >
+            Revisa los campos marcados en rojo.
+          </Text>
+        </View>
+      ) : null}
       <Controller
         control={form.control}
         name="email"
@@ -89,6 +109,7 @@ export function LoginScreen() {
             onSubmitEditing={() => passwordRef.current?.focus()}
             blurOnSubmit={false}
             error={fieldState.error?.message}
+            showErrorMessage={false}
             icon={<Mail size={18} color={theme.colors.textFaint} />}
           />
         )}
@@ -116,6 +137,7 @@ export function LoginScreen() {
             onBlur={field.onBlur}
             onSubmitEditing={form.handleSubmit(handleLogin)}
             error={fieldState.error?.message}
+            showErrorMessage={false}
             icon={<Lock size={18} color={theme.colors.textFaint} />}
             rightElement={
               <Pressable
@@ -295,6 +317,20 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: "center",
     justifyContent: "center",
+  },
+  validationNotice: {
+    minHeight: 34,
+    borderWidth: 1,
+    borderRadius: 12,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  validationNoticeText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "900",
+    textAlign: "center",
   },
   demoBlock: {
     gap: 10,

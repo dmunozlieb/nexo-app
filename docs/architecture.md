@@ -1,69 +1,223 @@
-# Arquitectura
+# Arquitectura de Nexo
 
-Nexo usa arquitectura por features. Cada feature agrupa servicios Supabase, hooks TanStack Query, tipos y pantallas cuando aplica. La UI base vive en `src/components` y los tokens en `src/theme`.
+## Principio general
 
-## Capas
+Nexo usa arquitectura por features. Las rutas de Expo Router viven en `app/`, la UI compartida en `src/components`, el dominio en `src/types`, los servicios por feature en `src/features/*/services`, los hooks de datos en `src/features/*/hooks`, y Supabase en `supabase/`.
 
-- `app/`: rutas, layouts protegidos y tabs.
-- `src/features/*/services`: acceso a Supabase y operaciones de dominio.
-- `src/features/*/hooks`: queries, mutations, realtime e invalidacion.
-- `src/features/*/screens`: composicion de UI y formularios.
-- `src/components`: piezas reutilizables sin conocimiento de backend.
-- `supabase`: schema, RLS, seed y funciones.
+Patron preferido:
 
-## Flujo de auth
+```text
+app route -> screen -> hook TanStack Query -> service -> Supabase o demo-service
+```
 
-1. `AuthProvider` restaura sesion persistente desde Supabase.
-2. `app/index.tsx` redirige a login, onboarding o home.
-3. Los layouts protegidos verifican sesion y perfil completo.
-4. El trigger `handle_new_user` crea un perfil inicial.
-5. Onboarding actualiza username, display name, bio, avatar e intereses.
+Las pantallas componen UI y gestionan estados de interaccion. Los servicios hablan con Supabase o con el modo demo. Los componentes compartidos no deben conocer detalles del backend.
 
-## Datos y permisos
+## Stack
 
-Las reglas sensibles viven en PostgreSQL:
+- **Expo SDK 56** con `expo-router/entry`.
+- **Expo Router** para navegacion por archivos.
+- **React Native 0.85**, **React 19.2.3** y **React Native Web**.
+- **TypeScript estricto** con `noUncheckedIndexedAccess` y `exactOptionalPropertyTypes`.
+- **Supabase** para Auth, DB, Storage, Realtime, RLS y funciones.
+- **TanStack Query** para cache, queries, mutations e invalidaciones.
+- **Zustand** para estado local pequeno (`themeMode`).
+- **React Hook Form + Zod** para formularios.
+- **Jest + jest-expo** para tests.
+- **EAS** para builds nativas.
 
-- Solo miembros publican en una Orbita.
-- Autor o moderador puede editar/ocultar contenido.
-- Mensajes solo son visibles para miembros de la conversacion.
-- Bloqueos reducen visibilidad entre perfiles.
-- Reportes los leen reporter y moderadores correspondientes.
+La documentacion oficial de Expo SDK 56 debe consultarse antes de modificar codigo: https://docs.expo.dev/versions/v56.0.0/
 
-## Realtime
+## Estructura de carpetas
 
-La tabla `messages` esta en la publicacion `supabase_realtime`. El hook `useMessageSubscription` actualiza el cache local de mensajes por conversacion. Comentarios y notificaciones quedan preparados en la publicacion para activar experiencias en vivo despues.
+```text
+app/
+  _layout.tsx                 providers globales y Stack raiz
+  index.tsx                   redirect inicial segun auth/onboarding
+  (auth)/                     login, registro, recuperar password
+  (tabs)/                     home, discover, create post, chat, profile
+  community/                  detalle y creacion de Orbitas
+  chat/                       sala de chat
+  post/                       detalle de post
+  profile/                    perfil por id
+  settings/                   ajustes y editar perfil
+  moderation/                 cola de moderacion
 
-## Performance
+src/
+  components/
+    brand/                    mascota e identidad
+    community/                mapa orbital, roles, online users
+    content/                  cards, posts, report modal
+    layout/                   ScreenContainer, ProtectedStack
+    navigation/               sidebar, bottom nav, tabs de comunidad
+    ui/                       Button, TextInput, Badge, BottomSheet, etc.
+  constants/                  constantes de posts y moderacion
+  features/
+    auth/
+    chat/
+    comments/
+    communities/
+    feed/
+    moderation/
+    posts/
+    profile/
+    search/
+    settings/
+  hooks/                      hooks genericos
+  lib/                        Supabase, env, query client
+  services/                   demo-service y storage-service
+  stores/                     Zustand
+  theme/                      tokens y useTheme
+  types/                      domain y database
+  utils/                      validation, sanitize, slug, format, permissions
 
-- `FlatList` para feed, comunidades, chat y perfiles.
-- Paginacion infinita en feed.
-- Invalidacion granular tras reacciones, guardados, posts y comentarios.
-- `expo-image` para carga optimizada.
-- Componentes visuales pequenos y sin consultas directas.
+supabase/
+  migrations/                 schema, RLS, producto comunidades, storage
+  functions/                  Edge Function opcional de moderacion
+  policies.sql                politicas RLS completas
+  seed.sql                    datos demo para Supabase local
 
-## Styling
+tests/
+  validation.test.ts          tests de validacion y sanitizacion
+```
 
-El sistema de estilos usa tokens centralizados para colores, spacing, radios y tipografia. Dark mode es el modo inicial y light mode esta preparado en `palette.light`.
+## Navegacion
 
-## Rediseño social/cosmico
+`app/_layout.tsx` monta:
 
-La UI usa componentes reutilizables como `GradientCard`, `SectionTabs`, `RoleBadge`, `OnlineUsersBar` y `NexoMascot` para mantener una identidad alien/futurista sin acoplar pantallas a estilos puntuales.
+- `SafeAreaProvider`
+- `WebInteractionReset`
+- `QueryClientProvider`
+- `AuthProvider`
+- Stack raiz sin headers
 
-Las Orbitas son el nucleo del producto: tienen creacion desde la app, membresia automatica del creador como Admin/owner, feed propio, sala general y tabs de posts, chats, miembros, normas e info.
+`app/index.tsx` decide:
 
-## Roles
+- sin sesion -> `/login`
+- sesion sin onboarding -> `/onboarding`
+- sesion completa -> `/home`
 
-Los roles soportados son `owner`, `admin`, `mod`, `helper` y `member`.
+`app/(auth)/_layout.tsx` evita que usuarios autenticados vuelvan a login/registro.
 
-- `owner/admin`: gestion critica de comunidad y roles.
-- `mod`: moderacion de posts, reportes y miembros.
-- `helper`: acceso visual a herramientas de apoyo y revision basica.
-- `member`: publicar, comentar, reaccionar, chatear y reportar.
+`app/(tabs)/_layout.tsx` protege tabs y usa `AppNavigationFrame`. El tab bar nativo esta oculto; la navegacion real se renderiza con:
 
-La UI usa helpers en `src/utils/community-permissions.ts`, pero las comprobaciones sensibles deben seguir viviendo en Supabase/RLS o Edge Functions.
+- `AppSidebar` en desktop (`width >= 980`)
+- `AppBottomNav` en movil
 
-## Perfiles contextuales y presencia
+Rutas principales:
 
-El perfil puede abrirse con `communityId` para mostrar rol, fecha de union y posts de ese usuario dentro de una Orbita concreta.
+- `/home`: sistema orbital (`HomeFeedScreen` + `GalaxyOrbitMap`)
+- `/discover`: explorar Orbitas
+- `/create`: crear post
+- `/chat`: lista de chats
+- `/profile`: perfil propio
+- `/community/create`: crear Orbita
+- `/community/[id]`: detalle de Orbita
+- `/chat/[id]`: sala de chat
+- `/post/[id]`: detalle de post
+- `/profile/[id]`: perfil ajeno, opcionalmente con `communityId`
+- `/settings`, `/settings/edit-profile`
+- `/moderation`
 
-La presencia online empieza como aproximacion visual (`online_count` derivado de miembros en demo/cliente). La migracion `003_community_product.sql` añade `profiles.last_seen_at` para evolucionar hacia presencia real con updates periodicos o Realtime Presence.
+Las rutas protegidas fuera de tabs usan `ProtectedStack`, que repite las comprobaciones de sesion/onboarding y envuelve la escena en `AppNavigationFrame`.
+
+## Estado y datos
+
+### Auth
+
+`AuthProvider` restaura sesion desde Supabase o modo demo, carga perfil y expone:
+
+- `initialized`
+- `session`
+- `profile`
+- `isAuthenticated`
+- `onboardingComplete`
+- `refreshProfile`
+
+El onboarding se considera completo cuando el perfil tiene `username`, `display_name` y el username no empieza por `nexo_`.
+
+### Server state
+
+TanStack Query vive en `src/lib/query-client.ts` con:
+
+- `staleTime: 30_000`
+- `gcTime: 10 min`
+- `retry: 1` en queries
+- `retry: 0` en mutations
+
+Cada feature define query keys propias. Tras mutations se invalidan queries relacionadas, por ejemplo comunidades, miembros, posts, mensajes o perfil.
+
+### Estado local
+
+Zustand solo guarda UI local por ahora:
+
+- `themeMode: "dark" | "light"`
+- `setThemeMode`
+
+No metas server state en Zustand si puede vivir en TanStack Query.
+
+### Supabase
+
+`src/lib/supabase.ts` crea cliente con:
+
+- AsyncStorage para persistencia de auth.
+- `autoRefreshToken` y `persistSession`.
+- Realtime con limite `eventsPerSecond: 8`.
+
+Variables:
+
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `EXPO_PUBLIC_DEMO_MODE`
+
+No uses service role key en cliente.
+
+### Modo demo
+
+`src/services/demo-service.ts` implementa datos en memoria para auth, Orbitas, posts, comentarios, chats, perfiles, reportes y moderacion. Cualquier servicio nuevo que toque flujo principal debe mantener alternativa demo si se espera probar sin Supabase.
+
+## Backend y permisos
+
+Supabase contiene:
+
+- tablas: `profiles`, `interests`, `user_interests`, `communities`, `community_members`, `posts`, `post_reactions`, `comments`, `saved_posts`, `follows`, `conversations`, `conversation_members`, `messages`, `reports`, `blocks`, `notifications`.
+- RLS habilitado para tablas publicas.
+- politicas para visibilidad, miembros, autores, moderadores, chats, reportes y bloqueos.
+- buckets de Storage para avatars, banners, post media y community assets.
+- RPCs para conversaciones comunitarias/directas.
+- Realtime publicado para `messages`; `comments` y `notifications` estan preparados.
+
+Regla: toda decision sensible debe vivir en RLS, RPC o Edge Function. La UI solo oculta o muestra acciones; no debe ser la unica barrera de seguridad.
+
+## Features y limites de dominio
+
+Tipos centrales en `src/types/domain.ts`:
+
+- `Visibility = "public" | "private" | "unlisted"`
+- `CommunityRole = "owner" | "admin" | "mod" | "helper" | "member"`
+- `PostType = "debate" | "help" | "fanart" | "poll" | "story" | "recommendation" | "event"`
+- `ReactionType = "inspire" | "relate" | "curious" | "support"`
+- `ConversationType = "direct" | "community"`
+- `ReportTargetType = "post" | "comment" | "message" | "profile" | "community"`
+
+Validaciones viven en `src/utils/validation.ts`. Sanitizacion de texto en `src/utils/sanitize.ts`. Permisos de comunidad para UI en `src/utils/community-permissions.ts`.
+
+## Patrones a respetar
+
+- Nuevas pantallas: ruta fina en `app/` que exporta una screen de `src/features/.../screens`.
+- Nuevas consultas: servicio en `services`, hook en `hooks`, query key estable.
+- Nuevas mutations: invalidar caches relacionadas.
+- Formularios: React Hook Form + Zod.
+- Imagenes: `storage-service.ts`, `expo-image-picker`, Supabase Storage o data URL en modo demo.
+- Iconos: `lucide-react-native` cuando exista icono adecuado.
+- Estilos: `StyleSheet`, tokens centralizados, `useTheme`.
+- Responsive: `useWindowDimensions`, breakpoints locales coherentes con los existentes.
+- Errores: `getErrorMessage` y estados `LoadingState`, `ErrorState`, `EmptyState`/`AlienEmptyState`.
+
+## Riesgos conocidos
+
+- `online_count` es aproximado, no presencia real.
+- `listConversations` en Supabase devuelve `last_message: null`; el modo demo si calcula ultimo mensaje.
+- Perfil muestra banner como bloque de color; la carga/edicion de banner de perfil no esta completa.
+- Moderacion existe, pero necesita UX/permisos mas finos.
+- Algunas copias no tienen acentos por compatibilidad/teclado historico; no mezcles estilos de copy sin revisar.
+- `docs/architecture.md` fue sustituido por este `docs/ARCHITECTURE.md` para seguir el contrato de documentacion interna.

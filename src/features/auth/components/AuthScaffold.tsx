@@ -4,7 +4,6 @@ import {
   Animated,
   Easing,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -27,7 +26,6 @@ type AuthScaffoldProps = PropsWithChildren<{
   storyTitle?: string | undefined;
   storyCopy?: string | undefined;
   panelVariant?: "docked" | "compact" | undefined;
-  formScrollable?: boolean | undefined;
 }>;
 
 const particles = [
@@ -46,7 +44,6 @@ export function AuthScaffold({
   storyTitle = "Vuelve a tu orbita",
   storyCopy = "Entra a tus Orbitas, retoma conversaciones y descubre senales nuevas sin perder el hilo.",
   panelVariant = "docked",
-  formScrollable = false,
   children,
 }: AuthScaffoldProps) {
   const theme = useTheme();
@@ -60,7 +57,6 @@ export function AuthScaffold({
   const isVeryShort = height < 640;
   const compactDesktopPanel = isDockedDesktop && panelVariant === "compact";
   const dockedDesktopPanel = isDockedDesktop && !compactDesktopPanel;
-  const scrollFormInsidePanel = dockedDesktopPanel && formScrollable;
   const desktopInsetX = isVeryShortDesktop ? 16 : isShortDesktop ? 20 : 28;
   const desktopInsetY = isVeryShortDesktop ? 12 : isShortDesktop ? 18 : 24;
   const reduceMotion = useReduceMotion();
@@ -489,21 +485,7 @@ export function AuthScaffold({
             )}
           </View>
 
-          {scrollFormInsidePanel ? (
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              style={styles.formScroller}
-              contentContainerStyle={[
-                styles.formScrollerContent,
-                { gap: formGap },
-              ]}
-            >
-              {children}
-            </ScrollView>
-          ) : (
-            <View style={[styles.form, { gap: formGap }]}>{children}</View>
-          )}
+          <View style={[styles.form, { gap: formGap }]}>{children}</View>
         </View>
       </View>
     </ScreenContainer>
@@ -815,13 +797,5 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 13,
-  },
-  formScroller: {
-    width: "100%",
-    minHeight: 0,
-    flexShrink: 1,
-  },
-  formScrollerContent: {
-    paddingBottom: 2,
   },
 });

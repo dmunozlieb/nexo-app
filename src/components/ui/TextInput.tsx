@@ -19,6 +19,7 @@ type TextInputProps = RNTextInputProps & {
   icon?: ReactNode | undefined;
   rightElement?: ReactNode | undefined;
   compact?: boolean | undefined;
+  showErrorMessage?: boolean | undefined;
 };
 
 export const TextInput = forwardRef<RNTextInput, TextInputProps>(
@@ -29,6 +30,7 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
       icon,
       rightElement,
       compact = false,
+      showErrorMessage = true,
       style,
       onFocus,
       onBlur,
@@ -137,7 +139,7 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             <View style={styles.rightWrap}>{rightElement}</View>
           ) : null}
         </View>
-        {error ? (
+        {error && showErrorMessage ? (
           <Text
             numberOfLines={compact ? 1 : 2}
             style={[

@@ -12,7 +12,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import {
   AtSign,
-  Check,
   Eye,
   EyeOff,
   Lock,
@@ -36,7 +35,6 @@ export function RegisterScreen() {
   const { width, height } = useWindowDimensions();
   const fitDesktop = width >= 980 && height >= 720;
   const compactForm = fitDesktop && height < 940;
-  const ultraCompactForm = fitDesktop && height < 820;
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const usernameRef = useRef<RNTextInput | null>(null);
@@ -53,12 +51,16 @@ export function RegisterScreen() {
       email: "",
       password: "",
       confirmPassword: "",
-      acceptedTerms: false,
     },
   });
   const password = form.watch("password");
-  const acceptedTerms = form.watch("acceptedTerms");
   const passwordStrength = getPasswordStrength(password);
+  const validationErrors = form.formState.errors;
+  const hasValidationErrors = Object.keys(validationErrors).length > 0;
+  const passwordError =
+    typeof validationErrors.password?.message === "string"
+      ? validationErrors.password.message
+      : undefined;
 
   async function handleRegister(input: AuthRegisterInput) {
     try {
@@ -77,8 +79,25 @@ export function RegisterScreen() {
       subtitle="Crea tu perfil y despues elige tus intereses para encontrar tus primeras Orbitas."
       storyTitle="Empieza tu viaje orbital"
       storyCopy="Crea tu perfil, descubre comunidades y conecta con personas que comparten tus intereses."
-      formScrollable
     >
+      {hasValidationErrors ? (
+        <View
+          accessibilityRole="alert"
+          style={[
+            styles.validationNotice,
+            {
+              backgroundColor: `${theme.colors.error}16`,
+              borderColor: `${theme.colors.error}66`,
+            },
+          ]}
+        >
+          <Text
+            style={[styles.validationNoticeText, { color: theme.colors.text }]}
+          >
+            Revisa los campos marcados en rojo.
+          </Text>
+        </View>
+      ) : null}
       <Controller
         control={form.control}
         name="displayName"
@@ -99,6 +118,7 @@ export function RegisterScreen() {
             onSubmitEditing={() => usernameRef.current?.focus()}
             blurOnSubmit={false}
             error={fieldState.error?.message}
+            showErrorMessage={false}
             icon={<UserRound size={18} color={theme.colors.textFaint} />}
           />
         )}
@@ -125,6 +145,7 @@ export function RegisterScreen() {
             onSubmitEditing={() => emailRef.current?.focus()}
             blurOnSubmit={false}
             error={fieldState.error?.message}
+            showErrorMessage={false}
             icon={<AtSign size={18} color={theme.colors.textFaint} />}
           />
         )}
@@ -154,6 +175,7 @@ export function RegisterScreen() {
             onSubmitEditing={() => passwordRef.current?.focus()}
             blurOnSubmit={false}
             error={fieldState.error?.message}
+            showErrorMessage={false}
             icon={<Mail size={18} color={theme.colors.textFaint} />}
           />
         )}
@@ -183,6 +205,7 @@ export function RegisterScreen() {
             onSubmitEditing={() => confirmPasswordRef.current?.focus()}
             blurOnSubmit={false}
             error={fieldState.error?.message}
+            showErrorMessage={false}
             icon={<Lock size={18} color={theme.colors.textFaint} />}
             rightElement={
               <Pressable
@@ -207,7 +230,11 @@ export function RegisterScreen() {
           />
         )}
       />
-      <PasswordStrength value={passwordStrength} compact={compactForm} />
+      <PasswordStrength
+        value={passwordStrength}
+        compact={compactForm}
+        error={passwordError}
+      />
       <Controller
         control={form.control}
         name="confirmPassword"
@@ -232,79 +259,9 @@ export function RegisterScreen() {
             onBlur={field.onBlur}
             onSubmitEditing={form.handleSubmit(handleRegister)}
             error={fieldState.error?.message}
+            showErrorMessage={false}
             icon={<ShieldCheck size={18} color={theme.colors.textFaint} />}
           />
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="acceptedTerms"
-        render={({ field, fieldState }) => (
-          <View
-            style={[
-              styles.termsWrap,
-              compactForm ? styles.termsWrapCompact : null,
-            ]}
-          >
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: field.value }}
-              accessibilityLabel="Aceptar terminos y politica de privacidad"
-              onPress={() => {
-                setRegisterError(null);
-                field.onChange(!field.value);
-              }}
-              style={({ pressed }) => [
-                styles.termsRow,
-                compactForm ? styles.termsRowCompact : null,
-                {
-                  borderColor: fieldState.error
-                    ? theme.colors.error
-                    : field.value
-                      ? theme.colors.secondary
-                      : "rgba(255,255,255,0.12)",
-                  backgroundColor: field.value
-                    ? `${theme.colors.secondary}14`
-                    : "rgba(255,255,255,0.05)",
-                  opacity: pressed ? 0.76 : 1,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  {
-                    backgroundColor: field.value
-                      ? theme.colors.secondary
-                      : "transparent",
-                    borderColor: field.value
-                      ? theme.colors.secondary
-                      : theme.colors.textFaint,
-                  },
-                ]}
-              >
-                {field.value ? <Check size={13} color="#07101A" /> : null}
-              </View>
-              <Text
-                style={[styles.termsText, { color: theme.colors.textMuted }]}
-                numberOfLines={ultraCompactForm ? 1 : 2}
-              >
-                Acepto los terminos y la politica de privacidad de Nexo.
-              </Text>
-            </Pressable>
-            {fieldState.error?.message ? (
-              <Text
-                numberOfLines={compactForm ? 1 : 2}
-                style={[
-                  styles.errorText,
-                  compactForm ? styles.errorTextCompact : null,
-                  { color: theme.colors.error },
-                ]}
-              >
-                {fieldState.error.message}
-              </Text>
-            ) : null}
-          </View>
         )}
       />
       {registerError ? (
@@ -356,23 +313,30 @@ export function RegisterScreen() {
 function PasswordStrength({
   value,
   compact = false,
+  error,
 }: {
   value: PasswordStrengthValue;
   compact?: boolean;
+  error?: string | undefined;
 }) {
   const theme = useTheme();
   const activeColor =
-    value.score >= 4
-      ? theme.colors.success
-      : value.score >= 3
-        ? theme.colors.secondary
-        : value.score >= 2
-          ? theme.colors.warning
-          : theme.colors.textFaint;
+    error
+      ? theme.colors.error
+      : value.score >= 4
+        ? theme.colors.success
+        : value.score >= 3
+          ? theme.colors.secondary
+          : value.score >= 2
+            ? theme.colors.warning
+            : theme.colors.textFaint;
 
   return (
     <View
-      style={[styles.strengthBlock, compact ? styles.strengthBlockCompact : null]}
+      style={[
+        styles.strengthBlock,
+        compact ? styles.strengthBlockCompact : null,
+      ]}
     >
       <View style={styles.strengthBars}>
         {[0, 1, 2, 3].map((index) => (
@@ -388,8 +352,15 @@ function PasswordStrength({
           />
         ))}
       </View>
-      <Text style={[styles.strengthText, { color: theme.colors.textFaint }]}>
-        {value.label}
+      <Text
+        numberOfLines={compact ? 1 : 2}
+        style={[
+          styles.strengthText,
+          compact ? styles.strengthTextCompact : null,
+          { color: error ? theme.colors.error : theme.colors.textFaint },
+        ]}
+      >
+        {error ?? value.label}
       </Text>
     </View>
   );
@@ -454,6 +425,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  validationNotice: {
+    minHeight: 34,
+    borderWidth: 1,
+    borderRadius: 12,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  validationNoticeText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "900",
+    textAlign: "center",
+  },
   strengthBlock: {
     gap: 6,
     marginTop: -5,
@@ -473,49 +458,10 @@ const styles = StyleSheet.create({
   },
   strengthText: {
     fontSize: 12,
-    fontWeight: "800",
-  },
-  termsWrap: {
-    gap: 6,
-  },
-  termsWrapCompact: {
-    gap: 4,
-  },
-  termsRow: {
-    minHeight: 52,
-    borderWidth: 1,
-    borderRadius: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  termsRowCompact: {
-    minHeight: 46,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  termsText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: "700",
-  },
-  errorText: {
-    fontSize: 12,
     lineHeight: 16,
     fontWeight: "800",
   },
-  errorTextCompact: {
+  strengthTextCompact: {
     fontSize: 11,
     lineHeight: 14,
   },

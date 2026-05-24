@@ -32,9 +32,6 @@ export const authRegisterSchema = z
       .regex(/[a-z]/, "Incluye al menos una minuscula.")
       .regex(/[0-9]/, "Incluye al menos un numero."),
     confirmPassword: z.string().min(1, "Confirma tu contrasena."),
-    acceptedTerms: z.boolean().refine(Boolean, {
-      message: "Acepta los terminos y la politica de privacidad.",
-    }),
   })
   .refine((input) => input.password === input.confirmPassword, {
     path: ["confirmPassword"],

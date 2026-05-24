@@ -42,14 +42,13 @@ describe("validaciones de Nexo", () => {
     ).toThrow();
   });
 
-  it("valida registro con username, confirmacion y terminos", () => {
+  it("valida registro con username y confirmacion", () => {
     const parsed = authRegisterSchema.parse({
       displayName: "Luna Vega",
       username: "Luna_123",
       email: "luna@nexo.local",
       password: "Password123",
       confirmPassword: "Password123",
-      acceptedTerms: true,
     });
 
     expect(parsed.username).toBe("luna_123");
@@ -63,7 +62,6 @@ describe("validaciones de Nexo", () => {
         email: "luna@nexo.local",
         password: "Password123",
         confirmPassword: "Password124",
-        acceptedTerms: true,
       }),
     ).toThrow();
   });

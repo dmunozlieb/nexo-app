@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Bookmark, Flag, MessageCircle, Sparkles } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { POST_TYPES } from "../../constants/post";
@@ -69,7 +70,10 @@ export function PostCard({
         <View
           style={[
             styles.reasonBox,
-            { backgroundColor: theme.colors.elevated, borderColor: theme.colors.border },
+            {
+              backgroundColor: "rgba(255,255,255,0.045)",
+              borderColor: `${theme.colors.secondary}22`,
+            },
           ]}
         >
           <Sparkles size={14} color={theme.colors.secondary} />
@@ -86,11 +90,19 @@ export function PostCard({
       style={[
         styles.card,
         {
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.border,
+          backgroundColor: "rgba(18,20,39,0.78)",
+          borderColor: `${type.color}38`,
+          shadowColor: type.color,
         },
       ]}
     >
+      <LinearGradient
+        colors={[`${type.color}16`, "rgba(255,255,255,0.015)", "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cardWash}
+      />
+      <View style={[styles.accentLine, { backgroundColor: type.color }]} />
       {onPress ? (
         <Pressable
           accessibilityRole="button"
@@ -145,11 +157,32 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.md,
     borderWidth: 1,
-    padding: 13,
-    gap: 12,
+    padding: 14,
+    gap: 13,
+    overflow: "hidden",
+    shadowOpacity: 0.2,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
+  cardWash: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  accentLine: {
+    position: "absolute",
+    top: 16,
+    bottom: 16,
+    left: 0,
+    width: 3,
+    borderTopRightRadius: 999,
+    borderBottomRightRadius: 999,
   },
   contentButton: {
-    gap: 12,
+    gap: 13,
   },
   header: {
     flexDirection: "row",
@@ -175,6 +208,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
   },
   energyText: {
     fontSize: typography.tiny,
@@ -184,16 +219,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: typography.h3,
     fontWeight: "900",
-    lineHeight: 22,
+    lineHeight: 23,
   },
   body: {
     fontSize: typography.body,
-    lineHeight: 22,
+    lineHeight: 23,
   },
   media: {
     width: "100%",
     aspectRatio: 16 / 10,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   reason: {
     flex: 1,

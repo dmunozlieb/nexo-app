@@ -22,7 +22,7 @@ export function CreateActionButton({
   const motion = useRef(new Animated.Value(active ? 1 : 0)).current;
   const scale = motion.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.07],
+    outputRange: [1, layout === "bottom" ? 1.045 : 1.07],
   });
 
   useEffect(() => {
@@ -95,54 +95,46 @@ export function CreateActionButton({
           end={{ x: 1, y: 1 }}
           style={styles.bottomCircle}
         >
-          <Plus size={24} color="#FFFFFF" strokeWidth={3} />
+          <Plus size={19} color="#FFFFFF" strokeWidth={3} />
         </LinearGradient>
       </Animated.View>
-      <Text style={styles.bottomLabel}>Orbita</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   bottomButton: {
-    width: 58,
-    minHeight: 62,
+    width: 52,
+    minHeight: 52,
     alignItems: "center",
-    justifyContent: "flex-start",
-    marginTop: -20,
+    justifyContent: "center",
   },
   bottomMotion: {
-    width: 52,
-    height: 52,
+    width: 38,
+    height: 38,
     alignItems: "center",
     justifyContent: "center",
   },
   bottomHalo: {
     position: "absolute",
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: "rgba(0,212,255,0.18)",
-    shadowColor: "#00D4FF",
-    shadowOpacity: 0.62,
-    shadowRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(24,215,255,0.10)",
+    shadowColor: "#18D7FF",
+    shadowOpacity: 0.36,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 8,
+    elevation: 4,
   },
   bottomCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.28)",
-  },
-  bottomLabel: {
-    color: "#FFFFFF",
-    fontSize: typography.tiny,
-    fontWeight: "900",
-    marginTop: 1,
+    borderColor: "rgba(255,255,255,0.34)",
   },
   sidebarButton: {
     minHeight: 50,

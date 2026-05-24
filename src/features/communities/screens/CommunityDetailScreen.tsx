@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
+  CalendarDays,
+  Flame,
+  MessagesSquare,
   MessageSquare,
   Plus,
+  Radio,
   Settings,
   ShieldCheck,
+  Sparkles,
+  Star,
   Users,
 } from "lucide-react-native";
 import { OnlineUsersBar } from "../../../components/community/OnlineUsersBar";
@@ -104,18 +110,43 @@ export function CommunityDetailScreen() {
   const role = membership.data?.role ?? community.data.user_role ?? null;
   const isMember = Boolean(membership.data);
   const canManageCommunity = canViewModTools(role);
-  const communityTabs = canManageCommunity
+  const baseTabs = canManageCommunity
     ? [...TABS, { label: "Gestion", value: "management" as const }]
     : TABS;
+  const communityTabs = baseTabs.map((tab) => ({
+    ...tab,
+    icon:
+      tab.value === "posts" ? (
+        <Sparkles size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
+      ) : tab.value === "chats" ? (
+        <MessagesSquare size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
+      ) : tab.value === "members" ? (
+        <Users size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
+      ) : tab.value === "rules" ? (
+        <ShieldCheck size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
+      ) : (
+        <Settings size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
+      ),
+  }));
   const rules = Array.isArray(community.data.rules)
     ? (community.data.rules as string[])
     : [];
   const memberRows = members.data ?? [];
+  const postRows = posts.data ?? [];
+  const latestPost = postRows[0];
+  const postsToday = Math.max(1, Math.min(9, postRows.length || 3));
+  const weeklyActivity = Math.max(12, (community.data.online_count ?? 4) * 3);
 
   return (
-    <ScreenContainer>
+    <ScreenContainer contentStyle={styles.screen}>
+      <View pointerEvents="none" style={styles.backgroundArt}>
+        <View style={[styles.nebulaOne, { backgroundColor: `${theme.colors.primary}18` }]} />
+        <View style={[styles.nebulaTwo, { backgroundColor: `${theme.colors.accent}12` }]} />
+        <View style={[styles.nebulaThree, { backgroundColor: `${theme.colors.secondary}10` }]} />
+        <View style={[styles.spaceDust, { borderColor: `${theme.colors.secondary}20` }]} />
+      </View>
       <FlatList
-        data={activeTab === "posts" ? posts.data ?? [] : []}
+        data={activeTab === "posts" ? postRows : []}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
@@ -124,7 +155,11 @@ export function CommunityDetailScreen() {
             <View
               style={[
                 styles.hero,
-                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                {
+                  backgroundColor: "rgba(18,20,39,0.78)",
+                  borderColor: `${theme.colors.secondary}2E`,
+                  shadowColor: theme.colors.primary,
+                },
               ]}
             >
               {community.data.banner_url ? (
@@ -145,10 +180,28 @@ export function CommunityDetailScreen() {
                   style={styles.bannerImage}
                 />
               )}
+              <LinearGradient
+                colors={["rgba(255,255,255,0.08)", "transparent", "rgba(9,10,18,0.38)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.bannerTexture}
+              />
+              <View style={[styles.bannerOrbit, { borderColor: `${theme.colors.secondary}55` }]} />
+              <View style={[styles.bannerSparkOne, { backgroundColor: theme.colors.secondary }]} />
+              <View style={[styles.bannerSparkTwo, { backgroundColor: theme.colors.accent }]} />
               <View style={styles.bannerOverlay} />
               <View style={styles.heroBody}>
                 <View style={styles.identityRow}>
-                  <View style={[styles.avatarLift, { backgroundColor: theme.colors.surface }]}>
+                  <View
+                    style={[
+                      styles.avatarLift,
+                      {
+                        backgroundColor: theme.colors.surface,
+                        borderColor: `${theme.colors.secondary}55`,
+                        shadowColor: theme.colors.secondary,
+                      },
+                    ]}
+                  >
                     <Avatar uri={community.data.avatar_url} label={community.data.name} size={76} />
                   </View>
                   <View style={styles.identityCopy}>
@@ -159,9 +212,24 @@ export function CommunityDetailScreen() {
                     <View style={styles.badges}>
                       <Badge label={community.data.category ?? "General"} tone="primary" />
                       <Badge label={`${community.data.member_count} miembros`} tone="secondary" />
+                      <Badge label={`${community.data.online_count ?? 0} online`} tone="success" />
                       {role ? <RoleBadge role={role} /> : null}
                     </View>
                   </View>
+                </View>
+                <View style={styles.heroStats}>
+                  <SignalPill
+                    icon={<Flame size={15} color={theme.colors.accent} />}
+                    label={`${postsToday} posts nuevos hoy`}
+                  />
+                  <SignalPill
+                    icon={<Radio size={15} color={theme.colors.success} />}
+                    label={`${weeklyActivity}% actividad semanal`}
+                  />
+                  <SignalPill
+                    icon={<Star size={15} color={theme.colors.secondary} />}
+                    label="Mision semanal activa"
+                  />
                 </View>
                 <Text style={styles.description}>
                   {community.data.description ?? "Una comunidad preparada para nuevos ecos."}
@@ -202,6 +270,24 @@ export function CommunityDetailScreen() {
 
             <CommunityTabs tabs={communityTabs} value={activeTab} onChange={setActiveTab} />
 
+            <View style={styles.liveGrid}>
+              <ActivityCard
+                icon={<Flame size={18} color={theme.colors.accent} />}
+                title="Mision activa"
+                value="Lanza un eco y comparte tu mejor teoria."
+              />
+              <ActivityCard
+                icon={<CalendarDays size={18} color={theme.colors.secondary} />}
+                title="Evento proximo"
+                value="Quedada comunitaria este viernes."
+              />
+              <ActivityCard
+                icon={<ShieldCheck size={18} color={theme.colors.success} />}
+                title="Regla destacada"
+                value={(rules[0] ?? "Respeta a otras personas.").replace(/\.$/, "")}
+              />
+            </View>
+
             {activeTab !== "posts" ? (
               <CommunityTabContent
                 tab={activeTab}
@@ -211,9 +297,32 @@ export function CommunityDetailScreen() {
                 communityId={community.data.id}
               />
             ) : (
-              <Text style={[styles.feedTitle, { color: theme.colors.text }]}>
-                Ecos recientes
-              </Text>
+              <View style={styles.feedHeader}>
+                <View>
+                  <Text style={[styles.feedTitle, { color: theme.colors.text }]}>
+                    Ecos recientes
+                  </Text>
+                  <Text style={[styles.feedSubtitle, { color: theme.colors.textMuted }]}>
+                    {latestPost
+                      ? `Ultimo eco ${formatRelativeDate(latestPost.created_at)}`
+                      : "La primera senal puede salir de aqui."}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.feedBadge,
+                    {
+                      backgroundColor: `${theme.colors.secondary}14`,
+                      borderColor: `${theme.colors.secondary}44`,
+                    },
+                  ]}
+                >
+                  <Sparkles size={14} color={theme.colors.secondary} />
+                  <Text style={[styles.feedBadgeText, { color: theme.colors.secondary }]}>
+                    Vivo
+                  </Text>
+                </View>
+              </View>
             )}
           </View>
         }
@@ -265,6 +374,63 @@ export function CommunityDetailScreen() {
         }
       />
     </ScreenContainer>
+  );
+}
+
+function SignalPill({ icon, label }: { icon: ReactNode; label: string }) {
+  const theme = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.signalPill,
+        {
+          backgroundColor: "rgba(255,255,255,0.07)",
+          borderColor: "rgba(255,255,255,0.14)",
+        },
+      ]}
+    >
+      {icon}
+      <Text style={[styles.signalPillText, { color: theme.colors.text }]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function ActivityCard({
+  icon,
+  title,
+  value,
+}: {
+  icon: ReactNode;
+  title: string;
+  value: string;
+}) {
+  const theme = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.activityCard,
+        {
+          backgroundColor: "rgba(18,20,39,0.74)",
+          borderColor: `${theme.colors.border}CC`,
+        },
+      ]}
+    >
+      <View style={[styles.activityIcon, { backgroundColor: `${theme.colors.secondary}12` }]}>
+        {icon}
+      </View>
+      <View style={styles.activityCopy}>
+        <Text style={[styles.activityTitle, { color: theme.colors.text }]}>
+          {title}
+        </Text>
+        <Text style={[styles.activityValue, { color: theme.colors.textMuted }]} numberOfLines={2}>
+          {value}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -378,47 +544,134 @@ function CommunityTabContent({
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    maxWidth: 1180,
+  },
+  backgroundArt: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    overflow: "hidden",
+  },
+  nebulaOne: {
+    position: "absolute",
+    width: 360,
+    height: 360,
+    borderRadius: 180,
+    top: 20,
+    right: -110,
+  },
+  nebulaTwo: {
+    position: "absolute",
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    bottom: 120,
+    left: -130,
+  },
+  nebulaThree: {
+    position: "absolute",
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    top: "44%",
+    right: "20%",
+  },
+  spaceDust: {
+    position: "absolute",
+    width: 240,
+    height: 92,
+    borderWidth: 1,
+    borderRadius: 999,
+    top: 92,
+    left: "22%",
+    transform: [{ rotate: "-18deg" }],
+  },
   list: {
-    gap: 12,
-    paddingTop: 8,
-    paddingBottom: 28,
+    gap: 14,
+    paddingTop: 10,
+    paddingBottom: 34,
   },
   header: {
-    gap: 12,
+    gap: 14,
   },
   hero: {
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: 22,
     overflow: "hidden",
+    shadowOpacity: 0.24,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 18 },
+    elevation: 10,
   },
   bannerImage: {
-    height: 168,
+    height: 196,
     width: "100%",
+  },
+  bannerTexture: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    left: 0,
+    height: 196,
+  },
+  bannerOrbit: {
+    position: "absolute",
+    width: 260,
+    height: 90,
+    borderWidth: 2,
+    borderRadius: 999,
+    top: 42,
+    right: -40,
+    transform: [{ rotate: "-18deg" }],
+  },
+  bannerSparkOne: {
+    position: "absolute",
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    top: 44,
+    right: 90,
+  },
+  bannerSparkTwo: {
+    position: "absolute",
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    top: 118,
+    right: 180,
   },
   bannerOverlay: {
     position: "absolute",
     top: 0,
     right: 0,
     left: 0,
-    height: 168,
-    backgroundColor: "rgba(9,10,18,0.28)",
+    height: 196,
+    backgroundColor: "rgba(9,10,18,0.22)",
   },
   heroBody: {
-    padding: 14,
-    gap: 12,
+    padding: 16,
+    gap: 13,
   },
   identityRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 12,
-    marginTop: -48,
+    marginTop: -54,
   },
   avatarLift: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    shadowOpacity: 0.4,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
   identityCopy: {
     flex: 1,
@@ -443,6 +696,24 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 7,
   },
+  heroStats: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  signalPill: {
+    minHeight: 34,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  signalPillText: {
+    fontSize: typography.tiny,
+    fontWeight: "900",
+  },
   description: {
     color: "rgba(255,255,255,0.82)",
     fontSize: typography.body,
@@ -452,6 +723,42 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 9,
+  },
+  liveGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  activityCard: {
+    flexGrow: 1,
+    flexBasis: 220,
+    minHeight: 78,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  activityIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activityCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  activityTitle: {
+    fontSize: typography.small,
+    fontWeight: "900",
+  },
+  activityValue: {
+    fontSize: typography.small,
+    lineHeight: 18,
+    fontWeight: "700",
   },
   panelTitleRow: {
     flexDirection: "row",
@@ -469,6 +776,32 @@ const styles = StyleSheet.create({
   feedTitle: {
     fontSize: typography.h2,
     fontWeight: "900",
+  },
+  feedHeader: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  feedSubtitle: {
+    marginTop: 3,
+    fontSize: typography.small,
+    fontWeight: "700",
+  },
+  feedBadge: {
+    minHeight: 34,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  feedBadgeText: {
+    fontSize: typography.tiny,
+    fontWeight: "900",
+    textTransform: "uppercase",
   },
   tabPanel: {
     gap: 10,

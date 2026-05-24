@@ -42,8 +42,14 @@ export function CommunityTabs<T extends string>({
             style={({ pressed }) => [
               styles.tab,
               {
-                borderColor: selected ? theme.colors.secondary : theme.colors.border,
-                backgroundColor: selected ? "transparent" : theme.colors.surface,
+                borderColor: selected
+                  ? `${theme.colors.secondary}99`
+                  : `${theme.colors.border}CC`,
+                backgroundColor: selected
+                  ? "transparent"
+                  : "rgba(18,20,39,0.72)",
+                shadowColor: selected ? theme.colors.secondary : "transparent",
+                shadowOpacity: selected ? 0.24 : 0,
                 opacity: pressed ? 0.78 : 1,
               },
             ]}
@@ -53,10 +59,17 @@ export function CommunityTabs<T extends string>({
                 colors={[`${theme.colors.primary}D4`, `${theme.colors.secondary}45`]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.activeFill}
+                  style={styles.activeFill}
               />
             ) : null}
-            {selected ? <View style={styles.orbitMark} /> : null}
+            {selected ? (
+              <View
+                style={[
+                  styles.orbitMark,
+                  { borderColor: "rgba(255,255,255,0.72)" },
+                ]}
+              />
+            ) : null}
             {tab.icon}
             <Text
               style={[
@@ -77,6 +90,7 @@ const styles = StyleSheet.create({
   row: {
     gap: 8,
     paddingRight: 10,
+    paddingVertical: 2,
   },
   tab: {
     minHeight: 40,
@@ -88,6 +102,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 7,
     overflow: "hidden",
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
   },
   activeFill: {
     position: "absolute",
@@ -101,7 +118,6 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.72)",
     transform: [{ rotate: "-22deg" }],
   },
   text: {
