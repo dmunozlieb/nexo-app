@@ -26,6 +26,7 @@ type AuthScaffoldProps = PropsWithChildren<{
   storyTitle?: string | undefined;
   storyCopy?: string | undefined;
   panelVariant?: "docked" | "compact" | undefined;
+  mobileMascot?: "hero" | "inline" | undefined;
 }>;
 
 const particles = [
@@ -37,6 +38,30 @@ const particles = [
   { top: "86%", left: "68%", size: 2, opacity: 0.36 },
 ] as const;
 
+const storyStats = [
+  {
+    kicker: "Ecos hoy",
+    value: "12.4k",
+    label: "Reacciones con intencion",
+    Icon: Sparkles,
+    tone: "accent" as const,
+  },
+  {
+    kicker: "Orbitas",
+    value: "+248",
+    label: "Comunidades activas",
+    Icon: Orbit,
+    tone: "secondary" as const,
+  },
+  {
+    kicker: "Moderacion",
+    value: "<24h",
+    label: "Reportes resueltos",
+    Icon: ShieldCheck,
+    tone: "success" as const,
+  },
+] as const;
+
 export function AuthScaffold({
   title,
   subtitle,
@@ -44,36 +69,34 @@ export function AuthScaffold({
   storyTitle = "Vuelve a tu orbita",
   storyCopy = "Entra a tus Orbitas, retoma conversaciones y descubre senales nuevas sin perder el hilo.",
   panelVariant = "docked",
+  mobileMascot = "hero",
   children,
 }: AuthScaffoldProps) {
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
-  const isDesktop = width >= 980;
-  const isDockedDesktop = isDesktop && height >= 720;
-  const isShortDesktop = isDesktop && height < 900;
-  const isVeryShortDesktop = isDesktop && height < 780;
-  const isNarrow = width < 390;
-  const isShort = height < 720;
-  const isVeryShort = height < 640;
-  const compactDesktopPanel = isDockedDesktop && panelVariant === "compact";
-  const dockedDesktopPanel = isDockedDesktop && !compactDesktopPanel;
-  const desktopInsetX = isVeryShortDesktop ? 16 : isShortDesktop ? 20 : 28;
-  const desktopInsetY = isVeryShortDesktop ? 12 : isShortDesktop ? 18 : 24;
   const reduceMotion = useReduceMotion();
   const mascotFloat = useRef(new Animated.Value(0)).current;
   const particlePulse = useRef(new Animated.Value(0)).current;
-  const mobileMascotSize = isVeryShort
-    ? 76
-    : isShort
-      ? 92
-      : isNarrow
-        ? 104
-        : 118;
-  const desktopMascotSize = isVeryShortDesktop
-    ? 210
-    : isShortDesktop
-      ? Math.min(270, Math.max(220, width * 0.15))
-      : Math.min(330, Math.max(230, width * 0.18));
+  const m = getAuthMetrics(width, height, panelVariant);
+  const {
+    isDesktop,
+    isDockedDesktop,
+    isShortDesktop,
+    isShort,
+    isVeryShort,
+    isNarrow,
+    compactDesktopPanel,
+    dockedDesktopPanel,
+    desktopInsetX,
+    desktopInsetY,
+    mobileMascotSize,
+    desktopMascotSize,
+    headerGap,
+    formGap,
+    cardMaxWidth,
+    cardPadding,
+    cardGap,
+  } = m;
   const mascotTranslateY = mascotFloat.interpolate({
     inputRange: [0, 1],
     outputRange: [0, isDesktop ? -8 : -5],
@@ -82,24 +105,6 @@ export function AuthScaffold({
     inputRange: [0, 1],
     outputRange: [0.28, 0.68],
   });
-  const headerGap = compactDesktopPanel
-    ? 7
-    : isDockedDesktop && isShortDesktop
-      ? 3
-      : isShort && !isDesktop
-        ? 4
-        : 6;
-  const formGap = isDockedDesktop
-    ? compactDesktopPanel
-      ? 14
-      : isVeryShortDesktop
-        ? 7
-        : isShortDesktop
-          ? 9
-          : 11
-    : isShort && !isDesktop
-      ? 10
-      : 13;
 
   useEffect(() => {
     if (reduceMotion) {
@@ -310,48 +315,51 @@ export function AuthScaffold({
             </Text>
 
             <View style={styles.storySignals}>
-              <View
-                style={[
-                  styles.signalItem,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
-                <Orbit size={18} color={theme.colors.secondary} />
-                <Text style={[styles.signalText, { color: theme.colors.text }]}>
-                  Orbitas vivas
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.signalItem,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
-                <Sparkles size={18} color={theme.colors.accent} />
-                <Text style={[styles.signalText, { color: theme.colors.text }]}>
-                  Ecos con sentido
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.signalItem,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
-                <ShieldCheck size={18} color={theme.colors.success} />
-                <Text style={[styles.signalText, { color: theme.colors.text }]}>
-                  Seguridad UGC
-                </Text>
-              </View>
+              {storyStats.map((stat) => {
+                const accent =
+                  stat.tone === "secondary"
+                    ? theme.colors.secondary
+                    : stat.tone === "accent"
+                      ? theme.colors.accent
+                      : theme.colors.success;
+                return (
+                  <View
+                    key={stat.label}
+                    style={[
+                      styles.statCard,
+                      {
+                        backgroundColor: theme.colors.surface,
+                        borderColor: `${accent}33`,
+                      },
+                    ]}
+                  >
+                    <View style={styles.statHead}>
+                      <stat.Icon size={14} color={accent} />
+                      <Text
+                        style={[styles.statTone, { color: accent }]}
+                        numberOfLines={1}
+                      >
+                        {stat.kicker}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[styles.statValue, { color: theme.colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {stat.value}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.statLabel,
+                        { color: theme.colors.textMuted },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {stat.label}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           </View>
         ) : null}
@@ -365,37 +373,9 @@ export function AuthScaffold({
               shadowColor: theme.colors.secondary,
             },
             {
-              maxWidth: isDockedDesktop ? 470 : isDesktop ? 440 : isNarrow ? 348 : 394,
-              padding: isDockedDesktop
-                ? compactDesktopPanel
-                  ? isShortDesktop
-                    ? 22
-                    : 28
-                  : isVeryShortDesktop
-                    ? 16
-                    : isShortDesktop
-                      ? 18
-                      : 24
-                : isDesktop
-                  ? 24
-                  : isShort
-                    ? 16
-                    : 18,
-              gap: isDockedDesktop
-                ? compactDesktopPanel
-                  ? isShortDesktop
-                    ? 13
-                    : 16
-                  : isVeryShortDesktop
-                    ? 9
-                    : isShortDesktop
-                      ? 11
-                      : 14
-                : isDesktop
-                  ? 18
-                  : isShort
-                    ? 12
-                    : 15,
+              maxWidth: cardMaxWidth,
+              padding: cardPadding,
+              gap: cardGap,
             },
             dockedDesktopPanel ? styles.cardDocked : null,
             compactDesktopPanel ? styles.cardCompactDocked : null,
@@ -418,16 +398,28 @@ export function AuthScaffold({
             style={styles.cardGlow}
           />
 
-          <View pointerEvents="none" style={[styles.brand, webNoSelect]}>
-            <View style={styles.brandIcon}>
-              <NexoMark size={44} />
-            </View>
-            <Text style={[styles.brandText, { color: theme.colors.text }]}>
-              Nexo
-            </Text>
-          </View>
-
           {!isDesktop ? (
+            <View
+              pointerEvents="none"
+              style={[
+                mobileMascot === "inline" ? styles.brandInline : styles.brand,
+                webNoSelect,
+              ]}
+            >
+              <View style={styles.brandIcon}>
+                {mobileMascot === "inline" ? (
+                  <NexoMascot size={44} animated={!reduceMotion} />
+                ) : (
+                  <NexoMark size={44} />
+                )}
+              </View>
+              <Text style={[styles.brandText, { color: theme.colors.text }]}>
+                Nexo
+              </Text>
+            </View>
+          ) : null}
+
+          {!isDesktop && mobileMascot === "hero" ? (
             <View
               pointerEvents="none"
               style={[styles.mascotStage, { minHeight: mobileMascotSize }]}
@@ -463,14 +455,10 @@ export function AuthScaffold({
               <Text
                 style={[
                   styles.cardEyebrow,
-                  {
-                    color: theme.colors.secondary,
-                    backgroundColor: `${theme.colors.secondary}14`,
-                    borderColor: `${theme.colors.secondary}42`,
-                  },
+                  { color: theme.colors.secondary },
                 ]}
               >
-                {eyebrow}
+                {`· ${eyebrow}`}
               </Text>
             ) : null}
             <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -490,6 +478,116 @@ export function AuthScaffold({
       </View>
     </ScreenContainer>
   );
+}
+
+function getAuthMetrics(
+  width: number,
+  height: number,
+  panelVariant: "docked" | "compact",
+) {
+  const isDesktop = width >= 980;
+  const isDockedDesktop = isDesktop && height >= 720;
+  const isShortDesktop = isDesktop && height < 900;
+  const isVeryShortDesktop = isDesktop && height < 780;
+  const isNarrow = width < 390;
+  const isShort = height < 720;
+  const isVeryShort = height < 640;
+  const compactDesktopPanel = isDockedDesktop && panelVariant === "compact";
+  const dockedDesktopPanel = isDockedDesktop && !compactDesktopPanel;
+
+  const desktopInsetX = isVeryShortDesktop ? 16 : isShortDesktop ? 20 : 28;
+  const desktopInsetY = isVeryShortDesktop ? 12 : isShortDesktop ? 18 : 24;
+
+  const mobileMascotSize = isVeryShort
+    ? 76
+    : isShort
+      ? 92
+      : isNarrow
+        ? 104
+        : 118;
+  const desktopMascotSize = isVeryShortDesktop
+    ? 210
+    : isShortDesktop
+      ? Math.min(270, Math.max(220, width * 0.15))
+      : Math.min(330, Math.max(230, width * 0.18));
+
+  const headerGap = compactDesktopPanel
+    ? 7
+    : isDockedDesktop && isShortDesktop
+      ? 3
+      : isShort && !isDesktop
+        ? 4
+        : 6;
+  const formGap = isDockedDesktop
+    ? compactDesktopPanel
+      ? 14
+      : isVeryShortDesktop
+        ? 7
+        : isShortDesktop
+          ? 9
+          : 11
+    : isShort && !isDesktop
+      ? 10
+      : 13;
+
+  const cardMaxWidth = isDockedDesktop
+    ? 470
+    : isDesktop
+      ? 440
+      : isNarrow
+        ? 348
+        : 394;
+  const cardPadding = isDockedDesktop
+    ? compactDesktopPanel
+      ? isShortDesktop
+        ? 22
+        : 28
+      : isVeryShortDesktop
+        ? 16
+        : isShortDesktop
+          ? 18
+          : 24
+    : isDesktop
+      ? 24
+      : isShort
+        ? 16
+        : 18;
+  const cardGap = isDockedDesktop
+    ? compactDesktopPanel
+      ? isShortDesktop
+        ? 13
+        : 16
+      : isVeryShortDesktop
+        ? 9
+        : isShortDesktop
+          ? 11
+          : 14
+    : isDesktop
+      ? 18
+      : isShort
+        ? 12
+        : 15;
+
+  return {
+    isDesktop,
+    isDockedDesktop,
+    isShortDesktop,
+    isVeryShortDesktop,
+    isNarrow,
+    isShort,
+    isVeryShort,
+    compactDesktopPanel,
+    dockedDesktopPanel,
+    desktopInsetX,
+    desktopInsetY,
+    mobileMascotSize,
+    desktopMascotSize,
+    headerGap,
+    formGap,
+    cardMaxWidth,
+    cardPadding,
+    cardGap,
+  };
 }
 
 function useReduceMotion() {
@@ -689,7 +787,7 @@ const styles = StyleSheet.create({
   storySignals: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 12,
   },
   signalItem: {
     minHeight: 42,
@@ -703,6 +801,36 @@ const styles = StyleSheet.create({
   signalText: {
     fontSize: typography.small,
     fontWeight: "900",
+  },
+  statCard: {
+    flexGrow: 1,
+    flexBasis: 0,
+    minWidth: 120,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 4,
+  },
+  statHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  statTone: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: "700",
   },
   card: {
     width: "100%",
@@ -750,6 +878,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
+  brandInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
   brandIcon: {
     width: 48,
     height: 48,
@@ -776,12 +910,9 @@ const styles = StyleSheet.create({
   },
   cardEyebrow: {
     alignSelf: "center",
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    fontSize: typography.tiny,
+    fontSize: 10,
     fontWeight: "900",
+    letterSpacing: 2.4,
     textAlign: "center",
     textTransform: "uppercase",
   },

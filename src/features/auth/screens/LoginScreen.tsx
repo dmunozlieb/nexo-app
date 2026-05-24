@@ -9,7 +9,7 @@ import {
 import { Link, router } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react-native";
+import { ArrowRight, Eye, EyeOff, Mail, Lock } from "lucide-react-native";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
 import { env } from "../../../lib/env";
@@ -20,13 +20,21 @@ import {
 } from "../../../utils/validation";
 import { getErrorMessage } from "../../../utils/errors";
 import { AuthScaffold } from "../components/AuthScaffold";
+import { SocialAuthRow } from "../components/SocialAuthRow";
 import { useLoginMutation } from "../hooks/useAuthMutations";
 
-const demoUsers = [
-  { name: "Luna", role: "Exploradora", email: "luna@nexo.local" },
-  { name: "Kai", role: "Moderador", email: "kai@nexo.local" },
-  { name: "Iris", role: "Admin", email: "iris@nexo.local" },
-] as const;
+type DemoOrbColor = "secondary" | "primary" | "accent";
+
+const demoUsers: ReadonlyArray<{
+  name: string;
+  role: string;
+  email: string;
+  color: DemoOrbColor;
+}> = [
+  { name: "Luna", role: "Exploradora", email: "luna@nexo.local", color: "secondary" },
+  { name: "Kai", role: "Moderador", email: "kai@nexo.local", color: "primary" },
+  { name: "Iris", role: "Admin", email: "iris@nexo.local", color: "accent" },
+];
 
 export function LoginScreen() {
   const theme = useTheme();
@@ -86,6 +94,7 @@ export function LoginScreen() {
           </Text>
         </View>
       ) : null}
+      {!env.demoMode ? <SocialAuthRow /> : null}
       <Controller
         control={form.control}
         name="email"
@@ -183,8 +192,8 @@ export function LoginScreen() {
           style={[
             styles.demoBlock,
             {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderColor: "rgba(255,255,255,0.1)",
+              backgroundColor: "rgba(255,255,255,0.04)",
+              borderColor: "rgba(255,255,255,0.08)",
             },
           ]}
         >
@@ -193,40 +202,65 @@ export function LoginScreen() {
               Acceso demo
             </Text>
             <Text style={[styles.demoHint, { color: theme.colors.textFaint }]}>
-              Rellena credenciales de prueba
+              Elige una orbita para entrar
             </Text>
           </View>
           <View style={styles.demoUsers}>
-            {demoUsers.map((user) => (
-              <Pressable
-                key={user.email}
-                accessibilityRole="button"
-                accessibilityLabel={`Usar demo ${user.name}, ${user.role}`}
-                onPress={() => fillDemoUser(user.email)}
-                style={({ pressed }) => [
-                  styles.demoChip,
-                  {
-                    backgroundColor: theme.colors.elevated,
-                    borderColor: theme.colors.border,
-                    opacity: pressed ? 0.72 : 1,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.demoChipName, { color: theme.colors.text }]}
-                >
-                  {user.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.demoChipRole,
-                    { color: theme.colors.textFaint },
+            {demoUsers.map((user) => {
+              const accent = theme.colors[user.color];
+              return (
+                <Pressable
+                  key={user.email}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Usar demo ${user.name}, ${user.role}`}
+                  onPress={() => fillDemoUser(user.email)}
+                  style={({ pressed }) => [
+                    styles.demoChip,
+                    {
+                      backgroundColor: theme.colors.elevated,
+                      borderColor: pressed ? accent : `${accent}3D`,
+                      shadowColor: accent,
+                      shadowOpacity: pressed ? 0.45 : 0.22,
+                    },
                   ]}
                 >
-                  {user.role}
-                </Text>
-              </Pressable>
-            ))}
+                  <View
+                    style={[
+                      styles.demoOrbHalo,
+                      { backgroundColor: `${accent}22` },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.demoOrb,
+                      {
+                        backgroundColor: `${accent}1C`,
+                        borderColor: accent,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.demoOrbLetter, { color: accent }]}>
+                      {user.name[0]}
+                    </Text>
+                  </View>
+                  <View style={styles.demoChipText}>
+                    <Text
+                      style={[styles.demoChipName, { color: theme.colors.text }]}
+                    >
+                      {user.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.demoChipRole,
+                        { color: theme.colors.textFaint },
+                      ]}
+                    >
+                      {user.role}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       ) : null}
@@ -235,12 +269,13 @@ export function LoginScreen() {
         size="lg"
         loading={login.isPending}
         disabled={login.isPending}
+        gradient={[theme.colors.primary, theme.colors.accent]}
+        iconRight={<ArrowRight size={18} color="#FFFFFF" />}
         style={[
           styles.loginButton,
           {
-            shadowColor: theme.colors.secondary,
-            backgroundColor: theme.colors.primary,
-            borderColor: theme.colors.primary,
+            shadowColor: theme.colors.primary,
+            borderColor: "transparent",
           },
         ]}
         onPress={form.handleSubmit(handleLogin)}
@@ -248,7 +283,7 @@ export function LoginScreen() {
       <View style={styles.links}>
         <Link
           href="/forgot-password"
-          style={[styles.link, { color: theme.colors.secondary }]}
+          style={[styles.linkMuted, { color: theme.colors.textMuted }]}
         >
           Olvidaste tu contrasena?
         </Link>
@@ -312,6 +347,10 @@ const styles = StyleSheet.create({
   link: {
     fontWeight: "800",
   },
+  linkMuted: {
+    fontWeight: "700",
+    fontSize: 13,
+  },
   eyeButton: {
     width: 40,
     height: 40,
@@ -356,15 +395,47 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   demoChip: {
-    minHeight: 42,
+    minHeight: 56,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 10,
-    paddingVertical: 7,
-    alignItems: "flex-start",
-    justifyContent: "center",
+    paddingVertical: 8,
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 9,
+    justifyContent: "flex-start",
     flexGrow: 1,
-    minWidth: 92,
+    flexBasis: "30%",
+    minWidth: 96,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    overflow: "hidden",
+  },
+  demoOrbHalo: {
+    position: "absolute",
+    left: -6,
+    top: -6,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    opacity: 0.6,
+  },
+  demoOrb: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  demoOrbLetter: {
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  demoChipText: {
+    flex: 1,
+    minWidth: 0,
   },
   demoChipName: {
     fontSize: 13,

@@ -16,11 +16,13 @@ import {
   EyeOff,
   Lock,
   Mail,
+  Rocket,
   ShieldCheck,
   UserRound,
 } from "lucide-react-native";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
+import { env } from "../../../lib/env";
 import { useTheme } from "../../../theme/useTheme";
 import {
   authRegisterSchema,
@@ -28,6 +30,7 @@ import {
 } from "../../../utils/validation";
 import { getErrorMessage } from "../../../utils/errors";
 import { AuthScaffold } from "../components/AuthScaffold";
+import { SocialAuthRow } from "../components/SocialAuthRow";
 import { useRegisterMutation } from "../hooks/useAuthMutations";
 
 export function RegisterScreen() {
@@ -79,6 +82,8 @@ export function RegisterScreen() {
       subtitle="Crea tu perfil y despues elige tus intereses para encontrar tus primeras Orbitas."
       storyTitle="Empieza tu viaje orbital"
       storyCopy="Crea tu perfil, descubre comunidades y conecta con personas que comparten tus intereses."
+      mobileMascot="inline"
+      panelVariant="compact"
     >
       {hasValidationErrors ? (
         <View
@@ -98,6 +103,7 @@ export function RegisterScreen() {
           </Text>
         </View>
       ) : null}
+      {!env.demoMode ? <SocialAuthRow /> : null}
       <Controller
         control={form.control}
         name="displayName"
@@ -287,12 +293,13 @@ export function RegisterScreen() {
         size={compactForm ? "md" : "lg"}
         loading={register.isPending}
         disabled={register.isPending}
+        gradient={[theme.colors.primary, theme.colors.accent]}
+        iconRight={<Rocket size={18} color="#FFFFFF" />}
         style={[
           styles.primaryButton,
           {
-            backgroundColor: theme.colors.primary,
-            borderColor: theme.colors.primary,
-            shadowColor: theme.colors.secondary,
+            borderColor: "transparent",
+            shadowColor: theme.colors.primary,
           },
         ]}
         onPress={form.handleSubmit(handleRegister)}

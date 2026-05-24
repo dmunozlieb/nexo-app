@@ -4,10 +4,12 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  View,
   type StyleProp,
   type PressableProps,
   type ViewStyle,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { hitSlop, radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
 
@@ -19,7 +21,9 @@ type ButtonProps = Omit<PressableProps, "style"> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   icon?: ReactNode;
+  iconRight?: ReactNode;
   loading?: boolean;
+  gradient?: readonly [string, string] | undefined;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -28,7 +32,9 @@ export function Button({
   variant = "primary",
   size = "md",
   icon,
+  iconRight,
   loading,
+  gradient,
   disabled,
   style,
   ...props
@@ -52,6 +58,8 @@ export function Button({
         ? colors.border
         : background;
 
+  const hasGradient = Boolean(gradient);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -61,8 +69,9 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         styles[size],
+        hasGradient ? styles.clipped : null,
         {
-          backgroundColor: background,
+          backgroundColor: hasGradient ? "transparent" : background,
           borderColor,
           opacity: disabled ? 0.48 : pressed ? 0.82 : 1,
         },
@@ -70,10 +79,19 @@ export function Button({
       ]}
       {...props}
     >
+      {hasGradient && gradient ? (
+        <LinearGradient
+          colors={gradient as unknown as readonly [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
       {loading ? <ActivityIndicator color={color} /> : icon}
       <Text style={[styles.text, { color }]} numberOfLines={1}>
         {title}
       </Text>
+      {iconRight && !loading ? <View>{iconRight}</View> : null}
     </Pressable>
   );
 }
@@ -87,6 +105,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
+  },
+  clipped: {
+    overflow: "hidden",
   },
   sm: {
     minHeight: 36,
