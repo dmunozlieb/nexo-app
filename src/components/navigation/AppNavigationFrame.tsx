@@ -15,6 +15,7 @@ import { useTheme } from "../../theme/useTheme";
 import type { CommunityWithMeta } from "../../types/domain";
 import { AppBottomNav } from "./AppBottomNav";
 import { AppSidebar, APP_SIDEBAR_WIDTH } from "./AppSidebar";
+import { AppTopBar, APP_TOP_BAR_HEIGHT } from "./AppTopBar";
 import type { NavItemConfig } from "./NavItem";
 
 const DESKTOP_WIDTH = 980;
@@ -80,14 +81,16 @@ export function AppNavigationFrame({ children }: PropsWithChildren) {
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       {isDesktop ? (
         <AppSidebar
-          items={NAV_ITEMS}
+          items={NAV_ITEMS.filter((item) => item.routeName !== "profile")}
           activeRouteName={activeRouteName}
           topInset={insets.top}
           bottomInset={insets.bottom}
           communities={joinedCommunities.data ?? []}
           loadingCommunities={joinedCommunities.isLoading}
+          profile={auth.profile}
           onSelect={handleSelect}
           onOpenCommunity={handleOpenCommunity}
+          onOpenProfile={() => router.push("/profile")}
         />
       ) : null}
       <View
@@ -98,7 +101,14 @@ export function AppNavigationFrame({ children }: PropsWithChildren) {
             : { paddingBottom: MOBILE_NAV_SPACE },
         ]}
       >
-        {children}
+        {isDesktop ? (
+          <AppTopBar
+            profile={auth.profile}
+            onOpenSearch={() => router.push("/discover")}
+            onOpenProfile={() => router.push("/profile")}
+          />
+        ) : null}
+        <View style={styles.sceneContent}>{children}</View>
       </View>
       {!isDesktop ? (
         <AppBottomNav
@@ -111,6 +121,8 @@ export function AppNavigationFrame({ children }: PropsWithChildren) {
     </View>
   );
 }
+
+export { APP_TOP_BAR_HEIGHT };
 
 function getActiveRouteName(pathname: string) {
   if (pathname.startsWith("/discover")) {
@@ -141,5 +153,9 @@ const styles = StyleSheet.create({
   },
   scene: {
     flex: 1,
+  },
+  sceneContent: {
+    flex: 1,
+    minHeight: 0,
   },
 });

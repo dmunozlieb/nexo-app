@@ -1,12 +1,12 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { Radio, Users } from "lucide-react-native";
+import { ChevronRight, Settings } from "lucide-react-native";
 import { Avatar } from "../ui/Avatar";
 import { NexoMark } from "../ui/NexoMark";
 import { radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
-import type { CommunityWithMeta } from "../../types/domain";
+import type { CommunityWithMeta, Profile } from "../../types/domain";
 import { formatCompactNumber } from "../../utils/format";
 import { CreateActionButton } from "./CreateActionButton";
 import { NavItem, type NavItemConfig } from "./NavItem";
@@ -20,8 +20,10 @@ type AppSidebarProps = {
   bottomInset: number;
   communities: CommunityWithMeta[];
   loadingCommunities?: boolean;
+  profile: Profile | null;
   onSelect: (item: NavItemConfig) => void;
   onOpenCommunity: (community: CommunityWithMeta) => void;
+  onOpenProfile?: () => void;
 };
 
 export function AppSidebar({
@@ -31,10 +33,14 @@ export function AppSidebar({
   bottomInset,
   communities,
   loadingCommunities,
+  profile,
   onSelect,
   onOpenCommunity,
+  onOpenProfile,
 }: AppSidebarProps) {
   const theme = useTheme();
+  const displayName = profile?.display_name ?? profile?.username ?? "viajero";
+  const handleLabel = profile?.username ? `@${profile.username}` : "Nexo";
 
   return (
     <View
@@ -42,8 +48,8 @@ export function AppSidebar({
         styles.root,
         {
           width: APP_SIDEBAR_WIDTH,
-          paddingTop: topInset + 16,
-          paddingBottom: Math.max(bottomInset, 16),
+          paddingTop: topInset + 18,
+          paddingBottom: Math.max(bottomInset, 14),
           borderColor: theme.colors.border,
         },
       ]}
@@ -55,14 +61,14 @@ export function AppSidebar({
         style={styles.blur}
       />
       <LinearGradient
-        colors={["rgba(124,92,255,0.14)", "rgba(0,212,255,0.08)", "rgba(255,79,216,0.08)"]}
+        colors={["rgba(124,92,255,0.12)", "rgba(0,212,255,0.06)", "rgba(255,79,216,0.08)"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.backdrop}
       />
 
       <View style={styles.brand}>
-        <NexoMark size={42} />
+        <NexoMark size={40} />
         <View style={styles.brandCopy}>
           <Text style={[styles.brandName, { color: theme.colors.text }]}>Nexo</Text>
           <Text style={[styles.brandMeta, { color: theme.colors.textFaint }]}>
@@ -93,8 +99,8 @@ export function AppSidebar({
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Tus Orbitas</Text>
-        <View style={[styles.countPill, { backgroundColor: theme.colors.elevated }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>Tus Orbitas</Text>
+        <View style={[styles.countPill, { backgroundColor: "rgba(255,255,255,0.06)" }]}>
           <Text style={[styles.countText, { color: theme.colors.textMuted }]}>
             {communities.length}
           </Text>
@@ -105,39 +111,55 @@ export function AppSidebar({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.communities}
       >
-        {communities.slice(0, 10).map((community) => (
-          <Pressable
-            key={community.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Abrir Orbita ${community.name}`}
-            onPress={() => onOpenCommunity(community)}
-            style={({ pressed }) => [
-              styles.communityRow,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                opacity: pressed ? 0.78 : 1,
-              },
-            ]}
-          >
-            <Avatar uri={community.avatar_url} label={community.name} size={34} />
-            <View style={styles.communityCopy}>
-              <Text style={[styles.communityName, { color: theme.colors.text }]} numberOfLines={1}>
-                {community.name}
-              </Text>
-              <View style={styles.communityMeta}>
-                <Users size={12} color={theme.colors.textFaint} />
-                <Text style={[styles.communityMetaText, { color: theme.colors.textFaint }]}>
-                  {formatCompactNumber(community.member_count)}
+        {communities.slice(0, 10).map((community) => {
+          const online = community.online_count ?? 0;
+          const isLive = online > 0;
+
+          return (
+            <Pressable
+              key={community.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir Orbita ${community.name}`}
+              onPress={() => onOpenCommunity(community)}
+              style={({ pressed, hovered }) => [
+                styles.communityRow,
+                {
+                  backgroundColor: hovered
+                    ? "rgba(255,255,255,0.06)"
+                    : "transparent",
+                  opacity: pressed ? 0.78 : 1,
+                },
+              ]}
+            >
+              <View style={styles.communityAvatarWrap}>
+                <Avatar uri={community.avatar_url} label={community.name} size={32} />
+                {isLive ? (
+                  <View
+                    style={[
+                      styles.communityLiveDot,
+                      { backgroundColor: theme.colors.success },
+                    ]}
+                  />
+                ) : null}
+              </View>
+              <View style={styles.communityCopy}>
+                <Text
+                  style={[styles.communityName, { color: theme.colors.text }]}
+                  numberOfLines={1}
+                >
+                  {community.name}
                 </Text>
-                <Radio size={12} color={theme.colors.success} />
-                <Text style={[styles.communityMetaText, { color: theme.colors.textFaint }]}>
-                  {formatCompactNumber(community.online_count ?? 1)}
+                <Text
+                  style={[styles.communityMetaText, { color: theme.colors.textFaint }]}
+                  numberOfLines={1}
+                >
+                  {formatCompactNumber(community.member_count)} miembros
+                  {isLive ? ` - ${formatCompactNumber(online)} online` : ""}
                 </Text>
               </View>
-            </View>
-          </Pressable>
-        ))}
+            </Pressable>
+          );
+        })}
         {!loadingCommunities && communities.length === 0 ? (
           <View style={[styles.empty, { borderColor: theme.colors.border }]}>
             <Text style={[styles.emptyText, { color: theme.colors.textFaint }]}>
@@ -146,6 +168,44 @@ export function AppSidebar({
           </View>
         ) : null}
       </ScrollView>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Abrir mi perfil"
+        onPress={onOpenProfile}
+        style={({ pressed, hovered }) => [
+          styles.profileFooter,
+          {
+            borderColor: theme.colors.border,
+            backgroundColor: hovered
+              ? "rgba(255,255,255,0.06)"
+              : "rgba(7,11,26,0.42)",
+            opacity: pressed ? 0.82 : 1,
+          },
+        ]}
+      >
+        <Avatar
+          uri={profile?.avatar_url}
+          label={displayName}
+          size={36}
+        />
+        <View style={styles.profileFooterCopy}>
+          <Text
+            style={[styles.profileFooterName, { color: theme.colors.text }]}
+            numberOfLines={1}
+          >
+            {displayName}
+          </Text>
+          <Text
+            style={[styles.profileFooterHandle, { color: theme.colors.textFaint }]}
+            numberOfLines={1}
+          >
+            {handleLabel}
+          </Text>
+        </View>
+        <Settings size={15} color={theme.colors.textFaint} />
+        <ChevronRight size={14} color={theme.colors.textFaint} />
+      </Pressable>
     </View>
   );
 }
@@ -190,8 +250,8 @@ const styles = StyleSheet.create({
   },
   brandMeta: {
     fontSize: typography.tiny,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   navList: {
     gap: 8,
@@ -205,8 +265,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typography.small,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontWeight: "700",
   },
   countPill: {
     minWidth: 28,
@@ -221,35 +280,43 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   communities: {
-    gap: 8,
+    gap: 2,
     paddingBottom: 12,
   },
   communityRow: {
-    minHeight: 58,
-    borderWidth: 1,
+    minHeight: 48,
     borderRadius: radius.md,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  communityAvatarWrap: {
+    position: "relative",
+  },
+  communityLiveDot: {
+    position: "absolute",
+    right: -1,
+    bottom: -1,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: "#070B1A",
   },
   communityCopy: {
     flex: 1,
     minWidth: 0,
-    gap: 3,
+    gap: 2,
   },
   communityName: {
     fontSize: typography.small,
-    fontWeight: "900",
-  },
-  communityMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
+    fontWeight: "800",
   },
   communityMetaText: {
     fontSize: typography.tiny,
-    fontWeight: "800",
+    fontWeight: "700",
   },
   empty: {
     minHeight: 58,
@@ -263,5 +330,28 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: typography.small,
     fontWeight: "800",
+  },
+  profileFooter: {
+    marginTop: 10,
+    minHeight: 56,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  profileFooterCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  profileFooterName: {
+    fontSize: typography.small,
+    fontWeight: "900",
+  },
+  profileFooterHandle: {
+    fontSize: typography.tiny,
+    fontWeight: "700",
   },
 });

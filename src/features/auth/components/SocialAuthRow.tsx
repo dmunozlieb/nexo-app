@@ -1,41 +1,35 @@
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 
-type Provider = "google" | "apple";
+export type SocialAuthProvider = "google";
 
 const providers: ReadonlyArray<{
-  id: Provider;
+  id: SocialAuthProvider;
   label: string;
   letter: string;
   ring: string;
 }> = [
   { id: "google", label: "Google", letter: "G", ring: "#4285F4" },
-  { id: "apple", label: "Apple", letter: "A", ring: "#FFFFFF" },
 ];
 
 type SocialAuthRowProps = {
-  onProvider?: (provider: Provider) => void;
+  onProvider?: (provider: SocialAuthProvider) => void;
   dividerLabel?: string;
+  loadingProvider?: SocialAuthProvider | null | undefined;
 };
 
 export function SocialAuthRow({
   onProvider,
   dividerLabel = "o continua con email",
+  loadingProvider,
 }: SocialAuthRowProps) {
   const theme = useTheme();
 
-  function handlePress(provider: Provider) {
+  function handlePress(provider: SocialAuthProvider) {
     if (onProvider) {
       onProvider(provider);
-      return;
     }
-    if (Platform.OS === "web") {
-      // eslint-disable-next-line no-console
-      console.warn(`Social auth (${provider}) - proximamente`);
-      return;
-    }
-    Alert.alert("Proximamente", `Acceso con ${provider} aun no disponible.`);
   }
 
   return (
@@ -46,6 +40,7 @@ export function SocialAuthRow({
             key={p.id}
             accessibilityRole="button"
             accessibilityLabel={`Continuar con ${p.label}`}
+            disabled={Boolean(loadingProvider)}
             onPress={() => handlePress(p.id)}
             style={({ pressed }) => [
               styles.button,
@@ -54,7 +49,7 @@ export function SocialAuthRow({
                 borderColor: pressed
                   ? `${theme.colors.secondary}66`
                   : "rgba(255,255,255,0.1)",
-                opacity: pressed ? 0.85 : 1,
+                opacity: loadingProvider ? 0.58 : pressed ? 0.85 : 1,
               },
             ]}
           >
@@ -67,7 +62,7 @@ export function SocialAuthRow({
               style={[styles.buttonText, { color: theme.colors.text }]}
               numberOfLines={1}
             >
-              {p.label}
+              {loadingProvider === p.id ? "Conectando..." : p.label}
             </Text>
           </Pressable>
         ))}

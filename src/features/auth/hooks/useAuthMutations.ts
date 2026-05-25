@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import {
   resetPassword,
   signInWithEmail,
+  signInWithGoogle,
   signOut,
   signUpWithEmail,
 } from "../services/auth-service";
@@ -15,6 +16,12 @@ export function useLoginMutation() {
 export function useRegisterMutation() {
   return useMutation({
     mutationFn: signUpWithEmail,
+  });
+}
+
+export function useGoogleLoginMutation() {
+  return useMutation({
+    mutationFn: signInWithGoogle,
   });
 }
 

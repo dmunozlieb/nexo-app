@@ -101,7 +101,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       session,
       profile,
       isAuthenticated: Boolean(session),
-      onboardingComplete: isProfileComplete(profile),
+      onboardingComplete: env.demoMode
+        ? Boolean(session)
+        : isProfileComplete(profile),
       refreshProfile,
     }),
     [initialized, profile, refreshProfile, session],

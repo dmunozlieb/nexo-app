@@ -21,7 +21,10 @@ import {
 import { getErrorMessage } from "../../../utils/errors";
 import { AuthScaffold } from "../components/AuthScaffold";
 import { SocialAuthRow } from "../components/SocialAuthRow";
-import { useLoginMutation } from "../hooks/useAuthMutations";
+import {
+  useGoogleLoginMutation,
+  useLoginMutation,
+} from "../hooks/useAuthMutations";
 
 type DemoOrbColor = "secondary" | "primary" | "accent";
 
@@ -42,6 +45,7 @@ export function LoginScreen() {
   const [authError, setAuthError] = useState<string | null>(null);
   const passwordRef = useRef<RNTextInput | null>(null);
   const login = useLoginMutation();
+  const googleLogin = useGoogleLoginMutation();
   const form = useForm<AuthLoginInput>({
     resolver: zodResolver(authLoginSchema),
     mode: "onTouched",
@@ -57,6 +61,16 @@ export function LoginScreen() {
     try {
       setAuthError(null);
       await login.mutateAsync(input);
+      router.replace("/");
+    } catch (error) {
+      setAuthError(getFriendlyLoginError(error));
+    }
+  }
+
+  async function handleGoogleLogin() {
+    try {
+      setAuthError(null);
+      await googleLogin.mutateAsync();
       router.replace("/");
     } catch (error) {
       setAuthError(getFriendlyLoginError(error));
@@ -94,7 +108,12 @@ export function LoginScreen() {
           </Text>
         </View>
       ) : null}
-      {!env.demoMode ? <SocialAuthRow /> : null}
+      {!env.demoMode ? (
+        <SocialAuthRow
+          onProvider={handleGoogleLogin}
+          loadingProvider={googleLogin.isPending ? "google" : null}
+        />
+      ) : null}
       <Controller
         control={form.control}
         name="email"
@@ -268,7 +287,7 @@ export function LoginScreen() {
         title="Entrar"
         size="lg"
         loading={login.isPending}
-        disabled={login.isPending}
+        disabled={login.isPending || googleLogin.isPending}
         gradient={[theme.colors.primary, theme.colors.accent]}
         iconRight={<ArrowRight size={18} color="#FFFFFF" />}
         style={[

@@ -36,6 +36,7 @@ const config: ExpoConfig = {
         color: "#7C5CFF",
       },
     ],
+    "expo-web-browser",
   ],
   ios: {
     supportsTablet: true,

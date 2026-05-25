@@ -80,20 +80,20 @@ type CommunityVisualTheme = {
 };
 
 const planetLayouts: PlanetLayout[] = [
-  { top: "19%", left: "10%", size: 96, label: "right", hue: 0 },
-  { top: "47%", left: "27%", size: 136, label: "right", hue: 1 },
-  { top: "20%", left: "58%", size: 116, label: "left", hue: 2 },
-  { top: "57%", left: "73%", size: 94, label: "left", hue: 3 },
-  { top: "12%", left: "83%", size: 74, label: "left", hue: 4 },
-  { top: "69%", left: "11%", size: 84, label: "right", hue: 5 },
+  { top: "22%", left: "18%", size: 116, label: "right", hue: 0 },
+  { top: "26%", left: "72%", size: 108, label: "left", hue: 1 },
+  { top: "62%", left: "46%", size: 132, label: "bottom", hue: 2 },
+  { top: "40%", left: "44%", size: 78, label: "left", hue: 3 },
+  { top: "70%", left: "16%", size: 92, label: "right", hue: 4 },
+  { top: "66%", left: "80%", size: 88, label: "left", hue: 5 },
 ];
 
 const compactPlanetLayouts: PlanetLayout[] = [
-  { top: "26%", left: "24%", size: 54, label: "bottom", hue: 0 },
-  { top: "27%", left: "76%", size: 58, label: "bottom", hue: 1 },
-  { top: "53%", left: "50%", size: 66, label: "bottom", hue: 2 },
-  { top: "78%", left: "28%", size: 50, label: "bottom", hue: 3 },
-  { top: "77%", left: "74%", size: 52, label: "bottom", hue: 4 },
+  { top: "22%", left: "26%", size: 58, label: "bottom", hue: 0 },
+  { top: "24%", left: "74%", size: 60, label: "bottom", hue: 1 },
+  { top: "52%", left: "50%", size: 70, label: "bottom", hue: 2 },
+  { top: "80%", left: "24%", size: 50, label: "bottom", hue: 3 },
+  { top: "80%", left: "76%", size: 52, label: "bottom", hue: 4 },
 ];
 
 const planetColors = [
@@ -196,15 +196,38 @@ const stars = [
   { top: "53%", left: "33%", size: 1 },
   { top: "44%", left: "84%", size: 1 },
   { top: "21%", left: "58%", size: 1 },
-] as const;
-
-const cosmicDust = [
-  { top: "18%", left: "16%", width: 92, height: 1, rotate: "-22deg" },
-  { top: "34%", left: "58%", width: 128, height: 1, rotate: "14deg" },
-  { top: "69%", left: "29%", width: 104, height: 1, rotate: "-11deg" },
-  { top: "82%", left: "68%", width: 76, height: 1, rotate: "21deg" },
-  { top: "48%", left: "9%", width: 54, height: 1, rotate: "9deg" },
-  { top: "25%", left: "81%", width: 58, height: 1, rotate: "-31deg" },
+  { top: "7%", left: "33%", size: 1 },
+  { top: "5%", left: "55%", size: 2 },
+  { top: "8%", left: "78%", size: 1 },
+  { top: "14%", left: "61%", size: 1 },
+  { top: "17%", left: "29%", size: 1 },
+  { top: "24%", left: "44%", size: 1 },
+  { top: "27%", left: "68%", size: 2 },
+  { top: "33%", left: "9%", size: 1 },
+  { top: "35%", left: "85%", size: 1 },
+  { top: "40%", left: "38%", size: 1 },
+  { top: "47%", left: "21%", size: 1 },
+  { top: "49%", left: "57%", size: 2 },
+  { top: "55%", left: "73%", size: 1 },
+  { top: "60%", left: "8%", size: 1 },
+  { top: "63%", left: "41%", size: 1 },
+  { top: "68%", left: "57%", size: 1 },
+  { top: "72%", left: "11%", size: 2 },
+  { top: "75%", left: "48%", size: 1 },
+  { top: "81%", left: "62%", size: 1 },
+  { top: "85%", left: "29%", size: 1 },
+  { top: "89%", left: "58%", size: 1 },
+  { top: "94%", left: "82%", size: 1 },
+  { top: "2%", left: "44%", size: 1 },
+  { top: "11%", left: "84%", size: 1 },
+  { top: "20%", left: "7%", size: 1 },
+  { top: "30%", left: "76%", size: 1 },
+  { top: "41%", left: "92%", size: 1 },
+  { top: "56%", left: "47%", size: 1 },
+  { top: "66%", left: "76%", size: 1 },
+  { top: "77%", left: "37%", size: 1 },
+  { top: "82%", left: "8%", size: 1 },
+  { top: "93%", left: "55%", size: 1 },
 ] as const;
 
 const spaceDust = [
@@ -248,7 +271,7 @@ export function GalaxyOrbitMap({
   const visibleCommunities = communities.slice(0, activeLayouts.length);
   const ambientLayouts = activeLayouts.slice(visibleCommunities.length);
   const mobileListCommunities = communities.slice(0, 8);
-  const mobileStageHeight = Math.min(380, Math.max(292, width * 0.82));
+  const mobileStageHeight = Math.min(420, Math.max(320, width * 0.92));
   const totalOnline = communities.reduce(
     (sum, community) => sum + (community.online_count ?? 0),
     0,
@@ -312,17 +335,40 @@ export function GalaxyOrbitMap({
       style={StyleSheet.absoluteFill}
     >
       <LinearGradient
-        colors={["#070B1A", "#0D1230", "#171044", "#08162F", "#070B1A"]}
+        colors={["#03050F", "#070B1F", "#0B1030", "#070B1F", "#03050F"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.deepSpaceVeil} />
+      <LinearGradient
+        colors={[
+          "rgba(20,12,52,0.55)",
+          "rgba(11,16,48,0.2)",
+          "rgba(3,5,15,0)",
+          "rgba(11,16,48,0.2)",
+          "rgba(20,12,52,0.55)",
+        ]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={[
+          "rgba(3,5,15,0.7)",
+          "rgba(3,5,15,0)",
+          "rgba(3,5,15,0)",
+          "rgba(3,5,15,0.7)",
+        ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+      />
       <LinearGradient
         colors={[
           "rgba(177,140,255,0)",
-          "rgba(177,140,255,0.22)",
-          "rgba(24,215,255,0.16)",
+          "rgba(177,140,255,0.16)",
+          "rgba(123,92,255,0.18)",
+          "rgba(24,215,255,0.1)",
           "rgba(255,79,216,0)",
         ]}
         start={{ x: 0, y: 0.5 }}
@@ -332,8 +378,8 @@ export function GalaxyOrbitMap({
       <LinearGradient
         colors={[
           "rgba(255,79,216,0)",
-          "rgba(255,79,216,0.18)",
-          "rgba(123,92,255,0.18)",
+          "rgba(255,79,216,0.12)",
+          "rgba(123,92,255,0.14)",
           "rgba(34,230,185,0)",
         ]}
         start={{ x: 0, y: 0.5 }}
@@ -343,8 +389,8 @@ export function GalaxyOrbitMap({
       <LinearGradient
         colors={[
           "rgba(24,215,255,0)",
-          "rgba(24,215,255,0.12)",
-          "rgba(177,140,255,0.16)",
+          "rgba(24,215,255,0.08)",
+          "rgba(177,140,255,0.1)",
           "rgba(255,122,168,0)",
         ]}
         start={{ x: 0, y: 0.5 }}
@@ -353,18 +399,78 @@ export function GalaxyOrbitMap({
       />
       <LinearGradient
         colors={[
+          "rgba(8,12,32,0)",
+          "rgba(34,40,90,0.16)",
+          "rgba(96,86,168,0.22)",
+          "rgba(34,40,90,0.16)",
+          "rgba(8,12,32,0)",
+        ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.milkyWayBackdrop}
+      />
+      <LinearGradient
+        colors={[
           "rgba(255,255,255,0)",
-          "rgba(255,255,255,0.2)",
-          "rgba(24,215,255,0.18)",
+          "rgba(180,176,255,0.14)",
+          "rgba(225,212,255,0.22)",
+          "rgba(180,176,255,0.14)",
           "rgba(255,255,255,0)",
         ]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
-        style={styles.galaxyCore}
+        style={styles.milkyWayBand}
       />
-      <View style={styles.galaxyCoreGlow} />
-      <View style={styles.nebulaRibbon} />
-      <View style={styles.nebulaRibbonAlt} />
+      <LinearGradient
+        colors={[
+          "rgba(255,255,255,0)",
+          "rgba(255,238,255,0.32)",
+          "rgba(255,255,255,0.48)",
+          "rgba(255,238,255,0.32)",
+          "rgba(255,255,255,0)",
+        ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.milkyWayCore}
+      />
+      <View style={styles.galacticCenter} />
+      <View style={styles.galacticCenterGlow} />
+      <LinearGradient
+        colors={[
+          "rgba(3,5,15,0.78)",
+          "rgba(3,5,15,0)",
+        ]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.4 }}
+        style={styles.vignetteTop}
+      />
+      <LinearGradient
+        colors={[
+          "rgba(3,5,15,0)",
+          "rgba(3,5,15,0.82)",
+        ]}
+        start={{ x: 0.5, y: 0.6 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.vignetteBottom}
+      />
+      <LinearGradient
+        colors={[
+          "rgba(3,5,15,0.6)",
+          "rgba(3,5,15,0)",
+        ]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 0.35, y: 0.5 }}
+        style={styles.vignetteLeft}
+      />
+      <LinearGradient
+        colors={[
+          "rgba(3,5,15,0)",
+          "rgba(3,5,15,0.6)",
+        ]}
+        start={{ x: 0.65, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.vignetteRight}
+      />
       {lightFlares.map((body) => (
         <View
           key={`${body.top}-${body.left}`}
@@ -400,22 +506,6 @@ export function GalaxyOrbitMap({
       <View style={[styles.orbitRing, styles.orbitRingOne]} />
       <View style={[styles.orbitRing, styles.orbitRingTwo]} />
       <View style={[styles.orbitRing, styles.orbitRingThree]} />
-      <View style={[styles.orbitRing, styles.orbitRingFour]} />
-      {cosmicDust.map((dust) => (
-        <View
-          key={`${dust.top}-${dust.left}`}
-          style={[
-            styles.cosmicDust,
-            {
-              top: dust.top,
-              left: dust.left,
-              width: dust.width,
-              height: dust.height,
-              transform: [{ rotate: dust.rotate }],
-            },
-          ]}
-        />
-      ))}
       {stars.map((star, index) => (
         <TwinkleStar
           key={`${star.top}-${star.left}`}
@@ -448,30 +538,23 @@ export function GalaxyOrbitMap({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.mobileHeader}>
-            <View style={styles.mobileHeaderTop}>
-              <View style={styles.mobileHeaderCopy}>
-                <View style={styles.eyebrow}>
-                  <Sparkles size={14} color={theme.colors.secondary} />
-                  <Text
-                    style={[
-                      styles.eyebrowText,
-                      { color: theme.colors.secondary },
-                    ]}
-                  >
-                    Galaxia Nexo
-                  </Text>
-                </View>
-                <Text style={styles.mobileTitle} numberOfLines={2}>
-                  Tu sistema orbital
-                </Text>
-              </View>
+            <View style={styles.eyebrow}>
+              <Sparkles size={13} color={theme.colors.secondary} />
+              <Text
+                style={[
+                  styles.eyebrowText,
+                  { color: theme.colors.secondary },
+                ]}
+              >
+                Galaxia Nexo
+              </Text>
             </View>
-            <Text style={styles.mobileSubtitle}>
-              Tus comunidades y recomendaciones en un mapa vivo.
+            <Text style={styles.mobileTitle} numberOfLines={2}>
+              Tu sistema orbital
             </Text>
             <View style={styles.mobileStatsRow}>
               <View style={styles.mobileStatPill}>
-                <Radio size={13} color="#FFFFFF" />
+                <Radio size={12} color="#FFFFFF" />
                 <Text style={styles.mobileStatText}>
                   {communities.length} Orbitas
                 </Text>
@@ -605,27 +688,25 @@ export function GalaxyOrbitMap({
             Tu sistema orbital
           </Text>
           <Text style={styles.subtitle}>
-            Tu galaxia social en movimiento: entra en tus Orbitas o descubre
-            nuevas senales alrededor.
+            Esto es lo que orbita a tu alrededor. Toca un planeta y aterriza.
           </Text>
         </View>
-      </View>
-
-      <View style={[styles.stats, compact ? styles.statsCompact : null]}>
-        <View style={styles.stat}>
-          <Radio size={15} color="#FFFFFF" />
-          <Text style={styles.statValue}>{communities.length}</Text>
-          <Text style={styles.statLabel}>Orbitas</Text>
-        </View>
-        <View style={styles.stat}>
-          <View style={styles.onlineIconWrap}>
-            <View style={styles.onlineDot} />
-            <Wifi size={15} color="#FFFFFF" />
+        <View style={styles.statsRow}>
+          <View style={styles.stat}>
+            <Radio size={15} color="#FFFFFF" />
+            <Text style={styles.statValue}>{communities.length}</Text>
+            <Text style={styles.statLabel}>Orbitas</Text>
           </View>
-          <Text style={styles.statValue}>
-            {formatCompactNumber(totalOnline)}
-          </Text>
-          <Text style={styles.statLabel}>Online</Text>
+          <View style={styles.stat}>
+            <View style={styles.onlineIconWrap}>
+              <View style={styles.onlineDot} />
+              <Wifi size={15} color="#FFFFFF" />
+            </View>
+            <Text style={styles.statValue}>
+              {formatCompactNumber(totalOnline)}
+            </Text>
+            <Text style={styles.statLabel}>Online</Text>
+          </View>
         </View>
       </View>
 
@@ -2179,89 +2260,122 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     gap: 14,
   },
-  deepSpaceVeil: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "rgba(2,4,15,0.18)",
-  },
   nebulaCloud: {
     position: "absolute",
     borderRadius: 999,
-    opacity: 0.9,
+    opacity: 0.75,
   },
   nebulaCloudOne: {
-    width: "122%",
-    height: 210,
-    left: "-16%",
-    top: "16%",
-    transform: [{ rotate: "-19deg" }],
-  },
-  nebulaCloudTwo: {
-    width: "112%",
-    height: 170,
-    right: "-22%",
-    top: "42%",
-    transform: [{ rotate: "18deg" }],
-  },
-  nebulaCloudThree: {
-    width: "104%",
-    height: 138,
-    left: "-24%",
-    bottom: "8%",
-    transform: [{ rotate: "-10deg" }],
-  },
-  galaxyCore: {
-    position: "absolute",
-    width: "88%",
-    height: 96,
-    left: "6%",
-    top: "41%",
-    borderRadius: 999,
-    opacity: 0.58,
+    width: "138%",
+    height: 320,
+    left: "-22%",
+    top: "8%",
     transform: [{ rotate: "-18deg" }],
   },
-  galaxyCoreGlow: {
+  nebulaCloudTwo: {
+    width: "128%",
+    height: 280,
+    right: "-26%",
+    top: "44%",
+    transform: [{ rotate: "20deg" }],
+  },
+  nebulaCloudThree: {
+    width: "120%",
+    height: 220,
+    left: "-30%",
+    bottom: "4%",
+    transform: [{ rotate: "-12deg" }],
+  },
+  milkyWayBackdrop: {
     position: "absolute",
-    width: 170,
-    height: 72,
+    width: "180%",
+    height: 360,
+    left: "-40%",
+    top: "32%",
+    transform: [{ rotate: "-22deg" }],
+    opacity: 0.85,
+  },
+  milkyWayBand: {
+    position: "absolute",
+    width: "170%",
+    height: 180,
+    left: "-35%",
+    top: "42%",
+    transform: [{ rotate: "-22deg" }],
+    opacity: 0.78,
+  },
+  milkyWayCore: {
+    position: "absolute",
+    width: "160%",
+    height: 64,
+    left: "-30%",
+    top: "49%",
+    transform: [{ rotate: "-22deg" }],
+    opacity: 0.72,
+  },
+  galacticCenter: {
+    position: "absolute",
+    width: 92,
+    height: 92,
     left: "50%",
-    top: "45%",
-    marginLeft: -85,
-    borderRadius: 999,
-    backgroundColor: "rgba(246,247,251,0.08)",
-    shadowColor: "#B18CFF",
-    shadowOpacity: 0.28,
-    shadowRadius: 34,
+    top: "50%",
+    marginLeft: -46,
+    marginTop: -46,
+    borderRadius: 46,
+    backgroundColor: "rgba(255,236,255,0.34)",
+    shadowColor: "#FFE4FF",
+    shadowOpacity: 0.6,
+    shadowRadius: 32,
     shadowOffset: { width: 0, height: 0 },
   },
-  nebulaRibbon: {
+  galacticCenterGlow: {
     position: "absolute",
-    width: "92%",
-    height: 42,
-    left: "-18%",
-    top: "35%",
-    borderRadius: 999,
-    backgroundColor: "rgba(24,215,255,0.055)",
-    transform: [{ rotate: "-23deg" }],
+    width: 220,
+    height: 220,
+    left: "50%",
+    top: "50%",
+    marginLeft: -110,
+    marginTop: -110,
+    borderRadius: 110,
+    backgroundColor: "rgba(180,150,255,0.08)",
+    shadowColor: "#B18CFF",
+    shadowOpacity: 0.4,
+    shadowRadius: 60,
+    shadowOffset: { width: 0, height: 0 },
   },
-  nebulaRibbonAlt: {
+  vignetteTop: {
     position: "absolute",
-    width: "86%",
-    height: 38,
-    right: "-24%",
-    top: "57%",
-    borderRadius: 999,
-    backgroundColor: "rgba(255,79,216,0.052)",
-    transform: [{ rotate: "21deg" }],
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "32%",
+  },
+  vignetteBottom: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "38%",
+  },
+  vignetteLeft: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: "22%",
+  },
+  vignetteRight: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: "22%",
   },
   lightFlare: {
     position: "absolute",
     borderWidth: 0,
     shadowColor: "#18D7FF",
-    shadowOpacity: 0.22,
+    shadowOpacity: 0.18,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 0 },
   },
@@ -2276,36 +2390,29 @@ const styles = StyleSheet.create({
   orbitRing: {
     position: "absolute",
     borderWidth: 1,
-    borderColor: "rgba(246,247,251,0.07)",
+    borderColor: "rgba(246,247,251,0.04)",
     borderRadius: 999,
   },
   orbitRingOne: {
-    width: 780,
-    height: 258,
-    left: "-8%",
-    top: "26%",
-    transform: [{ rotate: "-17deg" }],
+    width: 880,
+    height: 290,
+    left: "-12%",
+    top: "30%",
+    transform: [{ rotate: "-22deg" }],
   },
   orbitRingTwo: {
-    width: 900,
-    height: 322,
-    right: "-12%",
-    top: "18%",
-    transform: [{ rotate: "16deg" }],
+    width: 1020,
+    height: 360,
+    right: "-16%",
+    top: "20%",
+    transform: [{ rotate: "-22deg" }],
   },
   orbitRingThree: {
-    width: 640,
-    height: 212,
-    left: "21%",
-    bottom: "15%",
-    transform: [{ rotate: "-31deg" }],
-  },
-  orbitRingFour: {
-    width: 520,
-    height: 176,
-    right: "16%",
-    bottom: "30%",
-    transform: [{ rotate: "29deg" }],
+    width: 720,
+    height: 240,
+    left: "10%",
+    bottom: "18%",
+    transform: [{ rotate: "-22deg" }],
   },
   star: {
     position: "absolute",
@@ -2315,23 +2422,21 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
   },
-  cosmicDust: {
-    position: "absolute",
-    borderRadius: 999,
-    backgroundColor: "rgba(185,193,217,0.16)",
-  },
   header: {
-    paddingHorizontal: 26,
-    paddingTop: 24,
+    paddingHorizontal: 32,
+    paddingTop: 28,
+    paddingBottom: 8,
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 16,
-    alignItems: "flex-start",
+    gap: 24,
+    alignItems: "flex-end",
   },
   headerCompact: {
     paddingHorizontal: 18,
     paddingTop: 18,
+    paddingBottom: 0,
     flexDirection: "column",
+    alignItems: "stretch",
   },
   headerCopy: {
     flex: 1,
@@ -2343,18 +2448,6 @@ const styles = StyleSheet.create({
   },
   mobileHeader: {
     gap: 10,
-  },
-  mobileHeaderTop: {
-    minHeight: 82,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  mobileHeaderCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 8,
   },
   eyebrow: {
     alignSelf: "flex-start",
@@ -2368,8 +2461,8 @@ const styles = StyleSheet.create({
   },
   eyebrowText: {
     fontSize: typography.tiny,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
   title: {
     color: "#FFFFFF",
@@ -2417,8 +2510,7 @@ const styles = StyleSheet.create({
   mobileStatText: {
     color: "rgba(246,247,251,0.84)",
     fontSize: typography.tiny,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontWeight: "800",
   },
   mobileOnlineDot: {
     width: 7,
@@ -2426,29 +2518,22 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#22E6B9",
   },
-  stats: {
-    position: "absolute",
-    left: 26,
-    bottom: 24,
+  statsRow: {
     flexDirection: "row",
-    gap: 8,
-  },
-  statsCompact: {
-    left: 16,
-    right: 16,
-    bottom: 14,
-    justifyContent: "center",
+    gap: 10,
+    paddingBottom: 4,
   },
   stat: {
     minWidth: 92,
-    minHeight: 52,
+    minHeight: 56,
     borderRadius: radius.md,
-    backgroundColor: "rgba(7,11,26,0.54)",
+    backgroundColor: "rgba(7,11,26,0.6)",
     borderWidth: 1,
     borderColor: "rgba(246,247,251,0.12)",
     alignItems: "center",
     justifyContent: "center",
     gap: 1,
+    paddingHorizontal: 12,
   },
   statValue: {
     color: "#FFFFFF",
@@ -2456,10 +2541,9 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   statLabel: {
-    color: "rgba(255,255,255,0.68)",
+    color: "rgba(255,255,255,0.7)",
     fontSize: typography.tiny,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontWeight: "700",
   },
   onlineIconWrap: {
     flexDirection: "row",
@@ -2824,9 +2908,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   orbitTypeText: {
-    fontSize: 9,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontSize: 10,
+    fontWeight: "800",
     letterSpacing: 0,
   },
   planetCategory: {
@@ -3011,9 +3094,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   detailTypeText: {
-    fontSize: 9,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontSize: 10,
+    fontWeight: "800",
     letterSpacing: 0,
   },
   detailRoleText: {
@@ -3072,10 +3154,9 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   detailStatLabel: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 10,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 11,
+    fontWeight: "700",
   },
   detailSignals: {
     flexDirection: "row",

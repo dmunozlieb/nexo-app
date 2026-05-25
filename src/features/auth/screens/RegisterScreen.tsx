@@ -31,7 +31,10 @@ import {
 import { getErrorMessage } from "../../../utils/errors";
 import { AuthScaffold } from "../components/AuthScaffold";
 import { SocialAuthRow } from "../components/SocialAuthRow";
-import { useRegisterMutation } from "../hooks/useAuthMutations";
+import {
+  useGoogleLoginMutation,
+  useRegisterMutation,
+} from "../hooks/useAuthMutations";
 
 export function RegisterScreen() {
   const theme = useTheme();
@@ -45,6 +48,7 @@ export function RegisterScreen() {
   const passwordRef = useRef<RNTextInput | null>(null);
   const confirmPasswordRef = useRef<RNTextInput | null>(null);
   const register = useRegisterMutation();
+  const googleLogin = useGoogleLoginMutation();
   const form = useForm<AuthRegisterInput>({
     resolver: zodResolver(authRegisterSchema),
     mode: "onTouched",
@@ -70,6 +74,16 @@ export function RegisterScreen() {
       setRegisterError(null);
       await register.mutateAsync(input);
       router.replace("/onboarding");
+    } catch (error) {
+      setRegisterError(getFriendlyRegisterError(error));
+    }
+  }
+
+  async function handleGoogleLogin() {
+    try {
+      setRegisterError(null);
+      await googleLogin.mutateAsync();
+      router.replace("/");
     } catch (error) {
       setRegisterError(getFriendlyRegisterError(error));
     }
@@ -103,7 +117,12 @@ export function RegisterScreen() {
           </Text>
         </View>
       ) : null}
-      {!env.demoMode ? <SocialAuthRow /> : null}
+      {!env.demoMode ? (
+        <SocialAuthRow
+          onProvider={handleGoogleLogin}
+          loadingProvider={googleLogin.isPending ? "google" : null}
+        />
+      ) : null}
       <Controller
         control={form.control}
         name="displayName"
@@ -292,7 +311,7 @@ export function RegisterScreen() {
         title="Crear cuenta"
         size={compactForm ? "md" : "lg"}
         loading={register.isPending}
-        disabled={register.isPending}
+        disabled={register.isPending || googleLogin.isPending}
         gradient={[theme.colors.primary, theme.colors.accent]}
         iconRight={<Rocket size={18} color="#FFFFFF" />}
         style={[
