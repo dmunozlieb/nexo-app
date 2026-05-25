@@ -221,3 +221,71 @@ Validaciones viven en `src/utils/validation.ts`. Sanitizacion de texto en `src/u
 - Moderacion existe, pero necesita UX/permisos mas finos.
 - Algunas copias no tienen acentos por compatibilidad/teclado historico; no mezcles estilos de copy sin revisar.
 - `docs/architecture.md` fue sustituido por este `docs/ARCHITECTURE.md` para seguir el contrato de documentacion interna.
+
+## Navegacion desktop con AppTopBar
+
+`src/components/navigation/AppTopBar.tsx` se renderiza en desktop por `AppNavigationFrame` encima de cada screen autenticada (alto 68 px). Contiene saludo dinamico por hora con `NexoMascot`, search → `/discover`, bell con notif dot (mock), avatar → `/profile`. El item "Perfil" se filtra del sidebar desktop porque queda redundante con el avatar de la topbar y el footer del sidebar; sigue presente en el bottom nav mobile.
+
+`AppSidebar` recibe ahora el `profile: Profile | null` para pintar el footer clickeable con avatar + display name + handle + icono settings (navega a `/profile`).
+
+## Onboarding wizard
+
+`src/features/auth/screens/OnboardingScreen.tsx` es ahora un wizard de 3 pasos (`quien`, `identidad`, `orbita`) con validacion incremental (`form.trigger([fields])`). Mantiene los datos entre pasos via React Hook Form. Fade entre pasos con `Animated`, respetando `prefers-reduced-motion`.
+
+El backdrop (`OnboardingBackdrop`) usa solo gradiente base + 36 estrellas con animacion twinkle individual + vignette top/bottom. Sin nebulosas (se intentaron varias estrategias y todas quedaban geometricas). El card central usa BlurView + bg `rgba(9,12,28,0.78)` + shadow negro para profundidad.
+
+Los intereses se mapean a emojis via `INTEREST_EMOJI` (`art→🎨`, `game→🎮`, `book→📚`, `music→🎵`, `code→💻`, `film→🎬`). Si el `icon` no esta mapeado, fallback `✨`.
+
+## Chats v2 — esquema y arquitectura
+
+A partir de la migracion 006 los chats dejan de ser "1 conversacion por orbita" y pasan a ser entidades configurables con roles y herramientas de moderacion.
+
+### Tablas
+
+- `conversations` ampliada con `name`, `description`, `avatar_url`, `banner_url`, `created_by`, `visibility` (`'public' | 'invite_only'`), `slow_mode_seconds`, `is_default`, `updated_at`. Drop del unique index `conversations_unique_community`. Nuevo unique parcial `conversations_one_default_per_community` (solo 1 lobby por orbita).
+- `conversation_members` ampliada con `role` (`'admin' | 'co_admin' | 'member' | 'banned'`), `muted`, `last_read_at`. Unique parcial `conversation_members_one_admin` para garantizar un solo admin por chat.
+- `chat_pinned_messages` (PK conversation_id+message_id) — trigger que rechaza si ya hay 3 fijados.
+- `chat_audit_log` (acciones tipadas: chat_created/updated/deleted, role_granted/revoked, admin_transferred, member_kicked/banned/unbanned, message_pinned/unpinned, slow_mode_changed). Insert bloqueado por RLS y poblado solo por funciones SECURITY DEFINER.
+- `message_reactions` (PK message_id+user_id+emoji).
+
+### Helpers y RPC SQL
+
+- `chat_member_role(chat_id, user_id) → text`
+- `is_chat_admin(chat_id, user_id) → boolean`
+- `is_chat_moderator(chat_id, user_id) → boolean` (incluye override de mods de la orbita)
+- `chat_co_admin_count(chat_id) → int`
+- RPC `transfer_chat_admin(chat_id, new_admin_id)` — atomico, audita.
+- RPC `promote_to_co_admin(chat_id, user_id)` — enforce max 3 co-admins.
+- RPC `demote_from_co_admin(chat_id, user_id)`.
+- Trigger `create_default_community_chat` — al crear una orbita, auto-crea Lobby + agrega owner como admin.
+- Pendiente: RPC `create_community_chat` que invoca `chat-service.createChat`. Necesita ser creada en una nueva migracion 008.
+
+### RLS (migracion 007 — aplicar manualmente, NO usar la 002 que tiene `\ir`)
+
+- `conversations_insert_community_member`: type=direct o (type=community y `is_community_member`).
+- `conversations_update_mods`: `is_chat_moderator`.
+- `conversations_delete_admin_or_mod`: NO se borra el lobby, admin del chat o mod orbita.
+- `conversation_members_insert_self`: user_id = auth.uid().
+- `conversation_members_update_mods`: mods del chat o self.
+- `conversation_members_delete_self_or_mod`.
+- `messages_insert_members_self`: sender = auth.uid() Y miembro Y NO baneado.
+
+### Reglas de producto
+
+- Max 3 co-admins por chat.
+- Transfer admin baja al anterior a co-admin (si hay hueco), sino a member.
+- Cualquier miembro de la orbita puede crear chats. App-level pendiente: limitar a 5 por usuario.
+- Lobby (`is_default = true`) no se puede borrar ni transferir admin — lo gestiona el owner de la orbita.
+- Mods/owner de la orbita pueden moderar/borrar cualquier chat de su orbita.
+- V1: solo `public` + `invite_only`. Skip `private` full-hidden para mantener RLS simple.
+
+## Migraciones (estado actual)
+
+- `001_init_schema.sql` aplicada.
+- `002_rls_policies.sql` — contiene `\ir ../policies.sql` que el SQL Editor de Supabase no ejecuta. Las policies originales se aplicaron pegando `policies.sql` manualmente.
+- `003_community_product.sql` aplicada.
+- `004_storage_banner_upload_policies.sql` aplicada.
+- `005_auto_create_profile.sql` — trigger auto-create profile + seed intereses. **Pendiente de aplicar**.
+- `006_chats_v2.sql` — esquema chats v2 + helpers + RPC + triggers + RLS de nuevas tablas. **Pendiente de aplicar**.
+- `007_chats_v2_policies.sql` — RLS explicito sin `\ir`, compatible con SQL Editor. **Pendiente de aplicar — sin esto da 403 al crear chats**.
+- `008_create_community_chat_rpc.sql` — **NO existe todavia**. Necesario porque `chat-service.createChat` usa RPC `create_community_chat`.

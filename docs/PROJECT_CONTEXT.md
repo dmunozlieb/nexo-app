@@ -1,6 +1,6 @@
 # Nexo - Contexto principal del proyecto
 
-Estado observado: 2026-05-24.
+Estado observado: 2026-05-25. Para los cambios concretos de la ultima sesion lee `docs/SESSION_2026-05-25.md`.
 
 Este es el documento principal para que una IA de programacion entienda rapidamente que es Nexo, que ya existe y como continuar sin romper la direccion del producto.
 

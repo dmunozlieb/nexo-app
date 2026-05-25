@@ -9,8 +9,8 @@ Implementado:
 - Recuperar contrasena.
 - Logout.
 - Persistencia de sesion con Supabase Auth y AsyncStorage.
-- Onboarding obligatorio con username, nombre visible, bio, avatar e intereses.
-- Google OAuth preparado en servicio, pendiente configuracion real de provider/redirects.
+- Onboarding obligatorio como wizard de 3 pasos (identidad / perfil / intereses) con progress dots + labels, fade entre pasos, validacion incremental, "saltar foto", auto-normalizacion de username, contador de bio, emojis en cards de intereses, boton final disabled hasta 1+ intereses seleccionados. Fondo cosmico con 36 estrellas animadas (twinkle individual).
+- Google OAuth funcional (configurado en Supabase) — pendiente trigger auto-create profile (`005_auto_create_profile.sql`).
 - Modo demo con usuarios locales.
 
 Pendiente:
@@ -61,14 +61,16 @@ Pendiente:
 
 Implementado:
 
-- Sidebar desktop con logo, nav y "Tus Orbitas".
+- Sidebar desktop con logo, nav, "Tus Orbitas" con filas ligeras + dot live, y footer de perfil clickeable (avatar + nombre + handle).
+- "Perfil" filtrado del sidebar desktop (redundante con avatar de topbar y footer del sidebar). En bottom nav mobile sigue.
+- **TopBar desktop nueva** (`AppTopBar`, 68px) con mascot animado + saludo dinamico por hora ("Buenos dias / Buenas tardes / Buenas noches / Aun explorando") + "Hola {nombre}" + acciones search/bell/avatar.
 - Bottom nav mobile con accion central de crear.
 - Rutas protegidas con `ProtectedStack`.
 - Tabs principales ocultando tab bar nativo de Expo Router.
 
 Pendiente:
 
-- Estados de notificaciones/unread.
+- Estados de notificaciones/unread reales (ahora el bell tiene dot fijo mock).
 - Mejor indicacion del contexto actual en rutas profundas.
 - Gestos o sheets moviles para acciones secundarias.
 
@@ -140,28 +142,40 @@ Pendiente:
 - Edicion/borrado desde UI.
 - Paginacion/infinite scroll mas completa en todos los listados.
 
-## Chats
+## Chats v2
 
-Implementado:
+Implementado (esquema en migraciones 006/007, UI desde cero):
 
-- Lista de conversaciones.
-- Chat room con mensajes.
-- Composer con validacion.
+- **Multiples chats por Orbita**. Esquema `conversations` ampliado con `name`, `description`, `avatar_url`, `banner_url`, `created_by`, `visibility`, `slow_mode_seconds`, `is_default`. Drop del unique index legacy.
+- **Lobby auto-creado** al crear una Orbita (trigger `create_default_community_chat`). No se puede borrar ni transferir admin.
+- **Roles dentro del chat**: `admin` (1 unico), `co_admin` (max 3), `member`, `banned`. RPC transaccionales `transfer_chat_admin`, `promote_to_co_admin`, `demote_from_co_admin`. Override de mods de la orbita.
+- **Crear chat dentro de la orbita**: tab "Chats" de `CommunityDetailScreen` lista todos los chats con boton "Crear chat" → `CreateChatScreen` (banner + avatar + nombre + descripcion + visibilidad + slow mode).
+- **`ChatListScreen` global**: agrupado por orbita, search en vivo, badges de unread/lobby/lock/rol, mensajes directos separados arriba. Sin boton crear (la creacion vive dentro de la orbita).
+- **`ChatRoomScreen`**: 2 columnas desktop (chat + info panel), mobile fullscreen + overlay. Mark-read automatico. Scroll-to-end al enviar.
+- **`MessageBubble`**: gradient violeta para propios, glassmorphism con border lateral por rol para ajenos. Dot en avatar para admin/co-admin. Acciones flotantes en hover (react, pin, unpin, report).
+- **`MessageComposer`**: input auto-grow, slow mode countdown visible, contador de caracteres a >800, send disabled cuando vacio o en cooldown.
+- **`PinnedBar`**: max 3 fijados, colapsable, mods pueden desfijar (trigger DB enforce el limite).
+- **`ChatInfoPanel`**: hero con avatar + descripcion, miembros ordenados por rol con contador `X/3 co-admins`, acciones por miembro (promote/demote/transfer/kick/ban/ver perfil), boton salir con warning especial si eres admin.
+- **`RoleBadge`** compact o full (Crown dorado / ShieldCheck cyan / UserX rojo).
+- **`chat_audit_log`** tabla con acciones tipadas, poblado por SECURITY DEFINER, leer = mods.
+- **`message_reactions`** tabla (1 emoji por user por mensaje) y servicios `reactToMessage`/`unreactToMessage` listos.
+- **`setMuted` y `markRead`** por miembro implementados.
 - Realtime para inserts en `messages`.
-- Conversaciones comunitarias por RPC.
-- Conversaciones directas preparadas.
 - Reportar mensajes.
-- Modo demo con eventos locales.
+- Modo demo con eventos locales (extendido para los nuevos campos).
 
 Pendiente:
 
-- `last_message` real en Supabase para lista.
-- Unread counts reales.
-- Read receipts.
-- Adjuntos/media.
-- Multiples canales por Orbita.
-- Moderacion de chat mas visible.
-- Indicadores de typing/presencia.
+- `ChatSettingsScreen` (editar config + audit log UI + boton borrar chat).
+- UI de reactions (picker + render de counts debajo del mensaje).
+- Adjuntar imagenes desde composer (`media_urls` ya en schema).
+- @mentions parsing + notificacion.
+- `last_message` real y `unread_count` real en `listConversations`.
+- Realtime de pinned + reactions (ahora solo messages).
+- Aplicar `banner_url` del chat como fondo del MessageList con overlay.
+- App-level: limite 5 chats activos por usuario por orbita.
+- RPC `create_community_chat` (la usa `chat-service.createChat`) — NO existe, requiere migracion 008.
+- Indicadores typing/presencia.
 
 ## Usuarios online / presencia
 

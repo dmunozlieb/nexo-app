@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session } from "@supabase/supabase-js";
 import type {
+  ChatRole,
   Comment,
   CommentWithAuthor,
   Community,
@@ -398,28 +399,58 @@ const savedPosts = new Set<string>([`${profiles[0]!.id}:${posts[1]!.id}`]);
 const follows = new Set<string>([`${profiles[0]!.id}:${profiles[1]!.id}`]);
 const blocks = new Set<string>();
 
+function buildDemoConversation(overrides: Partial<Conversation> & Pick<Conversation, "id" | "type">): Conversation {
+  return {
+    community_id: null,
+    name: null,
+    description: null,
+    avatar_url: null,
+    banner_url: null,
+    created_by: null,
+    visibility: "public",
+    slow_mode_seconds: 0,
+    is_default: false,
+    created_at: now(),
+    updated_at: now(),
+    ...overrides,
+  };
+}
+
 const conversations: Conversation[] = [
-  {
+  buildDemoConversation({
     id: "eeeeeeee-0000-4000-8000-000000000001",
     type: "community",
     community_id: communities[0]!.id,
-    created_at: now(),
-  },
-  {
+    name: "Lobby",
+    description: "Espacio principal de la Orbita.",
+    is_default: true,
+    created_by: communities[0]!.owner_id,
+  }),
+  buildDemoConversation({
     id: "eeeeeeee-0000-4000-8000-000000000002",
     type: "community",
     community_id: communities[1]!.id,
-    created_at: now(),
-  },
+    name: "Lobby",
+    description: "Espacio principal de la Orbita.",
+    is_default: true,
+    created_by: communities[1]!.owner_id,
+  }),
 ];
 
 const conversationMembers: Array<{
   conversation_id: string;
   user_id: string;
   joined_at: string;
+  role: ChatRole;
+  muted: boolean;
+  last_read_at: string | null;
 }> = [];
 
 for (const conversation of conversations) {
+  const communityOwner = communities.find(
+    (entry) => entry.id === conversation.community_id,
+  )?.owner_id;
+
   for (const member of members.filter(
     (item) => item.community_id === conversation.community_id,
   )) {
@@ -427,6 +458,9 @@ for (const conversation of conversations) {
       conversation_id: conversation.id,
       user_id: member.user_id,
       joined_at: now(),
+      role: member.user_id === communityOwner ? "admin" : "member",
+      muted: false,
+      last_read_at: null,
     });
   }
 }
@@ -726,17 +760,23 @@ export async function demoCreateCommunity(
     joined_at: now(),
   });
 
-  const conversation: Conversation = {
+  const conversation: Conversation = buildDemoConversation({
     id: uuid(),
     type: "community",
     community_id: id,
-    created_at: now(),
-  };
+    name: "Lobby",
+    description: "Espacio principal de la Orbita.",
+    is_default: true,
+    created_by: ownerId,
+  });
   conversations.unshift(conversation);
   conversationMembers.push({
     conversation_id: conversation.id,
     user_id: ownerId,
     joined_at: now(),
+    role: "admin",
+    muted: false,
+    last_read_at: null,
   });
 
   return communityMeta(community, ownerId);
@@ -991,11 +1031,16 @@ export async function demoListConversations(
               entry.status === "sent",
           )
           .at(-1) ?? null;
+      const memberCount = conversationMembers.filter(
+        (entry) => entry.conversation_id === conversation.id,
+      ).length;
       return {
         ...conversation,
         community,
         last_message: lastMessage,
         unread_count: 0,
+        member_count: memberCount,
+        role: item.role,
       };
     });
 }
@@ -1004,17 +1049,26 @@ export async function demoGetOrCreateCommunityConversation(
   communityId: string,
 ) {
   let conversation = conversations.find(
-    (item) => item.type === "community" && item.community_id === communityId,
+    (item) =>
+      item.type === "community" &&
+      item.community_id === communityId &&
+      item.is_default,
   );
   if (!conversation) {
-    conversation = {
+    const owner = communities.find((entry) => entry.id === communityId)?.owner_id ?? null;
+    conversation = buildDemoConversation({
       id: uuid(),
       type: "community",
       community_id: communityId,
-      created_at: now(),
-    };
+      name: "Lobby",
+      description: "Espacio principal de la Orbita.",
+      is_default: true,
+      created_by: owner,
+    });
     conversations.push(conversation);
   }
+
+  const owner = communities.find((entry) => entry.id === communityId)?.owner_id;
 
   for (const member of members.filter(
     (item) => item.community_id === communityId,
@@ -1030,6 +1084,9 @@ export async function demoGetOrCreateCommunityConversation(
         conversation_id: conversation.id,
         user_id: member.user_id,
         joined_at: now(),
+        role: member.user_id === owner ? "admin" : "member",
+        muted: false,
+        last_read_at: null,
       });
     }
   }
@@ -1060,19 +1117,28 @@ export async function demoGetOrCreateDirectConversation(
     return existing.id;
   }
 
-  const conversation: Conversation = {
+  const conversation: Conversation = buildDemoConversation({
     id: uuid(),
     type: "direct",
-    community_id: null,
-    created_at: now(),
-  };
+    created_by: userId,
+  });
   conversations.unshift(conversation);
   conversationMembers.push(
-    { conversation_id: conversation.id, user_id: userId, joined_at: now() },
+    {
+      conversation_id: conversation.id,
+      user_id: userId,
+      joined_at: now(),
+      role: "member",
+      muted: false,
+      last_read_at: null,
+    },
     {
       conversation_id: conversation.id,
       user_id: otherUserId,
       joined_at: now(),
+      role: "member",
+      muted: false,
+      last_read_at: null,
     },
   );
 

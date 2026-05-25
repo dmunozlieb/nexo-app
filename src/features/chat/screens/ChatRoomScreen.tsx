@@ -1,249 +1,303 @@
-import { useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
-import { Flag, Send } from "lucide-react-native";
 import { ReportModal } from "../../../components/content/ReportModal";
-import { ScreenContainer } from "../../../components/layout/ScreenContainer";
-import { Avatar } from "../../../components/ui/Avatar";
-import { Button } from "../../../components/ui/Button";
-import { EmptyState } from "../../../components/ui/EmptyState";
+import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { LoadingState } from "../../../components/ui/LoadingState";
-import { TextInput } from "../../../components/ui/TextInput";
-import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
-import type { Message, Profile } from "../../../types/domain";
-import { formatRelativeDate } from "../../../utils/format";
-import { messageSchema, type MessageInput } from "../../../utils/validation";
+import type {
+  ChatRole,
+  ConversationMemberWithProfile,
+  Message,
+  Profile,
+} from "../../../types/domain";
+import { messageSchema } from "../../../utils/validation";
 import { getErrorMessage } from "../../../utils/errors";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { useCreateReportMutation } from "../../moderation/hooks/useModeration";
 import {
+  useChatDetails,
+  useMarkReadMutation,
   useMessageSubscription,
   useMessages,
+  usePinMessageMutation,
   useSendMessageMutation,
+  useSetMutedMutation,
+  useUnpinMessageMutation,
 } from "../hooks/useChat";
+import { ChatHeader } from "../components/ChatHeader";
+import { ChatInfoPanel } from "../components/ChatInfoPanel";
+import { MessageBubble } from "../components/MessageBubble";
+import { MessageComposer } from "../components/MessageComposer";
+import { PinnedBar } from "../components/PinnedBar";
 
-type MessageWithSender = Message & {
-  sender?: Profile;
-};
+const DESKTOP_WIDTH = 1100;
+
+type MessageWithSender = Message & { sender?: Profile | null };
 
 export function ChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const conversationId = id ?? "";
   const theme = useTheme();
   const auth = useAuth();
-  const messages = useMessages(id);
-  const send = useSendMessageMutation(id, auth.session?.user.id);
-  const report = useCreateReportMutation(auth.session?.user.id);
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= DESKTOP_WIDTH;
+  const userId = auth.session?.user.id;
+
+  const details = useChatDetails(conversationId, userId);
+  const messages = useMessages(conversationId);
+  const send = useSendMessageMutation(conversationId, userId);
+  const pinMessage = usePinMessageMutation(conversationId, userId);
+  const unpinMessage = useUnpinMessageMutation(conversationId);
+  const markRead = useMarkReadMutation(userId);
+  const toggleMute = useSetMutedMutation(userId);
+  const report = useCreateReportMutation(userId);
   const [reportMessageId, setReportMessageId] = useState<string | null>(null);
-  const form = useForm<MessageInput>({
-    resolver: zodResolver(messageSchema),
-    defaultValues: {
-      body: "",
-    },
-  });
+  const [infoOpen, setInfoOpen] = useState(false);
+  const listRef = useRef<FlatList<MessageWithSender>>(null);
 
-  useMessageSubscription(id);
+  useMessageSubscription(conversationId);
 
-  async function handleSend(input: MessageInput) {
+  useEffect(() => {
+    if (!conversationId || !userId) return;
+    void markRead.mutateAsync(conversationId).catch(() => undefined);
+  }, [conversationId, userId, messages.data?.length]);
+
+  const conversation = details.data?.conversation ?? null;
+  const members = details.data?.members ?? [];
+  const pinned = details.data?.pinned_messages ?? [];
+  const currentUserRole: ChatRole | null =
+    details.data?.current_user_role ?? null;
+  const currentMember = members.find((m) => m.user_id === userId);
+  const muted = currentMember?.muted ?? false;
+  const canModerate =
+    currentUserRole === "admin" || currentUserRole === "co_admin";
+  const slowMode = conversation?.slow_mode_seconds ?? 0;
+
+  const memberRoleById = useMemo(() => {
+    const map = new Map<string, ChatRole>();
+    members.forEach((m: ConversationMemberWithProfile) =>
+      map.set(m.user_id, m.role),
+    );
+    return map;
+  }, [members]);
+
+  const pinnedIds = useMemo(
+    () => new Set(pinned.map((p) => p.id)),
+    [pinned],
+  );
+
+  async function handleSend(body: string) {
     try {
-      await send.mutateAsync(input);
-      form.reset({ body: "" });
+      await send.mutateAsync(messageSchema.parse({ body }));
+      requestAnimationFrame(() => {
+        listRef.current?.scrollToEnd({ animated: true });
+      });
     } catch (error) {
       Alert.alert("No se pudo enviar", getErrorMessage(error));
+      throw error;
     }
   }
 
-  if (messages.isLoading) {
-    return <LoadingState label="Conectando a Realtime..." />;
+  async function handlePin(messageId: string) {
+    try {
+      await pinMessage.mutateAsync(messageId);
+    } catch (error) {
+      Alert.alert("No se pudo fijar", getErrorMessage(error));
+    }
+  }
+
+  async function handleUnpin(messageId: string) {
+    try {
+      await unpinMessage.mutateAsync(messageId);
+    } catch (error) {
+      Alert.alert("No se pudo desfijar", getErrorMessage(error));
+    }
+  }
+
+  if (details.isLoading || messages.isLoading) {
+    return <LoadingState label="Conectando al chat..." />;
+  }
+
+  if (details.isError) {
+    return (
+      <ErrorState
+        message={getErrorMessage(details.error)}
+        onRetry={() => void details.refetch()}
+      />
+    );
   }
 
   if (messages.isError) {
-    return <ErrorState onRetry={() => void messages.refetch()} />;
+    return (
+      <ErrorState
+        message={getErrorMessage(messages.error)}
+        onRetry={() => void messages.refetch()}
+      />
+    );
   }
 
+  if (!conversation) {
+    return (
+      <ErrorState
+        title="Chat no encontrado"
+        message="Puede haber sido borrado o no tienes acceso."
+      />
+    );
+  }
+
+  const rows: MessageWithSender[] =
+    (messages.data ?? []) as MessageWithSender[];
+
   return (
-    <ScreenContainer
-      footer={
-        <View
-          style={[
-            styles.composer,
-            { backgroundColor: theme.colors.background, borderColor: theme.colors.border },
-          ]}
-        >
-          <Controller
-            control={form.control}
-            name="body"
-            render={({ field, fieldState }) => (
-              <TextInput
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                error={fieldState.error?.message}
-                placeholder="Mensaje..."
-                multiline
-                style={styles.messageInput}
-              />
-            )}
-          />
-          <Button
-            title="Enviar"
-            loading={send.isPending}
-            icon={<Send size={17} color="#FFFFFF" />}
-            onPress={form.handleSubmit(handleSend)}
+    <View
+      style={[
+        styles.root,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
+      <View style={styles.main}>
+        <ChatHeader
+          conversation={conversation}
+          memberCount={members.length}
+          currentUserRole={currentUserRole}
+          muted={muted}
+          showBack={!isDesktop}
+          onToggleInfo={() => setInfoOpen((v) => !v)}
+          onToggleMute={() =>
+            toggleMute.mutate({ conversationId, muted: !muted })
+          }
+        />
+
+        <PinnedBar
+          pinned={pinned}
+          canModerate={canModerate}
+          onUnpin={handleUnpin}
+        />
+
+        <FlatList
+          ref={listRef}
+          data={rows}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => {
+            listRef.current?.scrollToEnd({ animated: false });
+          }}
+          ListEmptyComponent={
+            <AlienEmptyState
+              title="Aun no hay mensajes"
+              message="Rompe el silencio con un saludo o una pregunta."
+            />
+          }
+          renderItem={({ item }) => (
+            <MessageBubble
+              message={item}
+              own={item.sender_id === userId}
+              senderRole={memberRoleById.get(item.sender_id) ?? null}
+              isPinned={pinnedIds.has(item.id)}
+              canModerate={canModerate}
+              onReport={
+                item.sender_id !== userId
+                  ? () => setReportMessageId(item.id)
+                  : undefined
+              }
+              onPin={() => handlePin(item.id)}
+              onUnpin={() => handleUnpin(item.id)}
+            />
+          )}
+        />
+
+        <View style={styles.composerWrap}>
+          <MessageComposer
+            onSend={handleSend}
+            sending={send.isPending}
+            slowModeSeconds={slowMode}
+            disabled={currentUserRole === "banned"}
+            placeholder={
+              currentUserRole === "banned"
+                ? "Has sido baneado en este chat"
+                : slowMode > 0
+                  ? `Mensaje (modo lento ${slowMode}s)`
+                  : "Escribe un mensaje..."
+            }
           />
         </View>
-      }
-    >
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Sala en vivo</Text>
-        <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
-          Mensajes visibles solo para miembros de la conversacion.
-        </Text>
       </View>
-      <FlatList
-        data={(messages.data ?? []) as MessageWithSender[]}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <EmptyState
-            title="Aun no hay mensajes"
-            message="Abre la conversacion con una pregunta amable."
+
+      {isDesktop && infoOpen ? (
+        <ChatInfoPanel
+          conversation={conversation}
+          members={members}
+          currentUserId={userId ?? ""}
+          currentUserRole={currentUserRole}
+          onClose={() => setInfoOpen(false)}
+        />
+      ) : null}
+
+      {!isDesktop && infoOpen ? (
+        <View style={styles.mobileOverlay}>
+          <ChatInfoPanel
+            conversation={conversation}
+            members={members}
+            currentUserId={userId ?? ""}
+            currentUserRole={currentUserRole}
+            onClose={() => setInfoOpen(false)}
           />
-        }
-        renderItem={({ item }) => (
-          <MessageBubble
-            message={item}
-            own={item.sender_id === auth.session?.user.id}
-            onReport={() => setReportMessageId(item.id)}
-          />
-        )}
-      />
+        </View>
+      ) : null}
+
       <ReportModal
         visible={Boolean(reportMessageId)}
         onClose={() => setReportMessageId(null)}
-        onSubmitReport={(reason, details) =>
+        onSubmitReport={(reason, details_) =>
           report.mutateAsync({
             targetType: "message",
             targetId: reportMessageId ?? "",
             reason,
-            details,
+            details: details_,
           })
         }
       />
-    </ScreenContainer>
-  );
-}
-
-function MessageBubble({
-  message,
-  own,
-  onReport,
-}: {
-  message: MessageWithSender;
-  own: boolean;
-  onReport: () => void;
-}) {
-  const theme = useTheme();
-  const name = message.sender?.display_name ?? message.sender?.username ?? "Usuario";
-
-  return (
-    <View style={[styles.messageRow, own && styles.messageRowOwn]}>
-      {!own ? <Avatar uri={message.sender?.avatar_url} label={name} size={30} /> : null}
-      <View
-        style={[
-          styles.bubble,
-          {
-            backgroundColor: own ? theme.colors.primary : theme.colors.surface,
-            borderColor: own ? theme.colors.primary : theme.colors.border,
-          },
-        ]}
-      >
-        {!own ? (
-          <Text style={[styles.sender, { color: theme.colors.secondary }]}>{name}</Text>
-        ) : null}
-        <Text style={[styles.body, { color: own ? "#FFFFFF" : theme.colors.text }]}>
-          {message.body}
-        </Text>
-        <View style={styles.bubbleMeta}>
-          <Text style={[styles.time, { color: own ? "#E6E2FF" : theme.colors.textFaint }]}>
-            {formatRelativeDate(message.created_at)}
-          </Text>
-          {!own ? (
-            <Button
-              title="Reportar"
-              variant="ghost"
-              size="sm"
-              icon={<Flag size={14} color={theme.colors.textMuted} />}
-              onPress={onReport}
-            />
-          ) : null}
-        </View>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingTop: 8,
-    paddingBottom: 12,
-    gap: 4,
+  root: {
+    flex: 1,
+    flexDirection: "row",
   },
-  title: {
-    fontSize: typography.h2,
-    fontWeight: "900",
-  },
-  subtitle: {
-    fontSize: typography.small,
+  main: {
+    flex: 1,
+    minHeight: 0,
   },
   list: {
-    gap: 10,
-    paddingBottom: 150,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    gap: 6,
+    flexGrow: 1,
   },
-  messageRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
+  composerWrap: {
+    paddingHorizontal: 12,
+    paddingBottom: 14,
+    paddingTop: 8,
   },
-  messageRowOwn: {
-    justifyContent: "flex-end",
-  },
-  bubble: {
-    maxWidth: "82%",
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: 10,
-    gap: 4,
-  },
-  sender: {
-    fontSize: typography.tiny,
-    fontWeight: "900",
-  },
-  body: {
-    fontSize: typography.body,
-    lineHeight: 21,
-  },
-  bubbleMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  time: {
-    fontSize: typography.tiny,
-    fontWeight: "700",
-  },
-  composer: {
-    borderTopWidth: 1,
-    padding: 12,
-    gap: 10,
-  },
-  messageInput: {
-    maxHeight: 96,
-    textAlignVertical: "top",
+  mobileOverlay: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
 });

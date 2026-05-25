@@ -4,6 +4,7 @@ Usa este archivo como backlog practico. Marca o actualiza tareas cuando se compl
 
 ## Antes de tocar codigo
 
+- [ ] Leer `docs/SESSION_2026-05-25.md` para el ultimo estado.
 - [ ] Leer `AGENTS.md`.
 - [ ] Leer `docs/PROJECT_CONTEXT.md`.
 - [ ] Leer `docs/ARCHITECTURE.md`.
@@ -20,21 +21,38 @@ Usa este archivo como backlog practico. Marca o actualiza tareas cuando se compl
 - [ ] Ejecutar `npx expo export --platform web` si se toca navegacion, web o release.
 - [ ] Probar mobile y desktop cuando se toca UI.
 
-## Tareas de producto prioritarias
+## Acciones de Supabase pendientes (criticas, hacer antes que nada)
 
+- [ ] Aplicar `supabase/migrations/005_auto_create_profile.sql` en SQL Editor.
+- [ ] Aplicar `supabase/migrations/006_chats_v2.sql` en SQL Editor.
+- [ ] Aplicar `supabase/migrations/007_chats_v2_policies.sql` en SQL Editor (sin esto = 403 al crear chats).
+- [ ] Crear `008_create_community_chat_rpc.sql` con RPC SECURITY DEFINER `create_community_chat(community_id, name, description, avatar_url, banner_url, visibility, slow_mode_seconds)` — necesario porque `chat-service.createChat` lo invoca.
+- [ ] Rotar el Google OAuth client_secret si aun no se hizo (se filtro en sesion anterior).
+
+## Tareas de producto prioritarias (proxima sesion)
+
+### Chat v2 — completar
+- [ ] `ChatSettingsScreen` con form de editar `name/description/avatar/banner/visibility/slow_mode_seconds` + boton "Borrar chat" + audit log visible (`useChatAuditLog` ya existe).
+- [ ] UI de reactions: emoji picker en menu flotante de cada bubble + render counts debajo del mensaje.
+- [ ] Adjuntar imagenes desde composer (`media_urls` ya en schema).
+- [ ] @mentions parsing en `body` + notificacion.
+- [ ] Aplicar `banner_url` del chat como fondo del MessageList con overlay oscuro.
+- [ ] Realtime de pinned + reactions (ahora solo `messages`).
+- [ ] `last_message` real y `unread_count` real en `listConversations`.
+- [ ] App-level: limitar a 5 chats activos por usuario por orbita.
+- [ ] Long-press para acciones de bubble en mobile (ahora solo hover web).
+
+### Otros productos
 - [ ] Pulir responsive mobile del sistema orbital.
 - [ ] Revisar solapamientos y legibilidad en `GalaxyOrbitMap`.
 - [ ] Extender bottom sheets a filtros de explorar y acciones contextuales.
 - [ ] Mejorar perfil con banner real en vista y edicion.
 - [ ] Mostrar intereses y Orbitas en perfiles.
-- [ ] Completar `last_message` real en lista de chats Supabase.
-- [ ] Anadir unread counts en chats.
-- [ ] Mejorar chat composer con teclado y scroll.
 - [ ] Convertir `online_count` aproximado en presencia real.
 - [ ] Mejorar cola de moderacion con preview del contenido reportado.
-- [ ] Crear UI para gestion de roles.
 - [ ] Crear UI para gestionar bloqueos.
 - [ ] Mejorar onboarding con recomendaciones de Orbitas.
+- [ ] Notificaciones reales en `AppTopBar.bell` (ahora el dot es mock fijo).
 - [ ] Preparar deploy web documentado.
 
 ## Tareas tecnicas
@@ -72,9 +90,10 @@ Usa este archivo como backlog practico. Marca o actualiza tareas cuando se compl
 ## Ideas futuras
 
 - [ ] Misiones/eventos como entidad propia dentro de Orbitas.
-- [ ] Canales multiples por Orbita.
+- [x] Canales multiples por Orbita. _(esquema y UI base hechos en sesion 2026-05-25)_
 - [ ] Reputacion comunitaria.
 - [ ] Notificaciones push por mencion/respuesta/chat.
 - [ ] Busqueda global de posts, Orbitas y usuarios.
-- [ ] Moderation audit log.
+- [x] Moderation audit log (chat). _(tabla `chat_audit_log` creada, falta UI)_
+- [ ] Moderation audit log global (posts/perfiles/orbitas).
 - [ ] Web SEO/metadata para Orbitas publicas.

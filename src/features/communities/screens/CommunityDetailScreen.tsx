@@ -40,7 +40,10 @@ import { canViewModTools } from "../../../utils/community-permissions";
 import { getErrorMessage } from "../../../utils/errors";
 import { formatRelativeDate } from "../../../utils/format";
 import { useAuth } from "../../auth/hooks/useAuth";
-import { useCommunityConversationMutation } from "../../chat/hooks/useChat";
+import {
+  useCommunityChats,
+  useCommunityConversationMutation,
+} from "../../chat/hooks/useChat";
 import { useCreateReportMutation } from "../../moderation/hooks/useModeration";
 import {
   useToggleReactionMutation,
@@ -450,20 +453,7 @@ function CommunityTabContent({
   const theme = useTheme();
 
   if (tab === "chats") {
-    return (
-      <GradientCard contentStyle={styles.tabPanel}>
-        <View style={styles.panelTitleRow}>
-          <MessageSquare size={18} color={theme.colors.secondary} />
-          <Text style={[styles.panelTitle, { color: theme.colors.text }]}>
-            Sala general
-          </Text>
-        </View>
-        <Text style={[styles.copy, { color: theme.colors.textMuted }]}>
-          Canal comunitario preparado para mensajes Realtime. Mas canales pueden llegar despues.
-        </Text>
-        <Button title="Entrar al chat" onPress={onOpenChat} />
-      </GradientCard>
-    );
+    return <CommunityChatsTab communityId={communityId} />;
   }
 
   if (tab === "members") {
@@ -540,6 +530,127 @@ function CommunityTabContent({
         onPress={() => router.push("/moderation")}
       />
     </GradientCard>
+  );
+}
+
+function CommunityChatsTab({ communityId }: { communityId: string }) {
+  const theme = useTheme();
+  const chats = useCommunityChats(communityId);
+  const list = chats.data ?? [];
+
+  return (
+    <View style={styles.chatsTab}>
+      <View style={styles.chatsTabHeader}>
+        <View style={styles.chatsTabTitleRow}>
+          <MessagesSquare size={17} color={theme.colors.secondary} />
+          <Text style={[styles.chatsTabTitle, { color: theme.colors.text }]}>
+            Chats de la Orbita
+          </Text>
+        </View>
+        <Button
+          title="Crear chat"
+          size="sm"
+          icon={<Plus size={15} color="#FFFFFF" />}
+          onPress={() =>
+            router.push({
+              pathname: "/chat/create",
+              params: { communityId },
+            })
+          }
+        />
+      </View>
+
+      {chats.isLoading ? (
+        <Text style={[styles.chatsLoading, { color: theme.colors.textFaint }]}>
+          Cargando chats...
+        </Text>
+      ) : list.length === 0 ? (
+        <AlienEmptyState
+          title="Sin chats todavia"
+          message="Crea el primer canal para esta Orbita."
+        />
+      ) : (
+        <View style={styles.chatsList}>
+          {list.map((chat) => (
+            <Pressable
+              key={chat.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir chat ${chat.name ?? "general"}`}
+              onPress={() =>
+                router.push({ pathname: "/chat/[id]", params: { id: chat.id } })
+              }
+              style={({ pressed, hovered }) => [
+                styles.chatRow,
+                {
+                  backgroundColor: hovered
+                    ? "rgba(255,255,255,0.06)"
+                    : "rgba(255,255,255,0.03)",
+                  borderColor: chat.is_default
+                    ? `${theme.colors.secondary}55`
+                    : theme.colors.border,
+                  opacity: pressed ? 0.82 : 1,
+                },
+              ]}
+            >
+              <Avatar
+                uri={chat.avatar_url}
+                label={chat.name ?? "Chat"}
+                size={42}
+              />
+              <View style={styles.chatRowCopy}>
+                <View style={styles.chatRowTitleLine}>
+                  <Text
+                    style={[styles.chatRowTitle, { color: theme.colors.text }]}
+                    numberOfLines={1}
+                  >
+                    {chat.name ?? "Sin nombre"}
+                  </Text>
+                  {chat.is_default ? (
+                    <View
+                      style={[
+                        styles.chatLobbyTag,
+                        {
+                          backgroundColor: `${theme.colors.secondary}22`,
+                          borderColor: `${theme.colors.secondary}66`,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.chatLobbyTagText,
+                          { color: theme.colors.secondary },
+                        ]}
+                      >
+                        Lobby
+                      </Text>
+                    </View>
+                  ) : null}
+                  {chat.visibility === "invite_only" ? (
+                    <Text
+                      style={[
+                        styles.chatRowVisibility,
+                        { color: theme.colors.textFaint },
+                      ]}
+                    >
+                      · Solo invitacion
+                    </Text>
+                  ) : null}
+                </View>
+                <Text
+                  style={[
+                    styles.chatRowDesc,
+                    { color: theme.colors.textMuted },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {chat.description ?? "Sin descripcion."}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -833,5 +944,77 @@ const styles = StyleSheet.create({
   rule: {
     fontSize: typography.body,
     lineHeight: 21,
+  },
+  chatsTab: {
+    gap: 12,
+    paddingVertical: 4,
+  },
+  chatsTabHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  chatsTabTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  chatsTabTitle: {
+    fontSize: typography.h3,
+    fontWeight: "900",
+  },
+  chatsLoading: {
+    fontSize: typography.small,
+    fontWeight: "600",
+    paddingVertical: 12,
+    textAlign: "center",
+  },
+  chatsList: {
+    gap: 8,
+  },
+  chatRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: 12,
+  },
+  chatRowCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  chatRowTitleLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  chatRowTitle: {
+    fontSize: typography.body,
+    fontWeight: "900",
+    flexShrink: 1,
+  },
+  chatRowVisibility: {
+    fontSize: typography.tiny,
+    fontWeight: "700",
+  },
+  chatRowDesc: {
+    fontSize: typography.small,
+    lineHeight: 18,
+    fontWeight: "500",
+  },
+  chatLobbyTag: {
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  chatLobbyTagText: {
+    fontSize: typography.tiny,
+    fontWeight: "900",
   },
 });

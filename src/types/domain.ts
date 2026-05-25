@@ -19,6 +19,21 @@ export type PostType =
 export type ContentStatus = "published" | "hidden" | "deleted";
 export type ReactionType = "inspire" | "relate" | "curious" | "support";
 export type ConversationType = "direct" | "community";
+export type ChatVisibility = "public" | "invite_only";
+export type ChatRole = "admin" | "co_admin" | "member" | "banned";
+export type ChatAuditAction =
+  | "chat_created"
+  | "chat_updated"
+  | "chat_deleted"
+  | "role_granted"
+  | "role_revoked"
+  | "admin_transferred"
+  | "member_kicked"
+  | "member_banned"
+  | "member_unbanned"
+  | "message_pinned"
+  | "message_unpinned"
+  | "slow_mode_changed";
 export type MessageStatus = "sent" | "hidden" | "deleted";
 export type ReportTargetType =
   | "post"
@@ -105,7 +120,25 @@ export type Conversation = {
   id: string;
   type: ConversationType;
   community_id: string | null;
+  name: string | null;
+  description: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  created_by: string | null;
+  visibility: ChatVisibility;
+  slow_mode_seconds: number;
+  is_default: boolean;
   created_at: string;
+  updated_at: string;
+};
+
+export type ConversationMember = {
+  conversation_id: string;
+  user_id: string;
+  role: ChatRole;
+  muted: boolean;
+  last_read_at: string | null;
+  joined_at: string;
 };
 
 export type Message = {
@@ -115,6 +148,30 @@ export type Message = {
   body: string;
   media_urls: string[];
   status: MessageStatus;
+  created_at: string;
+};
+
+export type ChatPinnedMessage = {
+  conversation_id: string;
+  message_id: string;
+  pinned_by: string | null;
+  pinned_at: string;
+};
+
+export type MessageReaction = {
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+};
+
+export type ChatAuditEntry = {
+  id: string;
+  conversation_id: string;
+  actor_id: string | null;
+  action: ChatAuditAction;
+  target_id: string | null;
+  metadata: Json;
   created_at: string;
 };
 
@@ -173,4 +230,23 @@ export type ConversationPreview = Conversation & {
   community: Community | null;
   last_message: Message | null;
   unread_count: number;
+  member_count: number;
+  role: ChatRole | null;
+};
+
+export type ConversationMemberWithProfile = ConversationMember & {
+  profile: Profile | null;
+};
+
+export type MessageWithMeta = Message & {
+  sender: Profile | null;
+  reactions: Array<{ emoji: string; count: number; reacted_by_me: boolean }>;
+  is_pinned: boolean;
+};
+
+export type ChatDetails = {
+  conversation: Conversation;
+  members: ConversationMemberWithProfile[];
+  pinned_messages: MessageWithMeta[];
+  current_user_role: ChatRole | null;
 };

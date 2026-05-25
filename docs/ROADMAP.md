@@ -49,14 +49,26 @@ Objetivo: que cada usuario tenga identidad social clara.
 
 Objetivo: completar conversacion en tiempo real.
 
-- Guardar y mostrar `last_message` real.
-- Unread counts.
-- Read receipts.
-- Typing indicators.
-- Adjuntos/media.
-- Multiples canales por Orbita.
-- Herramientas de moderacion en chat.
-- Mejor soporte para conversaciones directas.
+Avance 2026-05-25: el esquema "chats v2" esta listo (multiples canales por orbita, roles dentro del chat, pinned, audit log, reactions, slow mode, mute, last_read_at) y la UI desde cero esta entregada. Falta polish y reactivos.
+
+- [x] Multiples canales por Orbita.
+- [x] Herramientas de moderacion en chat (transfer admin, promote co-admin, kick, ban, pin, audit log).
+- [x] Slow mode anti-spam.
+- [x] Ban con `role = 'banned'` que bloquea envio.
+- [x] `last_read_at` por miembro.
+- [ ] `last_message` real en `listConversations`.
+- [ ] Unread counts derivados de `last_read_at`.
+- [ ] Read receipts visibles.
+- [ ] Typing indicators (Realtime Presence).
+- [ ] Adjuntos/media (subir imagenes desde composer).
+- [ ] UI de reactions (picker + counts en bubble).
+- [ ] @mentions con notificacion.
+- [ ] Realtime de pinned + reactions (ahora solo messages).
+- [ ] `ChatSettingsScreen` (editar config + audit log + borrar chat).
+- [ ] Aplicar `banner_url` del chat como fondo del MessageList.
+- [ ] Mejor soporte para conversaciones directas.
+- [ ] App-level: limite 5 chats activos por usuario por orbita.
+- [ ] Long-press para acciones en mobile (ahora hover web).
 
 ## Fase 6 - Moderacion y seguridad
 
@@ -84,11 +96,17 @@ Objetivo: reemplazar conteos aproximados por presencia autentica.
 
 Objetivo: que el usuario llegue rapido a comunidades relevantes.
 
-- Recomendar Orbitas por intereses.
-- Sugerir primeras acciones.
-- Mejorar seleccion de intereses.
-- Permitir saltos controlados sin romper perfil.
-- Medir puntos de abandono.
+Avance 2026-05-25: onboarding rediseñado como wizard de 3 pasos con backdrop cosmico, mascota, emojis en intereses, copy conversacional. Falta la parte de descubrimiento posterior.
+
+- [x] Wizard multi-step con progress.
+- [x] Seleccion de intereses con emojis.
+- [x] Saltar foto / quitar foto.
+- [x] Validacion incremental por paso.
+- [x] Trigger auto-create profile al hacer login con Google (migracion 005).
+- [ ] Recomendar Orbitas por intereses al terminar.
+- [ ] Sugerir primeras acciones.
+- [ ] Username availability check live (con debounce y respeto de RLS).
+- [ ] Medir puntos de abandono.
 
 ## Fase 9 - Deploy web y publicacion
 
