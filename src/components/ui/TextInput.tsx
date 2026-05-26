@@ -10,16 +10,21 @@ import {
   type TextStyle,
   type TextInputProps as RNTextInputProps,
 } from "react-native";
+import { Check } from "lucide-react-native";
 import { radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
+
+type InputState = "default" | "focus" | "error" | "success";
 
 type TextInputProps = RNTextInputProps & {
   label?: string | undefined;
   error?: string | undefined;
+  success?: boolean | undefined;
   icon?: ReactNode | undefined;
   rightElement?: ReactNode | undefined;
   compact?: boolean | undefined;
   showErrorMessage?: boolean | undefined;
+  required?: boolean | undefined;
 };
 
 export const TextInput = forwardRef<RNTextInput, TextInputProps>(
@@ -27,10 +32,12 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
     {
       label,
       error,
+      success,
       icon,
       rightElement,
       compact = false,
       showErrorMessage = true,
+      required = false,
       style,
       onFocus,
       onBlur,
@@ -41,6 +48,14 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
     const theme = useTheme();
     const isMultiline = Boolean(props.multiline);
     const [focused, setFocused] = useState(false);
+
+    const inputState: InputState = error
+      ? "error"
+      : success
+        ? "success"
+        : focused
+          ? "focus"
+          : "default";
 
     function setRefs(instance: RNTextInput | null) {
       if (typeof ref === "function") {
@@ -60,24 +75,25 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
       onBlur?.(event);
     }
 
-    const borderColor = error
-      ? theme.colors.error
-      : focused
-        ? theme.colors.secondary
-        : "rgba(255,255,255,0.1)";
+    const stateStyles = getStateStyles(inputState, theme.colors);
 
     return (
       <View style={[styles.wrapper, compact ? styles.wrapperCompact : null]}>
         {label ? (
-          <Text
-            style={[
-              styles.label,
-              compact ? styles.labelCompact : null,
-              { color: theme.colors.textMuted },
-            ]}
-          >
-            {label}
-          </Text>
+          <View style={styles.labelRow}>
+            <Text
+              style={[
+                styles.label,
+                compact ? styles.labelCompact : null,
+                { color: theme.colors.textSecondary ?? theme.colors.textMuted },
+              ]}
+            >
+              {label}
+              {required ? (
+                <Text style={{ color: theme.colors.accent }}> *</Text>
+              ) : null}
+            </Text>
+          </View>
         ) : null}
         <View
           accessibilityLabel={props.accessibilityLabel ?? label}
@@ -86,12 +102,10 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             isMultiline ? styles.inputRowMultiline : styles.inputRowSingleLine,
             compact && !isMultiline ? styles.inputRowSingleLineCompact : null,
             {
-              backgroundColor: focused
-                ? "rgba(27,30,53,0.92)"
-                : theme.colors.elevated,
-              borderColor,
-              shadowColor: focused ? theme.colors.secondary : "transparent",
-              shadowOpacity: focused ? 0.24 : 0,
+              backgroundColor: stateStyles.backgroundColor,
+              borderColor: stateStyles.borderColor,
+              shadowColor: stateStyles.shadowColor,
+              shadowOpacity: stateStyles.shadowOpacity,
             },
           ]}
         >
@@ -101,12 +115,8 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
                 styles.iconWrap,
                 compact ? styles.iconWrapCompact : null,
                 {
-                  backgroundColor: focused
-                    ? `${theme.colors.secondary}18`
-                    : theme.colors.surface,
-                  borderColor: focused
-                    ? `${theme.colors.secondary}55`
-                    : "transparent",
+                  backgroundColor: stateStyles.iconBackground,
+                  borderColor: stateStyles.iconBorder,
                 },
               ]}
             >
@@ -135,6 +145,18 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             ]}
             {...props}
           />
+          {success && !rightElement ? (
+            <View style={styles.rightWrap}>
+              <View
+                style={[
+                  styles.successCheck,
+                  { backgroundColor: `${theme.colors.success}20` },
+                ]}
+              >
+                <Check size={14} color={theme.colors.success} strokeWidth={3} />
+              </View>
+            </View>
+          ) : null}
           {rightElement ? (
             <View style={styles.rightWrap}>{rightElement}</View>
           ) : null}
@@ -158,6 +180,50 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
 
 TextInput.displayName = "TextInput";
 
+function getStateStyles(
+  state: InputState,
+  colors: ReturnType<typeof useTheme>["colors"],
+) {
+  switch (state) {
+    case "error":
+      return {
+        borderColor: colors.error,
+        backgroundColor: `${colors.error}08`,
+        shadowColor: colors.error,
+        shadowOpacity: 0.2,
+        iconBackground: `${colors.error}15`,
+        iconBorder: `${colors.error}40`,
+      };
+    case "success":
+      return {
+        borderColor: colors.success,
+        backgroundColor: `${colors.success}08`,
+        shadowColor: colors.success,
+        shadowOpacity: 0.15,
+        iconBackground: `${colors.success}15`,
+        iconBorder: `${colors.success}40`,
+      };
+    case "focus":
+      return {
+        borderColor: colors.secondary,
+        backgroundColor: "rgba(27,30,53,0.92)",
+        shadowColor: colors.secondary,
+        shadowOpacity: 0.24,
+        iconBackground: `${colors.secondary}18`,
+        iconBorder: `${colors.secondary}55`,
+      };
+    default:
+      return {
+        borderColor: colors.border ?? "rgba(255,255,255,0.1)",
+        backgroundColor: colors.elevated,
+        shadowColor: "transparent",
+        shadowOpacity: 0,
+        iconBackground: colors.surface,
+        iconBorder: "transparent",
+      };
+  }
+}
+
 const webInputReset =
   Platform.OS === "web"
     ? ({
@@ -178,6 +244,10 @@ const styles = StyleSheet.create({
   wrapperCompact: {
     gap: 5,
   },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   label: {
     fontSize: typography.small,
     fontWeight: "700",
@@ -187,7 +257,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   inputRow: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: radius.lg,
     paddingLeft: 10,
     paddingRight: 10,
@@ -255,9 +325,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  successCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   error: {
     fontSize: typography.small,
     lineHeight: 17,
+    fontWeight: "600",
   },
   errorCompact: {
     fontSize: 11,

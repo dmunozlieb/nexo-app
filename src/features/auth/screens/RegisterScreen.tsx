@@ -4,7 +4,6 @@ import {
   StyleSheet,
   Text,
   TextInput as RNTextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { Link, router } from "expo-router";
@@ -12,6 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import {
   AtSign,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   EyeOff,
   Lock,
@@ -36,19 +37,42 @@ import {
   useRegisterMutation,
 } from "../hooks/useAuthMutations";
 
+const TOTAL_STEPS = 2;
+
+type StepConfig = {
+  title: string;
+  subtitle: string;
+  eyebrow: string;
+};
+
+const stepConfig: Record<number, StepConfig> = {
+  1: {
+    title: "Crea tu cuenta",
+    subtitle: "Empieza con tu email y una contrasena segura.",
+    eyebrow: "Paso 1 de 2",
+  },
+  2: {
+    title: "Tu identidad",
+    subtitle: "Elige como te veran los demas en Nexo.",
+    eyebrow: "Paso 2 de 2",
+  },
+};
+
 export function RegisterScreen() {
   const theme = useTheme();
-  const { width, height } = useWindowDimensions();
-  const fitDesktop = width >= 980 && height >= 720;
-  const compactForm = fitDesktop && height < 940;
+  const [currentStep, setCurrentStep] = useState(1);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
-  const usernameRef = useRef<RNTextInput | null>(null);
+
   const emailRef = useRef<RNTextInput | null>(null);
   const passwordRef = useRef<RNTextInput | null>(null);
   const confirmPasswordRef = useRef<RNTextInput | null>(null);
+  const displayNameRef = useRef<RNTextInput | null>(null);
+  const usernameRef = useRef<RNTextInput | null>(null);
+
   const register = useRegisterMutation();
   const googleLogin = useGoogleLoginMutation();
+
   const form = useForm<AuthRegisterInput>({
     resolver: zodResolver(authRegisterSchema),
     mode: "onTouched",
@@ -60,14 +84,22 @@ export function RegisterScreen() {
       confirmPassword: "",
     },
   });
+
   const password = form.watch("password");
   const passwordStrength = getPasswordStrength(password);
   const validationErrors = form.formState.errors;
-  const hasValidationErrors = Object.keys(validationErrors).length > 0;
-  const passwordError =
-    typeof validationErrors.password?.message === "string"
-      ? validationErrors.password.message
-      : undefined;
+
+  // Check if step 1 fields are valid
+  const step1Fields = ["email", "password", "confirmPassword"] as const;
+  const step1HasErrors = step1Fields.some(
+    (field) => validationErrors[field]?.message,
+  );
+  const step1Values = form.watch(["email", "password", "confirmPassword"]);
+  const step1Filled = step1Values.every((v) => v && v.length > 0);
+  const canProceedToStep2 = step1Filled && !step1HasErrors;
+
+  // Get current step config
+  const { title, subtitle, eyebrow } = stepConfig[currentStep];
 
   async function handleRegister(input: AuthRegisterInput) {
     try {
@@ -89,214 +121,58 @@ export function RegisterScreen() {
     }
   }
 
+  function goToNextStep() {
+    if (currentStep < TOTAL_STEPS && canProceedToStep2) {
+      setCurrentStep(currentStep + 1);
+      setRegisterError(null);
+    }
+  }
+
+  function goToPreviousStep() {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      setRegisterError(null);
+    }
+  }
+
   return (
     <AuthScaffold
-      eyebrow="Nueva cuenta"
-      title="Crea tu identidad"
-      subtitle="Crea tu perfil y despues elige tus intereses para encontrar tus primeras Orbitas."
+      eyebrow={eyebrow}
+      title={title}
+      subtitle={subtitle}
       storyTitle="Empieza tu viaje orbital"
       storyCopy="Crea tu perfil, descubre comunidades y conecta con personas que comparten tus intereses."
       mobileMascot="inline"
       panelVariant="compact"
     >
-      {hasValidationErrors ? (
-        <View
-          accessibilityRole="alert"
-          style={[
-            styles.validationNotice,
-            {
-              backgroundColor: `${theme.colors.error}16`,
-              borderColor: `${theme.colors.error}66`,
-            },
-          ]}
-        >
-          <Text
-            style={[styles.validationNoticeText, { color: theme.colors.text }]}
-          >
-            Revisa los campos marcados en rojo.
-          </Text>
+      {/* Progress indicator */}
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          {Array.from({ length: TOTAL_STEPS }).map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.progressStep,
+                {
+                  backgroundColor:
+                    index < currentStep
+                      ? theme.colors.primary
+                      : "rgba(255,255,255,0.1)",
+                },
+              ]}
+            />
+          ))}
         </View>
-      ) : null}
-      {!env.demoMode ? (
-        <SocialAuthRow
-          onProvider={handleGoogleLogin}
-          loadingProvider={googleLogin.isPending ? "google" : null}
-        />
-      ) : null}
-      <Controller
-        control={form.control}
-        name="displayName"
-        render={({ field, fieldState }) => (
-          <TextInput
-            compact={compactForm}
-            label="Nombre visible"
-            accessibilityLabel="Nombre visible"
-            placeholder="Luna Vega"
-            textContentType="name"
-            returnKeyType="next"
-            value={field.value}
-            onChangeText={(value) => {
-              setRegisterError(null);
-              field.onChange(value);
-            }}
-            onBlur={field.onBlur}
-            onSubmitEditing={() => usernameRef.current?.focus()}
-            blurOnSubmit={false}
-            error={fieldState.error?.message}
-            showErrorMessage={false}
-            icon={<UserRound size={18} color={theme.colors.textFaint} />}
-          />
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="username"
-        render={({ field, fieldState }) => (
-          <TextInput
-            ref={usernameRef}
-            compact={compactForm}
-            label="Username"
-            accessibilityLabel="Username"
-            placeholder="luna_vega"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="next"
-            value={field.value}
-            onChangeText={(value) => {
-              setRegisterError(null);
-              field.onChange(value.toLowerCase().replace(/\s+/g, "_"));
-            }}
-            onBlur={field.onBlur}
-            onSubmitEditing={() => emailRef.current?.focus()}
-            blurOnSubmit={false}
-            error={fieldState.error?.message}
-            showErrorMessage={false}
-            icon={<AtSign size={18} color={theme.colors.textFaint} />}
-          />
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="email"
-        render={({ field, fieldState }) => (
-          <TextInput
-            ref={emailRef}
-            compact={compactForm}
-            label="Email"
-            accessibilityLabel="Email"
-            placeholder="tu@email.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            autoComplete="email"
-            inputMode="email"
-            returnKeyType="next"
-            value={field.value}
-            onChangeText={(value) => {
-              setRegisterError(null);
-              field.onChange(value);
-            }}
-            onBlur={field.onBlur}
-            onSubmitEditing={() => passwordRef.current?.focus()}
-            blurOnSubmit={false}
-            error={fieldState.error?.message}
-            showErrorMessage={false}
-            icon={<Mail size={18} color={theme.colors.textFaint} />}
-          />
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="password"
-        render={({ field, fieldState }) => (
-          <TextInput
-            ref={passwordRef}
-            compact={compactForm}
-            label="Contrasena"
-            accessibilityLabel="Contrasena"
-            placeholder="Minimo 8 caracteres"
-            secureTextEntry={!passwordVisible}
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="newPassword"
-            autoComplete="new-password"
-            returnKeyType="next"
-            value={field.value}
-            onChangeText={(value) => {
-              setRegisterError(null);
-              field.onChange(value);
-            }}
-            onBlur={field.onBlur}
-            onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-            blurOnSubmit={false}
-            error={fieldState.error?.message}
-            showErrorMessage={false}
-            icon={<Lock size={18} color={theme.colors.textFaint} />}
-            rightElement={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  passwordVisible ? "Ocultar contrasena" : "Mostrar contrasena"
-                }
-                hitSlop={10}
-                onPress={() => setPasswordVisible((visible) => !visible)}
-                style={({ pressed }) => [
-                  styles.iconButton,
-                  { opacity: pressed ? 0.68 : 1 },
-                ]}
-              >
-                {passwordVisible ? (
-                  <Eye size={20} color={theme.colors.textMuted} />
-                ) : (
-                  <EyeOff size={20} color={theme.colors.textMuted} />
-                )}
-              </Pressable>
-            }
-          />
-        )}
-      />
-      <PasswordStrength
-        value={passwordStrength}
-        compact={compactForm}
-        error={passwordError}
-      />
-      <Controller
-        control={form.control}
-        name="confirmPassword"
-        render={({ field, fieldState }) => (
-          <TextInput
-            ref={confirmPasswordRef}
-            compact={compactForm}
-            label="Confirmar contrasena"
-            accessibilityLabel="Confirmar contrasena"
-            placeholder="Repite tu contrasena"
-            secureTextEntry={!passwordVisible}
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="newPassword"
-            autoComplete="new-password"
-            returnKeyType="done"
-            value={field.value}
-            onChangeText={(value) => {
-              setRegisterError(null);
-              field.onChange(value);
-            }}
-            onBlur={field.onBlur}
-            onSubmitEditing={form.handleSubmit(handleRegister)}
-            error={fieldState.error?.message}
-            showErrorMessage={false}
-            icon={<ShieldCheck size={18} color={theme.colors.textFaint} />}
-          />
-        )}
-      />
+      </View>
+
       {registerError ? (
         <View
           accessibilityRole="alert"
           style={[
             styles.registerError,
             {
-              backgroundColor: `${theme.colors.error}18`,
-              borderColor: `${theme.colors.error}70`,
+              backgroundColor: `${theme.colors.error}12`,
+              borderColor: `${theme.colors.error}50`,
             },
           ]}
         >
@@ -307,23 +183,266 @@ export function RegisterScreen() {
           </Text>
         </View>
       ) : null}
-      <Button
-        title="Crear cuenta"
-        size={compactForm ? "md" : "lg"}
-        loading={register.isPending}
-        disabled={register.isPending || googleLogin.isPending}
-        gradient={[theme.colors.primary, theme.colors.accent]}
-        iconRight={<Rocket size={18} color="#FFFFFF" />}
+
+      {/* Step 1: Email and Password */}
+      {currentStep === 1 ? (
+        <>
+          {!env.demoMode ? (
+            <SocialAuthRow
+              onProvider={handleGoogleLogin}
+              loadingProvider={googleLogin.isPending ? "google" : null}
+            />
+          ) : null}
+
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field, fieldState }) => (
+              <TextInput
+                ref={emailRef}
+                label="Email"
+                accessibilityLabel="Email"
+                placeholder="tu@email.com"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                autoComplete="email"
+                inputMode="email"
+                returnKeyType="next"
+                required
+                value={field.value}
+                onChangeText={(value) => {
+                  setRegisterError(null);
+                  field.onChange(value);
+                }}
+                onBlur={field.onBlur}
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                blurOnSubmit={false}
+                error={fieldState.error?.message}
+                success={!fieldState.error && field.value.includes("@")}
+                icon={<Mail size={18} color={theme.colors.textFaint} />}
+              />
+            )}
+          />
+
+          <Controller
+            control={form.control}
+            name="password"
+            render={({ field, fieldState }) => (
+              <TextInput
+                ref={passwordRef}
+                label="Contrasena"
+                accessibilityLabel="Contrasena"
+                placeholder="Minimo 8 caracteres"
+                secureTextEntry={!passwordVisible}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                autoComplete="new-password"
+                returnKeyType="next"
+                required
+                value={field.value}
+                onChangeText={(value) => {
+                  setRegisterError(null);
+                  field.onChange(value);
+                }}
+                onBlur={field.onBlur}
+                onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                blurOnSubmit={false}
+                error={fieldState.error?.message}
+                showErrorMessage={false}
+                icon={<Lock size={18} color={theme.colors.textFaint} />}
+                rightElement={
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      passwordVisible
+                        ? "Ocultar contrasena"
+                        : "Mostrar contrasena"
+                    }
+                    hitSlop={12}
+                    onPress={() => setPasswordVisible((v) => !v)}
+                    style={({ pressed }) => [
+                      styles.iconButton,
+                      { opacity: pressed ? 0.68 : 1 },
+                    ]}
+                  >
+                    {passwordVisible ? (
+                      <Eye size={20} color={theme.colors.textMuted} />
+                    ) : (
+                      <EyeOff size={20} color={theme.colors.textMuted} />
+                    )}
+                  </Pressable>
+                }
+              />
+            )}
+          />
+
+          <PasswordStrength
+            value={passwordStrength}
+            error={validationErrors.password?.message}
+          />
+
+          <Controller
+            control={form.control}
+            name="confirmPassword"
+            render={({ field, fieldState }) => (
+              <TextInput
+                ref={confirmPasswordRef}
+                label="Confirmar contrasena"
+                accessibilityLabel="Confirmar contrasena"
+                placeholder="Repite tu contrasena"
+                secureTextEntry={!passwordVisible}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                autoComplete="new-password"
+                returnKeyType="done"
+                required
+                value={field.value}
+                onChangeText={(value) => {
+                  setRegisterError(null);
+                  field.onChange(value);
+                }}
+                onBlur={field.onBlur}
+                onSubmitEditing={goToNextStep}
+                error={fieldState.error?.message}
+                success={
+                  !fieldState.error &&
+                  field.value.length > 0 &&
+                  field.value === password
+                }
+                icon={<ShieldCheck size={18} color={theme.colors.textFaint} />}
+              />
+            )}
+          />
+
+          <Button
+            title="Continuar"
+            size="lg"
+            disabled={!canProceedToStep2}
+            gradient={
+              canProceedToStep2
+                ? [theme.colors.primary, theme.colors.accent]
+                : undefined
+            }
+            iconRight={<ChevronRight size={18} color="#FFFFFF" />}
+            style={[
+              styles.primaryButton,
+              {
+                borderColor: "transparent",
+                shadowColor: theme.colors.primary,
+                opacity: canProceedToStep2 ? 1 : 0.5,
+              },
+            ]}
+            onPress={goToNextStep}
+          />
+        </>
+      ) : null}
+
+      {/* Step 2: Profile info */}
+      {currentStep === 2 ? (
+        <>
+          <Controller
+            control={form.control}
+            name="displayName"
+            render={({ field, fieldState }) => (
+              <TextInput
+                ref={displayNameRef}
+                label="Nombre visible"
+                accessibilityLabel="Nombre visible"
+                placeholder="Como quieres que te llamen"
+                textContentType="name"
+                returnKeyType="next"
+                required
+                value={field.value}
+                onChangeText={(value) => {
+                  setRegisterError(null);
+                  field.onChange(value);
+                }}
+                onBlur={field.onBlur}
+                onSubmitEditing={() => usernameRef.current?.focus()}
+                blurOnSubmit={false}
+                error={fieldState.error?.message}
+                success={!fieldState.error && field.value.length >= 2}
+                icon={<UserRound size={18} color={theme.colors.textFaint} />}
+              />
+            )}
+          />
+
+          <Controller
+            control={form.control}
+            name="username"
+            render={({ field, fieldState }) => (
+              <TextInput
+                ref={usernameRef}
+                label="Username"
+                accessibilityLabel="Username"
+                placeholder="tu_nombre_unico"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="done"
+                required
+                value={field.value}
+                onChangeText={(value) => {
+                  setRegisterError(null);
+                  field.onChange(value.toLowerCase().replace(/\s+/g, "_"));
+                }}
+                onBlur={field.onBlur}
+                onSubmitEditing={form.handleSubmit(handleRegister)}
+                error={fieldState.error?.message}
+                success={!fieldState.error && field.value.length >= 3}
+                icon={<AtSign size={18} color={theme.colors.textFaint} />}
+              />
+            )}
+          />
+
+          <Text
+            style={[
+              styles.usernameHint,
+              { color: theme.colors.textSecondary ?? theme.colors.textMuted },
+            ]}
+          >
+            Tu username sera tu identificador unico en Nexo. Solo letras,
+            numeros y guiones bajos.
+          </Text>
+
+          <View style={styles.buttonRow}>
+            <Button
+              title="Atras"
+              size="lg"
+              variant="secondary"
+              iconLeft={<ChevronLeft size={18} color={theme.colors.text} />}
+              style={[styles.backButton, { borderColor: theme.colors.border }]}
+              onPress={goToPreviousStep}
+            />
+            <Button
+              title="Crear cuenta"
+              size="lg"
+              loading={register.isPending}
+              disabled={register.isPending || googleLogin.isPending}
+              gradient={[theme.colors.primary, theme.colors.accent]}
+              iconRight={<Rocket size={18} color="#FFFFFF" />}
+              style={[
+                styles.primaryButton,
+                styles.submitButton,
+                {
+                  borderColor: "transparent",
+                  shadowColor: theme.colors.primary,
+                },
+              ]}
+              onPress={form.handleSubmit(handleRegister)}
+            />
+          </View>
+        </>
+      ) : null}
+
+      <Text
         style={[
-          styles.primaryButton,
-          {
-            borderColor: "transparent",
-            shadowColor: theme.colors.primary,
-          },
+          styles.login,
+          { color: theme.colors.textSecondary ?? theme.colors.textMuted },
         ]}
-        onPress={form.handleSubmit(handleRegister)}
-      />
-      <Text style={[styles.login, { color: theme.colors.textMuted }]}>
+      >
         Ya tienes cuenta?{" "}
         <Link
           href="/login"
@@ -338,32 +457,24 @@ export function RegisterScreen() {
 
 function PasswordStrength({
   value,
-  compact = false,
   error,
 }: {
   value: PasswordStrengthValue;
-  compact?: boolean;
   error?: string | undefined;
 }) {
   const theme = useTheme();
-  const activeColor =
-    error
-      ? theme.colors.error
-      : value.score >= 4
-        ? theme.colors.success
-        : value.score >= 3
-          ? theme.colors.secondary
-          : value.score >= 2
-            ? theme.colors.warning
-            : theme.colors.textFaint;
+  const activeColor = error
+    ? theme.colors.error
+    : value.score >= 4
+      ? theme.colors.success
+      : value.score >= 3
+        ? theme.colors.secondary
+        : value.score >= 2
+          ? theme.colors.warning
+          : theme.colors.textFaint;
 
   return (
-    <View
-      style={[
-        styles.strengthBlock,
-        compact ? styles.strengthBlockCompact : null,
-      ]}
-    >
+    <View style={styles.strengthBlock}>
       <View style={styles.strengthBars}>
         {[0, 1, 2, 3].map((index) => (
           <View
@@ -372,18 +483,21 @@ function PasswordStrength({
               styles.strengthBar,
               {
                 backgroundColor:
-                  value.score > index ? activeColor : "rgba(255,255,255,0.1)",
+                  value.score > index ? activeColor : "rgba(255,255,255,0.08)",
               },
             ]}
           />
         ))}
       </View>
       <Text
-        numberOfLines={compact ? 1 : 2}
+        numberOfLines={2}
         style={[
           styles.strengthText,
-          compact ? styles.strengthTextCompact : null,
-          { color: error ? theme.colors.error : theme.colors.textFaint },
+          {
+            color: error
+              ? theme.colors.error
+              : theme.colors.textSecondary ?? theme.colors.textMuted,
+          },
         ]}
       >
         {error ?? value.label}
@@ -414,7 +528,7 @@ function getPasswordStrength(password: string): PasswordStrengthValue {
   }
 
   if (score >= 3) {
-    return { score, label: "Buen inicio, anade mas variedad si puedes." };
+    return { score, label: "Buen inicio, anade mas variedad." };
   }
 
   return { score, label: "Contrasena debil: combina letras y numeros." };
@@ -439,39 +553,34 @@ function getFriendlyRegisterError(error: unknown) {
 }
 
 const styles = StyleSheet.create({
+  progressContainer: {
+    paddingHorizontal: 4,
+  },
+  progressBar: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  progressStep: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+  },
   login: {
     textAlign: "center",
+    fontSize: 14,
   },
   link: {
     fontWeight: "800",
   },
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
-  validationNotice: {
-    minHeight: 34,
-    borderWidth: 1,
-    borderRadius: 12,
-    justifyContent: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  validationNoticeText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "900",
-    textAlign: "center",
-  },
   strengthBlock: {
     gap: 6,
-    marginTop: -5,
-  },
-  strengthBlockCompact: {
-    gap: 4,
-    marginTop: -6,
+    marginTop: -4,
   },
   strengthBars: {
     flexDirection: "row",
@@ -480,16 +589,12 @@ const styles = StyleSheet.create({
   strengthBar: {
     flex: 1,
     height: 4,
-    borderRadius: 999,
+    borderRadius: 2,
   },
   strengthText: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: "800",
-  },
-  strengthTextCompact: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontWeight: "600",
   },
   registerError: {
     borderWidth: 1,
@@ -500,12 +605,29 @@ const styles = StyleSheet.create({
   registerErrorText: {
     fontSize: 13,
     lineHeight: 18,
-    fontWeight: "800",
+    fontWeight: "700",
+  },
+  usernameHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: -4,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  backButton: {
+    flex: 0,
+    minWidth: 100,
+    borderWidth: 1,
   },
   primaryButton: {
-    shadowOpacity: 0.34,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 8,
+  },
+  submitButton: {
+    flex: 1,
   },
 });
