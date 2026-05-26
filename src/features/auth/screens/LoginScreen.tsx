@@ -9,7 +9,7 @@ import {
 import { Link, router } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ArrowRight, Eye, EyeOff, Mail, Lock } from "lucide-react-native";
+import { ArrowRight, Eye, EyeOff, Mail, Lock, Check } from "lucide-react-native";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
 import { env } from "../../../lib/env";
@@ -42,6 +42,7 @@ const demoUsers: ReadonlyArray<{
 export function LoginScreen() {
   const theme = useTheme();
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const passwordRef = useRef<RNTextInput | null>(null);
   const login = useLoginMutation();
@@ -96,8 +97,8 @@ export function LoginScreen() {
           style={[
             styles.validationNotice,
             {
-              backgroundColor: `${theme.colors.error}16`,
-              borderColor: `${theme.colors.error}66`,
+              backgroundColor: `${theme.colors.error}12`,
+              borderColor: `${theme.colors.error}50`,
             },
           ]}
         >
@@ -108,12 +109,14 @@ export function LoginScreen() {
           </Text>
         </View>
       ) : null}
+
       {!env.demoMode ? (
         <SocialAuthRow
           onProvider={handleGoogleLogin}
           loadingProvider={googleLogin.isPending ? "google" : null}
         />
       ) : null}
+
       <Controller
         control={form.control}
         name="email"
@@ -142,6 +145,7 @@ export function LoginScreen() {
           />
         )}
       />
+
       <Controller
         control={form.control}
         name="password"
@@ -173,7 +177,7 @@ export function LoginScreen() {
                 accessibilityLabel={
                   passwordVisible ? "Ocultar contrasena" : "Mostrar contrasena"
                 }
-                hitSlop={10}
+                hitSlop={12}
                 onPress={() => setPasswordVisible((visible) => !visible)}
                 style={({ pressed }) => [
                   styles.eyeButton,
@@ -190,14 +194,53 @@ export function LoginScreen() {
           />
         )}
       />
+
+      {/* Remember me checkbox */}
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: rememberMe }}
+        accessibilityLabel="Recordarme"
+        onPress={() => setRememberMe(!rememberMe)}
+        style={({ pressed }) => [
+          styles.rememberRow,
+          { opacity: pressed ? 0.8 : 1 },
+        ]}
+      >
+        <View
+          style={[
+            styles.checkbox,
+            {
+              backgroundColor: rememberMe
+                ? theme.colors.primary
+                : "transparent",
+              borderColor: rememberMe
+                ? theme.colors.primary
+                : theme.colors.border ?? "rgba(255,255,255,0.2)",
+            },
+          ]}
+        >
+          {rememberMe ? (
+            <Check size={12} color="#FFFFFF" strokeWidth={3} />
+          ) : null}
+        </View>
+        <Text
+          style={[
+            styles.rememberText,
+            { color: theme.colors.textSecondary ?? theme.colors.textMuted },
+          ]}
+        >
+          Recordarme en este dispositivo
+        </Text>
+      </Pressable>
+
       {authError ? (
         <View
           accessibilityRole="alert"
           style={[
             styles.authError,
             {
-              backgroundColor: `${theme.colors.error}18`,
-              borderColor: `${theme.colors.error}70`,
+              backgroundColor: `${theme.colors.error}12`,
+              borderColor: `${theme.colors.error}50`,
             },
           ]}
         >
@@ -206,13 +249,14 @@ export function LoginScreen() {
           </Text>
         </View>
       ) : null}
+
       {env.demoMode ? (
         <View
           style={[
             styles.demoBlock,
             {
-              backgroundColor: "rgba(255,255,255,0.04)",
-              borderColor: "rgba(255,255,255,0.08)",
+              backgroundColor: "rgba(255,255,255,0.03)",
+              borderColor: "rgba(255,255,255,0.06)",
             },
           ]}
         >
@@ -220,7 +264,12 @@ export function LoginScreen() {
             <Text style={[styles.demoLabel, { color: theme.colors.text }]}>
               Acceso demo
             </Text>
-            <Text style={[styles.demoHint, { color: theme.colors.textFaint }]}>
+            <Text
+              style={[
+                styles.demoHint,
+                { color: theme.colors.textSecondary ?? theme.colors.textMuted },
+              ]}
+            >
               Elige una orbita para entrar
             </Text>
           </View>
@@ -237,23 +286,23 @@ export function LoginScreen() {
                     styles.demoChip,
                     {
                       backgroundColor: theme.colors.elevated,
-                      borderColor: pressed ? accent : `${accent}3D`,
+                      borderColor: pressed ? accent : `${accent}30`,
                       shadowColor: accent,
-                      shadowOpacity: pressed ? 0.45 : 0.22,
+                      shadowOpacity: pressed ? 0.35 : 0.18,
                     },
                   ]}
                 >
                   <View
                     style={[
                       styles.demoOrbHalo,
-                      { backgroundColor: `${accent}22` },
+                      { backgroundColor: `${accent}18` },
                     ]}
                   />
                   <View
                     style={[
                       styles.demoOrb,
                       {
-                        backgroundColor: `${accent}1C`,
+                        backgroundColor: `${accent}18`,
                         borderColor: accent,
                       },
                     ]}
@@ -271,7 +320,10 @@ export function LoginScreen() {
                     <Text
                       style={[
                         styles.demoChipRole,
-                        { color: theme.colors.textFaint },
+                        {
+                          color:
+                            theme.colors.textSecondary ?? theme.colors.textMuted,
+                        },
                       ]}
                     >
                       {user.role}
@@ -283,6 +335,7 @@ export function LoginScreen() {
           </View>
         </View>
       ) : null}
+
       <Button
         title="Entrar"
         size="lg"
@@ -299,14 +352,20 @@ export function LoginScreen() {
         ]}
         onPress={form.handleSubmit(handleLogin)}
       />
+
       <View style={styles.links}>
         <Link
           href="/forgot-password"
-          style={[styles.linkMuted, { color: theme.colors.textMuted }]}
+          style={[styles.linkMuted, { color: theme.colors.secondary }]}
         >
           Olvidaste tu contrasena?
         </Link>
-        <Text style={{ color: theme.colors.textMuted }}>
+        <Text
+          style={[
+            styles.linkText,
+            { color: theme.colors.textSecondary ?? theme.colors.textMuted },
+          ]}
+        >
           No tienes cuenta?{" "}
           <Link
             href="/register"
@@ -351,17 +410,20 @@ const styles = StyleSheet.create({
   authErrorText: {
     fontSize: 13,
     lineHeight: 18,
-    fontWeight: "800",
+    fontWeight: "700",
   },
   loginButton: {
-    shadowOpacity: 0.34,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
   links: {
     alignItems: "center",
-    gap: 10,
+    gap: 8,
+  },
+  linkText: {
+    fontSize: 14,
   },
   link: {
     fontWeight: "800",
@@ -371,10 +433,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   eyeButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  rememberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 2,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rememberText: {
+    fontSize: 13,
+    fontWeight: "600",
   },
   validationNotice: {
     minHeight: 34,
@@ -387,7 +467,7 @@ const styles = StyleSheet.create({
   validationNoticeText: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: "900",
+    fontWeight: "800",
     textAlign: "center",
   },
   demoBlock: {
@@ -403,6 +483,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "900",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   demoHint: {
     fontSize: 12,
@@ -414,9 +495,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   demoChip: {
-    minHeight: 56,
+    minHeight: 54,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 8,
     alignItems: "center",
@@ -425,8 +506,8 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     flexGrow: 1,
     flexBasis: "30%",
-    minWidth: 96,
-    shadowRadius: 14,
+    minWidth: 94,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
     overflow: "hidden",
@@ -435,21 +516,21 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: -6,
     top: -6,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    opacity: 0.6,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    opacity: 0.5,
   },
   demoOrb: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
   },
   demoOrbLetter: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "900",
   },
   demoChipText: {
@@ -458,10 +539,10 @@ const styles = StyleSheet.create({
   },
   demoChipName: {
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "800",
   },
   demoChipRole: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "700",
   },
 });

@@ -26,16 +26,15 @@ type AuthScaffoldProps = PropsWithChildren<{
   storyTitle?: string | undefined;
   storyCopy?: string | undefined;
   panelVariant?: "docked" | "compact" | undefined;
-  mobileMascot?: "hero" | "inline" | undefined;
+  mobileMascot?: "hero" | "inline" | "none" | undefined;
 }>;
 
 const particles = [
-  { top: "10%", left: "16%", size: 2, opacity: 0.42 },
-  { top: "18%", left: "76%", size: 3, opacity: 0.5 },
-  { top: "37%", left: "9%", size: 2, opacity: 0.34 },
-  { top: "56%", left: "84%", size: 2, opacity: 0.38 },
-  { top: "74%", left: "21%", size: 3, opacity: 0.46 },
-  { top: "86%", left: "68%", size: 2, opacity: 0.36 },
+  { top: "12%", left: "8%", size: 1.5, opacity: 0.3 },
+  { top: "24%", left: "88%", size: 2, opacity: 0.25 },
+  { top: "45%", left: "5%", size: 1.5, opacity: 0.2 },
+  { top: "68%", left: "92%", size: 2, opacity: 0.28 },
+  { top: "82%", left: "15%", size: 1.5, opacity: 0.22 },
 ] as const;
 
 const storyStats = [
@@ -99,11 +98,11 @@ export function AuthScaffold({
   } = m;
   const mascotTranslateY = mascotFloat.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, isDesktop ? -8 : -5],
+    outputRange: [0, isDesktop ? -6 : -4],
   });
   const particleOpacity = particlePulse.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.28, 0.68],
+    outputRange: [0.15, 0.4],
   });
 
   useEffect(() => {
@@ -180,15 +179,17 @@ export function AuthScaffold({
         },
       ]}
     >
+      {/* Background - Simplified decorations */}
       <View pointerEvents="none" style={styles.backgroundArt}>
+        {/* Reduced opacity glows - moved to edges */}
         <View
           style={[
             styles.glowLarge,
             {
-              backgroundColor: `${theme.colors.primary}24`,
-              width: isDesktop ? 420 : 260,
-              height: isDesktop ? 420 : 260,
-              borderRadius: isDesktop ? 210 : 130,
+              backgroundColor: `${theme.colors.primary}12`,
+              width: isDesktop ? 380 : 200,
+              height: isDesktop ? 380 : 200,
+              borderRadius: isDesktop ? 190 : 100,
             },
           ]}
         />
@@ -196,50 +197,31 @@ export function AuthScaffold({
           style={[
             styles.glowSmall,
             {
-              backgroundColor: `${theme.colors.accent}20`,
-              width: isDesktop ? 260 : 170,
-              height: isDesktop ? 260 : 170,
-              borderRadius: isDesktop ? 130 : 85,
+              backgroundColor: `${theme.colors.accent}0C`,
+              width: isDesktop ? 220 : 140,
+              height: isDesktop ? 220 : 140,
+              borderRadius: isDesktop ? 110 : 70,
             },
           ]}
         />
-        <View
-          style={[
-            styles.glowCyan,
-            {
-              backgroundColor: `${theme.colors.secondary}14`,
-              width: isDesktop ? 360 : 220,
-              height: isDesktop ? 360 : 220,
-              borderRadius: isDesktop ? 180 : 110,
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.glowPanel,
-            {
-              backgroundColor: `${theme.colors.primary}12`,
-              width: isDesktop ? 430 : 260,
-              height: isDesktop ? 430 : 260,
-              borderRadius: isDesktop ? 215 : 130,
-            },
-          ]}
-        />
+        {/* Subtle grain overlay */}
         <View style={styles.grainVeil} />
+        {/* Simplified orbit strokes - lower opacity */}
         <View
           style={[
             styles.orbitStroke,
-            { borderColor: `${theme.colors.secondary}3D` },
+            { borderColor: `${theme.colors.secondary}20` },
             isDesktop ? styles.orbitStrokeDesktop : null,
           ]}
         />
         <View
           style={[
             styles.orbitStrokeAlt,
-            { borderColor: `${theme.colors.accent}35` },
+            { borderColor: `${theme.colors.accent}18` },
             isDesktop ? styles.orbitStrokeAltDesktop : null,
           ]}
         />
+        {/* Smaller, subtler particles */}
         {particles.map((particle) => (
           <Animated.View
             key={`${particle.top}-${particle.left}`}
@@ -251,7 +233,7 @@ export function AuthScaffold({
                 width: particle.size,
                 height: particle.size,
                 borderRadius: particle.size / 2,
-                opacity: reduceMotion ? particle.opacity : particleOpacity,
+                opacity: reduceMotion ? particle.opacity * 0.5 : particleOpacity,
               },
             ]}
           />
@@ -264,11 +246,12 @@ export function AuthScaffold({
           isDesktop ? styles.layoutDesktop : styles.layoutMobile,
         ]}
       >
+        {/* Desktop Story Panel - Simplified */}
         {isDesktop ? (
           <View pointerEvents="none" style={[styles.storyPanel, webNoSelect]}>
             <View style={styles.storyBrand}>
               <View style={styles.storyLogo}>
-                <NexoMark size={58} />
+                <NexoMark size={52} />
               </View>
               <View style={styles.storyBrandCopy}>
                 <Text
@@ -300,7 +283,7 @@ export function AuthScaffold({
               <View
                 style={[
                   styles.desktopMascotHalo,
-                  { backgroundColor: `${theme.colors.primary}18` },
+                  { backgroundColor: `${theme.colors.primary}10` },
                 ]}
               />
               <Animated.View
@@ -310,10 +293,16 @@ export function AuthScaffold({
               </Animated.View>
             </View>
 
-            <Text style={[styles.storyCopy, { color: theme.colors.textMuted }]}>
+            <Text
+              style={[
+                styles.storyCopy,
+                { color: theme.colors.textSecondary ?? theme.colors.textMuted },
+              ]}
+            >
               {storyCopy}
             </Text>
 
+            {/* Stats - Improved contrast */}
             <View style={styles.storySignals}>
               {storyStats.map((stat) => {
                 const accent =
@@ -328,8 +317,8 @@ export function AuthScaffold({
                     style={[
                       styles.statCard,
                       {
-                        backgroundColor: theme.colors.surface,
-                        borderColor: `${accent}33`,
+                        backgroundColor: `${theme.colors.surface}E6`,
+                        borderColor: `${accent}40`,
                       },
                     ]}
                   >
@@ -351,7 +340,10 @@ export function AuthScaffold({
                     <Text
                       style={[
                         styles.statLabel,
-                        { color: theme.colors.textMuted },
+                        {
+                          color:
+                            theme.colors.textSecondary ?? theme.colors.textMuted,
+                        },
                       ]}
                       numberOfLines={1}
                     >
@@ -364,13 +356,14 @@ export function AuthScaffold({
           </View>
         ) : null}
 
+        {/* Form Card */}
         <View
           style={[
             styles.card,
             {
-              backgroundColor: "rgba(12,14,28,0.74)",
-              borderColor: "rgba(255,255,255,0.14)",
-              shadowColor: theme.colors.secondary,
+              backgroundColor: "rgba(12,14,28,0.82)",
+              borderColor: "rgba(255,255,255,0.1)",
+              shadowColor: theme.colors.primary,
             },
             {
               maxWidth: cardMaxWidth,
@@ -382,22 +375,23 @@ export function AuthScaffold({
           ]}
         >
           <BlurView
-            intensity={46}
+            intensity={40}
             tint="dark"
             blurMethod="dimezisBlurViewSdk31Plus"
             style={styles.cardBlur}
           />
           <LinearGradient
             colors={[
-              `${theme.colors.primary}26`,
-              `${theme.colors.secondary}12`,
-              `${theme.colors.accent}1C`,
+              `${theme.colors.primary}18`,
+              `${theme.colors.secondary}08`,
+              `${theme.colors.accent}10`,
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.cardGlow}
           />
 
+          {/* Mobile brand header */}
           {!isDesktop ? (
             <View
               pointerEvents="none"
@@ -408,9 +402,9 @@ export function AuthScaffold({
             >
               <View style={styles.brandIcon}>
                 {mobileMascot === "inline" ? (
-                  <NexoMascot size={44} animated={!reduceMotion} />
+                  <NexoMascot size={40} animated={!reduceMotion} />
                 ) : (
-                  <NexoMark size={44} />
+                  <NexoMark size={40} />
                 )}
               </View>
               <Text style={[styles.brandText, { color: theme.colors.text }]}>
@@ -419,6 +413,7 @@ export function AuthScaffold({
             </View>
           ) : null}
 
+          {/* Mobile mascot hero */}
           {!isDesktop && mobileMascot === "hero" ? (
             <View
               pointerEvents="none"
@@ -427,11 +422,11 @@ export function AuthScaffold({
               <View
                 style={[
                   styles.mascotHalo,
-                  { backgroundColor: `${theme.colors.primary}16` },
+                  { backgroundColor: `${theme.colors.primary}0C` },
                   {
-                    width: mobileMascotSize * 0.84,
-                    height: mobileMascotSize * 0.84,
-                    borderRadius: mobileMascotSize * 0.42,
+                    width: mobileMascotSize * 0.8,
+                    height: mobileMascotSize * 0.8,
+                    borderRadius: mobileMascotSize * 0.4,
                   },
                 ]}
               />
@@ -443,6 +438,7 @@ export function AuthScaffold({
             </View>
           ) : null}
 
+          {/* Header */}
           <View
             style={[
               styles.header,
@@ -458,7 +454,7 @@ export function AuthScaffold({
                   { color: theme.colors.secondary },
                 ]}
               >
-                {`· ${eyebrow}`}
+                {`- ${eyebrow.toUpperCase()} -`}
               </Text>
             ) : null}
             <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -466,13 +462,20 @@ export function AuthScaffold({
             </Text>
             {isVeryShort && !isDesktop ? null : (
               <Text
-                style={[styles.subtitle, { color: theme.colors.textMuted }]}
+                style={[
+                  styles.subtitle,
+                  {
+                    color:
+                      theme.colors.textSecondary ?? theme.colors.textMuted,
+                  },
+                ]}
               >
                 {subtitle}
               </Text>
             )}
           </View>
 
+          {/* Form content */}
           <View style={[styles.form, { gap: formGap }]}>{children}</View>
         </View>
       </View>
@@ -499,25 +502,25 @@ function getAuthMetrics(
   const desktopInsetY = isVeryShortDesktop ? 12 : isShortDesktop ? 18 : 24;
 
   const mobileMascotSize = isVeryShort
-    ? 76
+    ? 72
     : isShort
-      ? 92
+      ? 88
       : isNarrow
-        ? 104
-        : 118;
+        ? 100
+        : 110;
   const desktopMascotSize = isVeryShortDesktop
-    ? 210
+    ? 200
     : isShortDesktop
-      ? Math.min(270, Math.max(220, width * 0.15))
-      : Math.min(330, Math.max(230, width * 0.18));
+      ? Math.min(250, Math.max(210, width * 0.14))
+      : Math.min(300, Math.max(220, width * 0.16));
 
   const headerGap = compactDesktopPanel
-    ? 7
+    ? 6
     : isDockedDesktop && isShortDesktop
       ? 3
       : isShort && !isDesktop
         ? 4
-        : 6;
+        : 5;
   const formGap = isDockedDesktop
     ? compactDesktopPanel
       ? 14
@@ -531,42 +534,42 @@ function getAuthMetrics(
       : 13;
 
   const cardMaxWidth = isDockedDesktop
-    ? 470
+    ? 460
     : isDesktop
-      ? 440
+      ? 430
       : isNarrow
-        ? 348
-        : 394;
+        ? 340
+        : 380;
   const cardPadding = isDockedDesktop
     ? compactDesktopPanel
       ? isShortDesktop
-        ? 22
-        : 28
+        ? 20
+        : 26
       : isVeryShortDesktop
         ? 16
         : isShortDesktop
           ? 18
-          : 24
+          : 22
     : isDesktop
-      ? 24
+      ? 22
       : isShort
         ? 16
         : 18;
   const cardGap = isDockedDesktop
     ? compactDesktopPanel
       ? isShortDesktop
-        ? 13
-        : 16
-      : isVeryShortDesktop
-        ? 9
-        : isShortDesktop
-          ? 11
-          : 14
-    : isDesktop
-      ? 18
-      : isShort
         ? 12
-        : 15;
+        : 14
+      : isVeryShortDesktop
+        ? 8
+        : isShortDesktop
+          ? 10
+          : 12
+    : isDesktop
+      ? 16
+      : isShort
+        ? 11
+        : 14;
 
   return {
     isDesktop,
@@ -644,29 +647,17 @@ const styles = StyleSheet.create({
   },
   particle: {
     position: "absolute",
-    backgroundColor: "rgba(255,255,255,0.86)",
+    backgroundColor: "rgba(255,255,255,0.9)",
   },
   glowLarge: {
     position: "absolute",
-    top: 16,
-    right: -84,
+    top: -60,
+    right: -120,
   },
   glowSmall: {
     position: "absolute",
-    bottom: 34,
-    left: -70,
-  },
-  glowCyan: {
-    position: "absolute",
-    top: "34%",
-    left: "18%",
-    opacity: 0.82,
-  },
-  glowPanel: {
-    position: "absolute",
-    right: -80,
-    bottom: "18%",
-    opacity: 0.72,
+    bottom: -40,
+    left: -80,
   },
   grainVeil: {
     position: "absolute",
@@ -674,42 +665,42 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    opacity: 0.28,
-    backgroundColor: "rgba(255,255,255,0.012)",
+    opacity: 0.15,
+    backgroundColor: "rgba(255,255,255,0.008)",
   },
   orbitStroke: {
     position: "absolute",
-    width: 188,
-    height: 92,
-    borderWidth: 9,
+    width: 160,
+    height: 72,
+    borderWidth: 6,
     borderRadius: 999,
-    top: 96,
-    left: -44,
+    top: 60,
+    left: -60,
     transform: [{ rotate: "24deg" }],
   },
   orbitStrokeDesktop: {
-    width: 270,
-    height: 118,
-    top: 74,
-    left: 28,
-    borderWidth: 10,
+    width: 220,
+    height: 90,
+    top: 50,
+    left: 10,
+    borderWidth: 7,
   },
   orbitStrokeAlt: {
     position: "absolute",
-    width: 168,
-    height: 76,
-    borderWidth: 8,
+    width: 140,
+    height: 60,
+    borderWidth: 5,
     borderRadius: 999,
-    right: -38,
-    bottom: 110,
+    right: -50,
+    bottom: 80,
     transform: [{ rotate: "-42deg" }],
   },
   orbitStrokeAltDesktop: {
-    width: 230,
-    height: 96,
-    right: 92,
-    bottom: 72,
-    borderWidth: 10,
+    width: 180,
+    height: 75,
+    right: 60,
+    bottom: 50,
+    borderWidth: 6,
   },
   layout: {
     width: "100%",
@@ -728,24 +719,24 @@ const styles = StyleSheet.create({
   storyPanel: {
     flex: 1,
     minWidth: 0,
-    maxWidth: 820,
+    maxWidth: 780,
     minHeight: 0,
     justifyContent: "center",
-    gap: 22,
-    paddingHorizontal: 56,
-    paddingVertical: 28,
+    gap: 20,
+    paddingHorizontal: 48,
+    paddingVertical: 24,
   },
   storyBrand: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
   },
   storyBrandCopy: {
     flex: 1,
   },
   storyLogo: {
-    width: 58,
-    height: 58,
+    width: 52,
+    height: 52,
     borderRadius: radius.lg,
     overflow: "hidden",
   },
@@ -755,109 +746,96 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   storyTitle: {
-    maxWidth: 460,
-    fontSize: 46,
-    lineHeight: 50,
+    maxWidth: 420,
+    fontSize: 42,
+    lineHeight: 46,
     fontWeight: "900",
   },
   storyTitleCompact: {
-    fontSize: 40,
-    lineHeight: 44,
+    fontSize: 36,
+    lineHeight: 40,
   },
   desktopMascotStage: {
-    minHeight: 330,
+    minHeight: 300,
     alignItems: "center",
     justifyContent: "center",
   },
   desktopMascotStageCompact: {
-    minHeight: 260,
+    minHeight: 240,
   },
   desktopMascotHalo: {
     position: "absolute",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
   },
   storyCopy: {
-    maxWidth: 500,
+    maxWidth: 460,
     fontSize: typography.body,
-    lineHeight: 23,
-    fontWeight: "700",
+    lineHeight: 22,
+    fontWeight: "600",
   },
   storySignals: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
-  },
-  signalItem: {
-    minHeight: 42,
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: 13,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  signalText: {
-    fontSize: typography.small,
-    fontWeight: "900",
+    gap: 10,
   },
   statCard: {
     flexGrow: 1,
     flexBasis: 0,
-    minWidth: 120,
+    minWidth: 115,
     borderWidth: 1,
     borderRadius: radius.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 3,
   },
   statHead: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   statTone: {
     fontSize: 10,
     fontWeight: "900",
-    letterSpacing: 1.6,
+    letterSpacing: 1.4,
     textTransform: "uppercase",
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "900",
     letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
   },
   card: {
     width: "100%",
     borderWidth: 1,
     borderRadius: radius.lg,
-    gap: 16,
+    gap: 14,
     overflow: "hidden",
-    shadowOpacity: 0.22,
-    shadowRadius: 26,
-    shadowOffset: { width: 0, height: 16 },
-    elevation: 12,
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 10,
   },
   cardDocked: {
-    width: 470,
+    width: 460,
     height: "100%",
     minHeight: 0,
     alignSelf: "stretch",
     justifyContent: "center",
-    borderRadius: 24,
-    shadowOpacity: 0.26,
+    borderRadius: 22,
+    shadowOpacity: 0.22,
   },
   cardCompactDocked: {
-    width: 470,
+    width: 460,
     alignSelf: "center",
     justifyContent: "center",
-    borderRadius: 24,
-    shadowOpacity: 0.26,
+    borderRadius: 22,
+    shadowOpacity: 0.22,
   },
   cardBlur: {
     position: "absolute",
@@ -876,17 +854,17 @@ const styles = StyleSheet.create({
   brand: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
   },
   brandInline: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
   },
   brandIcon: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: radius.md,
     overflow: "hidden",
   },
@@ -895,24 +873,24 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   mascotStage: {
-    minHeight: 118,
+    minHeight: 110,
     alignItems: "center",
     justifyContent: "center",
   },
   mascotHalo: {
     position: "absolute",
-    width: 132,
-    height: 132,
-    borderRadius: 66,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   header: {
-    gap: 6,
+    gap: 5,
   },
   cardEyebrow: {
     alignSelf: "center",
     fontSize: 10,
     fontWeight: "900",
-    letterSpacing: 2.4,
+    letterSpacing: 2,
     textAlign: "center",
     textTransform: "uppercase",
   },
@@ -923,10 +901,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: typography.small,
-    lineHeight: 19,
+    lineHeight: 18,
     textAlign: "center",
   },
   form: {
-    gap: 13,
+    gap: 12,
   },
 });
