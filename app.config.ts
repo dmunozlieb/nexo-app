@@ -11,6 +11,7 @@ const config: ExpoConfig = {
   assetBundlePatterns: ["**/*"],
   plugins: [
     "expo-router",
+    "expo-font",
     [
       "expo-splash-screen",
       {

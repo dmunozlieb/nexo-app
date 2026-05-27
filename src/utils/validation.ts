@@ -22,8 +22,6 @@ export const authLoginSchema = z.object({
 
 export const authRegisterSchema = z
   .object({
-    displayName: displayNameSchema,
-    username: usernameSchema,
     email: z.string().trim().email("Introduce un email valido."),
     password: z
       .string()

@@ -1,5 +1,14 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { radius, typography } from "../../../theme/tokens";
+import { useState } from "react";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
+import { fontFamilies, radius } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 
 export type SocialAuthProvider = "google";
@@ -9,9 +18,7 @@ const providers: ReadonlyArray<{
   label: string;
   letter: string;
   ring: string;
-}> = [
-  { id: "google", label: "Google", letter: "G", ring: "#4285F4" },
-];
+}> = [{ id: "google", label: "Google", letter: "G", ring: "#EA4335" }];
 
 type SocialAuthRowProps = {
   onProvider?: (provider: SocialAuthProvider) => void;
@@ -25,47 +32,72 @@ export function SocialAuthRow({
   loadingProvider,
 }: SocialAuthRowProps) {
   const theme = useTheme();
-
-  function handlePress(provider: SocialAuthProvider) {
-    if (onProvider) {
-      onProvider(provider);
-    }
-  }
+  const [hoveredProvider, setHoveredProvider] =
+    useState<SocialAuthProvider | null>(null);
 
   return (
     <View style={styles.root}>
       <View style={styles.row}>
-        {providers.map((p) => (
-          <Pressable
-            key={p.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Continuar con ${p.label}`}
-            disabled={Boolean(loadingProvider)}
-            onPress={() => handlePress(p.id)}
-            style={({ pressed }) => [
-              styles.button,
-              {
-                backgroundColor: theme.colors.elevated,
-                borderColor: pressed
-                  ? `${theme.colors.secondary}66`
-                  : "rgba(255,255,255,0.1)",
-                opacity: loadingProvider ? 0.58 : pressed ? 0.85 : 1,
-              },
-            ]}
-          >
-            <View style={[styles.letterBadge, { borderColor: p.ring }]}>
-              <Text style={[styles.letterText, { color: p.ring }]}>
-                {p.letter}
-              </Text>
-            </View>
-            <Text
-              style={[styles.buttonText, { color: theme.colors.text }]}
-              numberOfLines={1}
+        {providers.map((p) => {
+          const hovered = hoveredProvider === p.id;
+          return (
+            <Pressable
+              key={p.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Continuar con ${p.label}`}
+              disabled={Boolean(loadingProvider)}
+              onHoverIn={() => setHoveredProvider(p.id)}
+              onHoverOut={() =>
+                setHoveredProvider((current) =>
+                  current === p.id ? null : current,
+                )
+              }
+              onPress={() => onProvider?.(p.id)}
+              style={({ pressed }) => [
+                styles.button,
+                webNoSelect,
+                {
+                  backgroundColor: hovered
+                    ? "rgba(255,255,255,0.075)"
+                    : "rgba(255,255,255,0.035)",
+                  borderColor: pressed
+                    ? "rgba(255,255,255,0.28)"
+                    : hovered
+                      ? `${theme.colors.secondary}88`
+                      : "rgba(255,255,255,0.14)",
+                  shadowColor: hovered ? theme.colors.secondary : "#000000",
+                  shadowOpacity: hovered ? 0.22 : 0,
+                  opacity: loadingProvider ? 0.58 : pressed ? 0.85 : 1,
+                  transform: [{ translateY: hovered ? -1 : 0 }],
+                },
+              ]}
             >
-              {loadingProvider === p.id ? "Conectando..." : p.label}
-            </Text>
-          </Pressable>
-        ))}
+              <View
+                style={[
+                  styles.letterBadge,
+                  webNoSelect,
+                  { borderColor: p.ring },
+                ]}
+              >
+                <Text style={[styles.letterText, webNoSelect, { color: p.ring }]}>
+                  {p.letter}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.buttonText,
+                  webNoSelect,
+                  { color: theme.colors.text },
+                ]}
+                numberOfLines={1}
+              >
+                {loadingProvider === p.id
+                  ? "Conectando..."
+                  : `Continuar con ${p.label}`}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
       <View style={styles.divider}>
         <View
@@ -74,9 +106,7 @@ export function SocialAuthRow({
             { backgroundColor: "rgba(255,255,255,0.08)" },
           ]}
         />
-        <Text
-          style={[styles.dividerText, { color: theme.colors.textFaint }]}
-        >
+        <Text style={[styles.dividerText, { color: theme.colors.textFaint }]}>
           {dividerLabel}
         </Text>
         <View
@@ -90,9 +120,17 @@ export function SocialAuthRow({
   );
 }
 
+const webNoSelect =
+  Platform.OS === "web"
+    ? ({
+        cursor: "default",
+        userSelect: "none",
+      } as unknown as ViewStyle & TextStyle)
+    : null;
+
 const styles = StyleSheet.create({
   root: {
-    gap: 12,
+    gap: 10,
   },
   row: {
     flexDirection: "row",
@@ -100,7 +138,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    minHeight: 48,
+    minHeight: 46,
     borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: "row",
@@ -108,22 +146,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     paddingHorizontal: 10,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
   },
   letterBadge: {
-    width: 22,
+    width: 24,
     height: 22,
     borderRadius: 11,
-    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
   },
   letterText: {
-    fontSize: 12,
-    fontWeight: "900",
+    fontFamily: fontFamilies.interSemiBold,
+    fontSize: 18,
+    fontWeight: "600",
   },
   buttonText: {
-    fontSize: typography.small,
-    fontWeight: "800",
+    fontFamily: fontFamilies.interSemiBold,
+    fontSize: 14,
+    fontWeight: "600",
   },
   divider: {
     flexDirection: "row",
@@ -135,9 +176,9 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+    fontFamily: fontFamilies.interMedium,
+    fontSize: 11,
+    fontWeight: "500",
+    letterSpacing: 0.2,
   },
 });

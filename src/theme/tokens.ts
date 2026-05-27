@@ -61,6 +61,13 @@ export const typography = {
   tiny: 11,
 } as const;
 
+export const fontFamilies = {
+  interRegular: "Inter_400Regular",
+  interMedium: "Inter_500Medium",
+  interSemiBold: "Inter_600SemiBold",
+  interBold: "Inter_700Bold",
+} as const;
+
 export const hitSlop = {
   top: 10,
   bottom: 10,

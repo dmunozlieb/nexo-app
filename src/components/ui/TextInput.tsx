@@ -1,3 +1,4 @@
+import { AlertCircle, CheckCircle2 } from "lucide-react-native";
 import { forwardRef, useState, type ReactNode } from "react";
 import {
   NativeSyntheticEvent,
@@ -6,11 +7,13 @@ import {
   Text,
   TextInput as RNTextInput,
   View,
+  type StyleProp,
   type TargetedEvent,
   type TextStyle,
   type TextInputProps as RNTextInputProps,
+  type ViewStyle,
 } from "react-native";
-import { radius, typography } from "../../theme/tokens";
+import { fontFamilies, radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
 
 type TextInputProps = RNTextInputProps & {
@@ -20,6 +23,9 @@ type TextInputProps = RNTextInputProps & {
   rightElement?: ReactNode | undefined;
   compact?: boolean | undefined;
   showErrorMessage?: boolean | undefined;
+  success?: boolean | undefined;
+  surface?: "default" | "auth" | undefined;
+  inputContainerStyle?: StyleProp<ViewStyle>;
 };
 
 export const TextInput = forwardRef<RNTextInput, TextInputProps>(
@@ -31,6 +37,9 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
       rightElement,
       compact = false,
       showErrorMessage = true,
+      success = false,
+      surface = "default",
+      inputContainerStyle,
       style,
       onFocus,
       onBlur,
@@ -60,11 +69,14 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
       onBlur?.(event);
     }
 
+    const isAuthSurface = surface === "auth";
     const borderColor = error
       ? theme.colors.error
       : focused
         ? theme.colors.secondary
-        : "rgba(255,255,255,0.1)";
+        : success
+          ? `${theme.colors.secondary}88`
+          : "rgba(255,255,255,0.1)";
 
     return (
       <View style={[styles.wrapper, compact ? styles.wrapperCompact : null]}>
@@ -73,7 +85,13 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             style={[
               styles.label,
               compact ? styles.labelCompact : null,
-              { color: theme.colors.textMuted },
+              {
+                color: theme.colors.textMuted,
+                fontFamily: isAuthSurface
+                  ? fontFamilies.interSemiBold
+                  : undefined,
+                fontWeight: isAuthSurface ? "600" : "700",
+              },
             ]}
           >
             {label}
@@ -87,12 +105,17 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             compact && !isMultiline ? styles.inputRowSingleLineCompact : null,
             {
               backgroundColor: focused
-                ? "rgba(27,30,53,0.92)"
-                : theme.colors.elevated,
+                ? isAuthSurface
+                  ? "rgba(255,255,255,0.055)"
+                  : "rgba(27,30,53,0.92)"
+                : isAuthSurface
+                  ? "rgba(255,255,255,0.035)"
+                  : theme.colors.elevated,
               borderColor,
               shadowColor: focused ? theme.colors.secondary : "transparent",
               shadowOpacity: focused ? 0.24 : 0,
             },
+            inputContainerStyle,
           ]}
         >
           {icon ? (
@@ -101,12 +124,15 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
                 styles.iconWrap,
                 compact ? styles.iconWrapCompact : null,
                 {
-                  backgroundColor: focused
-                    ? `${theme.colors.secondary}18`
-                    : theme.colors.surface,
-                  borderColor: focused
-                    ? `${theme.colors.secondary}55`
-                    : "transparent",
+                  backgroundColor: isAuthSurface
+                    ? "transparent"
+                    : focused
+                      ? `${theme.colors.secondary}18`
+                      : theme.colors.surface,
+                  borderColor:
+                    !isAuthSurface && focused
+                      ? `${theme.colors.secondary}55`
+                      : "transparent",
                 },
               ]}
             >
@@ -130,11 +156,27 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
                 : undefined,
               isMultiline ? styles.inputMultiline : styles.inputSingleLine,
               compact && !isMultiline ? styles.inputSingleLineCompact : null,
-              { color: theme.colors.text },
+              {
+                color: theme.colors.text,
+                fontFamily: isAuthSurface
+                  ? fontFamilies.interMedium
+                  : undefined,
+                fontWeight: isAuthSurface ? "500" : "600",
+              },
               style,
             ]}
             {...props}
           />
+          {success && !error ? (
+            <View style={styles.successWrap}>
+              <CheckCircle2 size={16} color={theme.colors.secondary} />
+            </View>
+          ) : null}
+          {error && rightElement ? (
+            <View style={styles.successWrap}>
+              <AlertCircle size={16} color={theme.colors.error} />
+            </View>
+          ) : null}
           {rightElement ? (
             <View style={styles.rightWrap}>{rightElement}</View>
           ) : null}
@@ -145,7 +187,13 @@ export const TextInput = forwardRef<RNTextInput, TextInputProps>(
             style={[
               styles.error,
               compact ? styles.errorCompact : null,
-              { color: theme.colors.error },
+              {
+                color: theme.colors.error,
+                fontFamily: isAuthSurface
+                  ? fontFamilies.interMedium
+                  : undefined,
+                fontWeight: isAuthSurface ? "500" : undefined,
+              },
             ]}
           >
             {error}
@@ -252,6 +300,12 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   rightWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successWrap: {
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
   },

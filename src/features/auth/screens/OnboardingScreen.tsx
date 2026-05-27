@@ -1,39 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  AccessibilityInfo,
   Animated,
   Easing,
   Pressable,
   StyleSheet,
   Text,
   View,
-  type DimensionValue,
 } from "react-native";
 import { router } from "expo-router";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Camera,
-  Sparkles,
-  Trash2,
-} from "lucide-react-native";
-import { NexoMascot } from "../../../components/brand/NexoMascot";
+import { ArrowLeft, Camera, Sparkles, Trash2 } from "lucide-react-native";
 import { Avatar } from "../../../components/ui/Avatar";
-import { Button } from "../../../components/ui/Button";
-import { LoadingState } from "../../../components/ui/LoadingState";
 import { TextInput } from "../../../components/ui/TextInput";
-import { ScreenContainer } from "../../../components/layout/ScreenContainer";
 import { env } from "../../../lib/env";
 import {
   pickImage,
   uploadBase64Image,
 } from "../../../services/storage-service";
-import { radius, typography } from "../../../theme/tokens";
+import { fontFamilies, radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import { getErrorMessage } from "../../../utils/errors";
 import type { Interest } from "../../../types/domain";
@@ -41,8 +28,11 @@ import {
   onboardingSchema,
   type OnboardingInput,
 } from "../../../utils/validation";
+import { AuthCosmicScaffold } from "../components/AuthCosmicScaffold";
+import { AuthOrbitMascot } from "../components/AuthOrbitMascot";
 import { useAuth } from "../hooks/useAuth";
 import { completeOnboarding, listInterests } from "../services/auth-service";
+import { AUTH_CTA_GRADIENT, AuthSubmitButton, useReduceMotion } from "../shared";
 
 const INTEREST_EMOJI: Record<string, string> = {
   art: "🎨",
@@ -58,12 +48,7 @@ type StepKey = (typeof STEPS)[number];
 
 const STEP_META: Record<
   StepKey,
-  {
-    eyebrow: string;
-    title: string;
-    subtitle: string;
-    label: string;
-  }
+  { eyebrow: string; title: string; subtitle: string; label: string }
 > = {
   quien: {
     eyebrow: "Primer salto",
@@ -88,78 +73,56 @@ const STEP_META: Record<
 };
 
 const BIO_LIMIT = 160;
-
-const STARS: { top: DimensionValue; left: DimensionValue; size: number }[] = [
-  { top: "4%", left: "8%", size: 1 },
-  { top: "6%", left: "12%", size: 2 },
-  { top: "7%", left: "52%", size: 1 },
-  { top: "9%", left: "29%", size: 1 },
-  { top: "11%", left: "78%", size: 1 },
-  { top: "13%", left: "94%", size: 2 },
-  { top: "16%", left: "61%", size: 1 },
-  { top: "18%", left: "44%", size: 1 },
-  { top: "21%", left: "17%", size: 1 },
-  { top: "24%", left: "8%", size: 2 },
-  { top: "26%", left: "73%", size: 1 },
-  { top: "29%", left: "66%", size: 1 },
-  { top: "32%", left: "36%", size: 1 },
-  { top: "35%", left: "92%", size: 1 },
-  { top: "38%", left: "11%", size: 1 },
-  { top: "42%", left: "22%", size: 1 },
-  { top: "44%", left: "58%", size: 1 },
-  { top: "47%", left: "78%", size: 1 },
-  { top: "48%", left: "84%", size: 2 },
-  { top: "51%", left: "33%", size: 1 },
-  { top: "54%", left: "5%", size: 1 },
-  { top: "57%", left: "67%", size: 1 },
-  { top: "61%", left: "38%", size: 1 },
-  { top: "64%", left: "92%", size: 1 },
-  { top: "67%", left: "72%", size: 2 },
-  { top: "69%", left: "27%", size: 1 },
-  { top: "73%", left: "16%", size: 1 },
-  { top: "75%", left: "82%", size: 1 },
-  { top: "78%", left: "58%", size: 1 },
-  { top: "81%", left: "44%", size: 1 },
-  { top: "84%", left: "88%", size: 2 },
-  { top: "86%", left: "12%", size: 1 },
-  { top: "89%", left: "32%", size: 1 },
-  { top: "91%", left: "62%", size: 1 },
-  { top: "93%", left: "70%", size: 1 },
-  { top: "96%", left: "20%", size: 1 },
-];
+const DEMO_DEFAULTS = {
+  displayName: "Explorador Nexo",
+  username: "demo_user",
+  bio: "Preparando mi primera Orbita.",
+} as const;
 
 function getInterestEmoji(icon: string | null | undefined) {
   if (!icon) {
     return "✨";
   }
-
   return INTEREST_EMOJI[icon] ?? "✨";
 }
 
-function useReduceMotion() {
-  const [reduceMotion, setReduceMotion] = useState(false);
+function normalizeUsername(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, "_");
+}
 
-  useEffect(() => {
-    let mounted = true;
+function applyDemoFallbacks(
+  input: OnboardingInput,
+  context: {
+    profileDisplayName?: string | null | undefined;
+    profileUsername?: string | null | undefined;
+    profileAvatarUrl?: string | null | undefined;
+    pendingUsername?: string | undefined;
+    firstInterestId?: string | undefined;
+  },
+): OnboardingInput {
+  const profileUsernameValid =
+    context.profileUsername && !context.profileUsername.startsWith("nexo_")
+      ? context.profileUsername
+      : undefined;
 
-    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (mounted) {
-        setReduceMotion(enabled);
-      }
-    });
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      setReduceMotion,
-    );
-
-    return () => {
-      mounted = false;
-      subscription.remove();
-    };
-  }, []);
-
-  return reduceMotion;
+  return {
+    displayName:
+      input.displayName?.trim() ||
+      context.profileDisplayName ||
+      DEMO_DEFAULTS.displayName,
+    username:
+      normalizeUsername(input.username ?? "") ||
+      profileUsernameValid ||
+      (context.pendingUsername && normalizeUsername(context.pendingUsername)) ||
+      DEMO_DEFAULTS.username,
+    bio: input.bio?.trim() || DEMO_DEFAULTS.bio,
+    interestIds: input.interestIds.length
+      ? input.interestIds
+      : context.firstInterestId
+        ? [context.firstInterestId]
+        : [],
+    avatarUrl: input.avatarUrl ?? context.profileAvatarUrl ?? null,
+  };
 }
 
 export function OnboardingScreen() {
@@ -194,22 +157,24 @@ export function OnboardingScreen() {
   const bioValue = form.watch("bio") ?? "";
 
   useEffect(() => {
-    if (auth.profile) {
-      const pendingUsername =
-        typeof auth.session?.user.user_metadata?.username === "string"
-          ? auth.session.user.user_metadata.username
-          : "";
-
-      form.reset({
-        username: auth.profile.username.startsWith("nexo_")
-          ? pendingUsername
-          : auth.profile.username,
-        displayName: auth.profile.display_name ?? "",
-        bio: auth.profile.bio ?? "",
-        interestIds: [],
-        avatarUrl: auth.profile.avatar_url,
-      });
+    if (!auth.profile) {
+      return;
     }
+
+    const pendingUsername =
+      typeof auth.session?.user.user_metadata?.username === "string"
+        ? auth.session.user.user_metadata.username
+        : "";
+
+    form.reset({
+      username: auth.profile.username.startsWith("nexo_")
+        ? pendingUsername
+        : auth.profile.username,
+      displayName: auth.profile.display_name ?? "",
+      bio: auth.profile.bio ?? "",
+      interestIds: [],
+      avatarUrl: auth.profile.avatar_url,
+    });
   }, [auth.profile, auth.session?.user.user_metadata?.username, form]);
 
   const currentStep: StepKey = STEPS[stepIndex] ?? "quien";
@@ -249,7 +214,6 @@ export function OnboardingScreen() {
           : (["interestIds"] as const);
 
     const valid = await form.trigger(fields);
-
     if (!valid) {
       return;
     }
@@ -267,11 +231,11 @@ export function OnboardingScreen() {
   }
 
   async function handlePickAvatar() {
-    try {
-      if (!auth.session?.user.id) {
-        return;
-      }
+    if (!auth.session?.user.id) {
+      return;
+    }
 
+    try {
       setUploading(true);
       const asset = await pickImage();
 
@@ -305,25 +269,35 @@ export function OnboardingScreen() {
   }
 
   async function handleSubmit() {
-    try {
-      const valid = await form.trigger();
+    if (!auth.session?.user.id) {
+      router.replace("/login");
+      return;
+    }
 
+    const baseValues = form.getValues();
+    const payload: OnboardingInput = env.demoMode
+      ? applyDemoFallbacks(baseValues, {
+          profileDisplayName: auth.profile?.display_name,
+          profileUsername: auth.profile?.username,
+          profileAvatarUrl: auth.profile?.avatar_url,
+          pendingUsername:
+            typeof auth.session.user.user_metadata?.username === "string"
+              ? auth.session.user.user_metadata.username
+              : undefined,
+          firstInterestId: interests.data?.[0]?.id,
+        })
+      : baseValues;
+
+    if (!env.demoMode) {
+      const valid = await form.trigger();
       if (!valid) {
         return;
       }
+    }
 
-      if (env.demoMode) {
-        await handleDemoContinue();
-        return;
-      }
-
-      if (!auth.session?.user.id) {
-        router.replace("/login");
-        return;
-      }
-
+    try {
       setSaving(true);
-      await completeOnboarding(auth.session.user.id, form.getValues());
+      await completeOnboarding(auth.session.user.id, payload);
       await auth.refreshProfile();
       router.replace("/home");
     } catch (error) {
@@ -333,275 +307,116 @@ export function OnboardingScreen() {
     }
   }
 
-  async function handleDemoContinue() {
-    const values = form.getValues();
-    const fallbackInterest = interests.data?.[0]?.id;
-    const fallbackUsername =
-      typeof auth.session?.user.user_metadata?.username === "string"
-        ? auth.session.user.user_metadata.username
-            .toLowerCase()
-            .replace(/\s+/g, "_")
-        : "demo_user";
-    const demoInput: OnboardingInput = {
-      displayName:
-        values.displayName?.trim() ||
-        auth.profile?.display_name ||
-        "Explorador Nexo",
-      username:
-        values.username?.trim().toLowerCase().replace(/\s+/g, "_") ||
-        (auth.profile?.username && !auth.profile.username.startsWith("nexo_")
-          ? auth.profile.username
-          : fallbackUsername),
-      bio: values.bio?.trim() || "Preparando mi primera Orbita.",
-      interestIds: values.interestIds.length
-        ? values.interestIds
-        : fallbackInterest
-          ? [fallbackInterest]
-          : [],
-      avatarUrl: values.avatarUrl ?? auth.profile?.avatar_url ?? null,
-    };
-
-    try {
-      setSaving(true);
-      if (auth.session?.user.id) {
-        await completeOnboarding(auth.session.user.id, demoInput);
-        await auth.refreshProfile();
-      }
-      router.replace("/home");
-    } catch (error) {
-      console.warn("demo onboarding failed", getErrorMessage(error));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (interests.isLoading) {
-    return <LoadingState label="Preparando intereses..." />;
-  }
-
   return (
-    <ScreenContainer scroll contentStyle={styles.screen}>
-      <OnboardingBackdrop reduceMotion={reduceMotion} />
+    <AuthCosmicScaffold
+      formHeader={
+        <OnboardingHeader
+          eyebrow={meta.eyebrow}
+          title={meta.title}
+          reduceMotion={reduceMotion}
+          eyebrowColor={theme.colors.secondary}
+          titleColor={theme.colors.text}
+        />
+      }
+      hideDesktopVisual
+    >
+      <View style={styles.form}>
+        <ProgressIndicator
+          total={STEPS.length}
+          currentIndex={stepIndex}
+          currentLabel={meta.label}
+          primaryColor={theme.colors.primary}
+          secondaryColor={theme.colors.secondary}
+          textColor={theme.colors.textFaint}
+        />
 
-      <View pointerEvents="box-none" style={styles.cardWrap}>
-        <View
-          style={[
-            styles.cardShell,
-            { borderColor: theme.colors.border },
-          ]}
-        >
-          <BlurView
-            intensity={50}
-            tint="dark"
-            blurMethod="dimezisBlurViewSdk31Plus"
-            style={[
-              styles.card,
-              { backgroundColor: "rgba(9,12,28,0.78)" },
-            ]}
-          >
-            <View style={styles.headerRow}>
-              <NexoMascot size={64} animated={!reduceMotion} />
-              <View style={styles.headerCopy}>
-                <View style={styles.eyebrow}>
-                  <Sparkles size={13} color={theme.colors.secondary} />
-                  <Text
-                    style={[
-                      styles.eyebrowText,
-                      { color: theme.colors.secondary },
-                    ]}
-                  >
-                    {meta.eyebrow}
-                  </Text>
-                </View>
-                <Text style={[styles.title, { color: theme.colors.text }]}>
-                  {meta.title}
-                </Text>
-              </View>
-            </View>
+        <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
+          {meta.subtitle}
+        </Text>
 
-            <ProgressIndicator
-              total={STEPS.length}
-              currentIndex={stepIndex}
-              currentLabel={meta.label}
-              primaryColor={theme.colors.primary}
-              idleColor={theme.colors.border}
-              textColor={theme.colors.textMuted}
+        <Animated.View style={[styles.stepBody, { opacity: stepOpacity }]}>
+          {currentStep === "quien" ? (
+            <StepWhoAreYou
+              avatarUrl={avatarUrl}
+              displayName={currentDisplayName}
+              uploading={uploading}
+              form={form}
+              onPickAvatar={handlePickAvatar}
+              onSkipAvatar={handleSkipAvatar}
             />
+          ) : null}
 
-            <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
-              {meta.subtitle}
-            </Text>
+          {currentStep === "identidad" ? (
+            <StepIdentity form={form} bioLength={bioValue.length} />
+          ) : null}
 
-            <Animated.View
-              style={[styles.stepBody, { opacity: stepOpacity }]}
+          {currentStep === "orbita" ? (
+            <StepInterests
+              interests={interests.data ?? []}
+              selectedIds={selectedInterests}
+              onToggle={toggleInterest}
+              errorMessage={form.formState.errors.interestIds?.message}
+              reduceMotion={reduceMotion}
+              loading={interests.isLoading}
+            />
+          ) : null}
+        </Animated.View>
+
+        <View style={styles.footer}>
+          {!isFirst ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Paso anterior"
+              onPress={handleBack}
+              disabled={saving}
+              style={({ pressed }) => [
+                styles.backButton,
+                { opacity: saving ? 0.5 : pressed ? 0.78 : 1 },
+              ]}
             >
-              {currentStep === "quien" ? (
-                <StepWhoAreYou
-                  avatarUrl={avatarUrl}
-                  displayName={currentDisplayName}
-                  uploading={uploading}
-                  form={form}
-                  onPickAvatar={handlePickAvatar}
-                  onSkipAvatar={handleSkipAvatar}
-                />
-              ) : null}
-
-              {currentStep === "identidad" ? (
-                <StepIdentity form={form} bioLength={bioValue.length} />
-              ) : null}
-
-              {currentStep === "orbita" ? (
-                <StepInterests
-                  interests={interests.data ?? []}
-                  selectedIds={selectedInterests}
-                  onToggle={toggleInterest}
-                  errorMessage={form.formState.errors.interestIds?.message}
-                  reduceMotion={reduceMotion}
-                />
-              ) : null}
-            </Animated.View>
-
-            <View style={styles.footer}>
-              {!isFirst ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Paso anterior"
-                  onPress={handleBack}
-                  style={({ pressed }) => [
-                    styles.backButton,
-                    {
-                      borderColor: theme.colors.border,
-                      backgroundColor: "rgba(255,255,255,0.04)",
-                      opacity: pressed ? 0.78 : 1,
-                    },
-                  ]}
-                >
-                  <ArrowLeft size={18} color={theme.colors.text} />
-                </Pressable>
-              ) : null}
-              <Button
-                title={isLast ? "Aterrizar en Nexo" : "Siguiente"}
-                size="lg"
-                loading={saving}
-                disabled={!canSubmit}
-                icon={
-                  isLast ? null : (
-                    <ArrowRight size={18} color="#FFFFFF" />
-                  )
-                }
-                onPress={handleNext}
-                style={styles.nextButton}
-              />
-            </View>
-          </BlurView>
+              <ArrowLeft size={18} color={theme.colors.text} />
+            </Pressable>
+          ) : null}
+          <AuthSubmitButton
+            title={isLast ? "Aterrizar en Nexo" : "Siguiente"}
+            loading={saving}
+            disabled={!canSubmit}
+            iconRight={isLast ? null : undefined}
+            onPress={handleNext}
+            style={styles.nextButton}
+          />
         </View>
       </View>
-    </ScreenContainer>
+    </AuthCosmicScaffold>
   );
 }
 
-function OnboardingBackdrop({ reduceMotion }: { reduceMotion: boolean }) {
-  return (
-    <View
-      pointerEvents="none"
-      style={StyleSheet.absoluteFill}
-    >
-      <LinearGradient
-        colors={["#03050F", "#070B1F", "#0B0E2A", "#070B1F", "#03050F"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      {STARS.map((star, index) => (
-        <TwinkleStar
-          key={`${star.top}-${star.left}`}
-          star={star}
-          index={index}
-          reduceMotion={reduceMotion}
-        />
-      ))}
-      <LinearGradient
-        colors={["rgba(3,5,15,0.7)", "rgba(3,5,15,0)"]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.4 }}
-        style={backdropStyles.vignetteTop}
-      />
-      <LinearGradient
-        colors={["rgba(3,5,15,0)", "rgba(3,5,15,0.78)"]}
-        start={{ x: 0.5, y: 0.6 }}
-        end={{ x: 0.5, y: 1 }}
-        style={backdropStyles.vignetteBottom}
-      />
-    </View>
-  );
-}
-
-function TwinkleStar({
-  star,
-  index,
+function OnboardingHeader({
+  eyebrow,
+  title,
   reduceMotion,
+  eyebrowColor,
+  titleColor,
 }: {
-  star: { top: DimensionValue; left: DimensionValue; size: number };
-  index: number;
+  eyebrow: string;
+  title: string;
   reduceMotion: boolean;
+  eyebrowColor: string;
+  titleColor: string;
 }) {
-  const twinkle = useRef(new Animated.Value(0.5 + (index % 4) * 0.12)).current;
-
-  useEffect(() => {
-    if (reduceMotion) {
-      twinkle.stopAnimation();
-      twinkle.setValue(0.8);
-      return;
-    }
-
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(twinkle, {
-          toValue: 1,
-          duration: 1800 + (index % 6) * 280,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(twinkle, {
-          toValue: 0.35,
-          duration: 2200 + (index % 5) * 320,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    const startDelay = setTimeout(() => animation.start(), index * 90);
-
-    return () => {
-      clearTimeout(startDelay);
-      animation.stop();
-    };
-  }, [index, reduceMotion, twinkle]);
-
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        backdropStyles.star,
-        {
-          top: star.top,
-          left: star.left,
-          width: star.size,
-          height: star.size,
-          borderRadius: star.size / 2,
-          opacity: twinkle,
-          transform: [
-            {
-              scale: twinkle.interpolate({
-                inputRange: [0.35, 1],
-                outputRange: [0.8, 1.4],
-              }),
-            },
-          ],
-        },
-      ]}
-    />
+    <View style={styles.headerRow}>
+      <AuthOrbitMascot size={64} animated={!reduceMotion} />
+      <View style={styles.headerCopy}>
+        <View style={styles.eyebrow}>
+          <Sparkles size={13} color={eyebrowColor} />
+          <Text style={[styles.eyebrowText, { color: eyebrowColor }]}>
+            {eyebrow}
+          </Text>
+        </View>
+        <Text style={[styles.headerTitle, { color: titleColor }]}>{title}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -610,14 +425,14 @@ function ProgressIndicator({
   currentIndex,
   currentLabel,
   primaryColor,
-  idleColor,
+  secondaryColor,
   textColor,
 }: {
   total: number;
   currentIndex: number;
   currentLabel: string;
   primaryColor: string;
-  idleColor: string;
+  secondaryColor: string;
   textColor: string;
 }) {
   return (
@@ -635,7 +450,13 @@ function ProgressIndicator({
                 styles.dot,
                 {
                   width: active ? 28 : 8,
-                  backgroundColor: filled ? primaryColor : idleColor,
+                  backgroundColor: filled
+                    ? active
+                      ? primaryColor
+                      : secondaryColor
+                    : "rgba(255,255,255,0.12)",
+                  shadowColor: active ? primaryColor : "transparent",
+                  shadowOpacity: active ? 0.6 : 0,
                 },
               ]}
             />
@@ -682,31 +503,23 @@ function StepWhoAreYou({
           ]}
         >
           <LinearGradient
-            colors={[theme.colors.primary, theme.colors.secondary]}
+            colors={AUTH_CTA_GRADIENT}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarRing}
           >
-            <View
-              style={[
-                styles.avatarInner,
-                { backgroundColor: theme.colors.background },
-              ]}
-            >
+            <View style={styles.avatarInner}>
               <Avatar
                 uri={avatarUrl}
                 label={displayName ?? "Nexo"}
-                size={120}
+                size={118}
               />
             </View>
           </LinearGradient>
           <View
             style={[
               styles.avatarBadge,
-              {
-                backgroundColor: theme.colors.primary,
-                borderColor: theme.colors.background,
-              },
+              { backgroundColor: theme.colors.primary },
             ]}
           >
             <Camera size={15} color="#FFFFFF" />
@@ -739,23 +552,7 @@ function StepWhoAreYou({
                 Quitar foto
               </Text>
             </Pressable>
-          ) : (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Saltar foto por ahora"
-              onPress={onSkipAvatar}
-              style={({ pressed }) => [
-                styles.linkButton,
-                { opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <Text
-                style={[styles.linkText, { color: theme.colors.textFaint }]}
-              >
-                Saltar por ahora
-              </Text>
-            </Pressable>
-          )}
+          ) : null}
         </View>
       </View>
 
@@ -764,6 +561,8 @@ function StepWhoAreYou({
         name="displayName"
         render={({ field, fieldState }) => (
           <TextInput
+            compact
+            surface="auth"
             label="Nombre visible"
             placeholder="Como quieres que te llamemos"
             value={field.value}
@@ -794,6 +593,8 @@ function StepIdentity({
         name="username"
         render={({ field, fieldState }) => (
           <TextInput
+            compact
+            surface="auth"
             label="Username"
             autoCapitalize="none"
             icon={
@@ -807,9 +608,7 @@ function StepIdentity({
               </Text>
             }
             value={field.value}
-            onChangeText={(text) =>
-              field.onChange(text.toLowerCase().replace(/\s+/g, "_"))
-            }
+            onChangeText={(text) => field.onChange(normalizeUsername(text))}
             onBlur={field.onBlur}
             error={fieldState.error?.message}
             placeholder="tu_nombre"
@@ -822,6 +621,8 @@ function StepIdentity({
           name="bio"
           render={({ field, fieldState }) => (
             <TextInput
+              compact
+              surface="auth"
               label="Bio (opcional)"
               multiline
               maxLength={BIO_LIMIT}
@@ -857,12 +658,14 @@ function StepInterests({
   onToggle,
   errorMessage,
   reduceMotion,
+  loading,
 }: {
   interests: Interest[];
   selectedIds: string[];
   onToggle: (id: string) => void;
   errorMessage: string | undefined;
   reduceMotion: boolean;
+  loading: boolean;
 }) {
   const theme = useTheme();
 
@@ -874,6 +677,16 @@ function StepInterests({
       })),
     [interests],
   );
+
+  if (loading && interests.length === 0) {
+    return (
+      <View style={[styles.stepContent, styles.interestsLoading]}>
+        <Text style={[styles.interestCount, { color: theme.colors.textFaint }]}>
+          Cargando categorias...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.stepContent}>
@@ -891,8 +704,6 @@ function StepInterests({
               reduceMotion={reduceMotion}
               primaryColor={theme.colors.primary}
               secondaryColor={theme.colors.secondary}
-              borderColor={theme.colors.border}
-              surfaceColor={theme.colors.surface}
               textColor={theme.colors.text}
             />
           );
@@ -922,8 +733,6 @@ function InterestCard({
   reduceMotion,
   primaryColor,
   secondaryColor,
-  borderColor,
-  surfaceColor,
   textColor,
 }: {
   name: string;
@@ -933,8 +742,6 @@ function InterestCard({
   reduceMotion: boolean;
   primaryColor: string;
   secondaryColor: string;
-  borderColor: string;
-  surfaceColor: string;
   textColor: string;
 }) {
   const scale = useRef(new Animated.Value(selected ? 1 : 0.98)).current;
@@ -969,12 +776,12 @@ function InterestCard({
           styles.interestCard,
           {
             transform: [{ scale }],
-            borderColor: selected ? secondaryColor : borderColor,
+            borderColor: selected ? secondaryColor : "rgba(255,255,255,0.1)",
             backgroundColor: selected
-              ? "rgba(123,92,255,0.16)"
-              : surfaceColor,
+              ? "rgba(123,92,255,0.18)"
+              : "rgba(255,255,255,0.04)",
             shadowColor: selected ? primaryColor : "transparent",
-            shadowOpacity: selected ? 0.3 : 0,
+            shadowOpacity: selected ? 0.35 : 0,
           },
         ]}
       >
@@ -993,34 +800,8 @@ function InterestCard({
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 28,
-    paddingHorizontal: 12,
-  },
-  cardWrap: {
-    width: "100%",
-    maxWidth: 540,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardShell: {
-    width: "100%",
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-    shadowColor: "#000000",
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 18 },
-    elevation: 12,
-  },
-  card: {
-    width: "100%",
-    padding: 26,
-    gap: 18,
+  form: {
+    gap: 14,
   },
   headerRow: {
     flexDirection: "row",
@@ -1038,21 +819,26 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   eyebrowText: {
+    fontFamily: fontFamilies.interSemiBold,
     fontSize: typography.tiny,
-    fontWeight: "700",
-    letterSpacing: 0.2,
+    fontWeight: "600",
+    letterSpacing: 0.4,
   },
-  title: {
+  headerTitle: {
+    fontFamily: fontFamilies.interBold,
     fontSize: typography.h1,
-    fontWeight: "900",
     lineHeight: 28,
+    fontWeight: "700",
   },
   subtitle: {
-    fontSize: typography.body,
-    lineHeight: 22,
+    fontFamily: fontFamilies.interMedium,
+    fontSize: typography.small,
+    lineHeight: 20,
+    fontWeight: "500",
   },
   progressWrap: {
-    gap: 6,
+    gap: 7,
+    alignItems: "flex-start",
   },
   dotsRow: {
     flexDirection: "row",
@@ -1062,32 +848,36 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
   },
   progressText: {
+    fontFamily: fontFamilies.interSemiBold,
     fontSize: typography.tiny,
-    fontWeight: "700",
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
   stepBody: {
-    minHeight: 280,
+    minHeight: 270,
   },
   stepContent: {
-    gap: 16,
+    gap: 14,
   },
   avatarBlock: {
     alignItems: "center",
     gap: 10,
   },
   avatarPicker: {
-    width: 140,
-    height: 140,
+    width: 132,
+    height: 132,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
   },
   avatarRing: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 132,
+    height: 132,
+    borderRadius: 66,
     alignItems: "center",
     justifyContent: "center",
     padding: 3,
@@ -1095,19 +885,21 @@ const styles = StyleSheet.create({
   avatarInner: {
     width: "100%",
     height: "100%",
-    borderRadius: 67,
+    borderRadius: 63,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+    backgroundColor: "#090A1F",
   },
   avatarBadge: {
     position: "absolute",
-    right: 6,
-    bottom: 6,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    right: 4,
+    bottom: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 3,
+    borderColor: "#090A1F",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1117,8 +909,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   avatarHelper: {
+    fontFamily: fontFamilies.interMedium,
     fontSize: typography.small,
-    fontWeight: "600",
+    fontWeight: "500",
   },
   linkButton: {
     flexDirection: "row",
@@ -1128,11 +921,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   linkText: {
+    fontFamily: fontFamilies.interSemiBold,
     fontSize: typography.small,
-    fontWeight: "700",
+    fontWeight: "600",
     textDecorationLine: "underline",
   },
   usernamePrefix: {
+    fontFamily: fontFamilies.interBold,
     fontSize: typography.h3,
     fontWeight: "800",
   },
@@ -1140,13 +935,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   bioInput: {
-    minHeight: 96,
+    minHeight: 88,
     textAlignVertical: "top",
   },
   bioCounter: {
     alignSelf: "flex-end",
+    fontFamily: fontFamilies.interSemiBold,
     fontSize: typography.tiny,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   interestGrid: {
     flexDirection: "row",
@@ -1156,11 +952,11 @@ const styles = StyleSheet.create({
   },
   interestCardWrap: {
     width: "31.5%",
-    minHeight: 100,
+    minHeight: 96,
   },
   interestCard: {
     width: "100%",
-    minHeight: 96,
+    minHeight: 92,
     borderWidth: 1,
     borderRadius: radius.lg,
     paddingHorizontal: 10,
@@ -1173,11 +969,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   interestEmoji: {
-    fontSize: 30,
+    fontSize: 28,
   },
   interestLabel: {
+    fontFamily: fontFamilies.interSemiBold,
     fontSize: typography.small,
-    fontWeight: "800",
+    fontWeight: "700",
     textAlign: "center",
   },
   interestFooterRow: {
@@ -1188,11 +985,19 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   interestCount: {
+    fontFamily: fontFamilies.interMedium,
     fontSize: typography.small,
-    fontWeight: "700",
+    fontWeight: "600",
+  },
+  interestsLoading: {
+    minHeight: 230,
+    alignItems: "center",
+    justifyContent: "center",
   },
   error: {
+    fontFamily: fontFamilies.interMedium,
     fontSize: typography.small,
+    fontWeight: "500",
     textAlign: "right",
   },
   footer: {
@@ -1204,37 +1009,14 @@ const styles = StyleSheet.create({
   backButton: {
     width: 52,
     height: 52,
-    borderRadius: radius.md,
+    borderRadius: 26,
     borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.04)",
     alignItems: "center",
     justifyContent: "center",
   },
   nextButton: {
     flex: 1,
-  },
-});
-
-const backdropStyles = StyleSheet.create({
-  star: {
-    position: "absolute",
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#B18CFF",
-    shadowOpacity: 0.9,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  vignetteTop: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "26%",
-  },
-  vignetteBottom: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "34%",
   },
 });

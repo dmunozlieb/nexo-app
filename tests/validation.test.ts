@@ -42,23 +42,19 @@ describe("validaciones de Nexo", () => {
     ).toThrow();
   });
 
-  it("valida registro con username y confirmacion", () => {
+  it("valida registro con email y confirmacion", () => {
     const parsed = authRegisterSchema.parse({
-      displayName: "Luna Vega",
-      username: "Luna_123",
       email: "luna@nexo.local",
       password: "Password123",
       confirmPassword: "Password123",
     });
 
-    expect(parsed.username).toBe("luna_123");
+    expect(parsed.email).toBe("luna@nexo.local");
   });
 
   it("rechaza registro si la contrasena no coincide", () => {
     expect(() =>
       authRegisterSchema.parse({
-        displayName: "Luna Vega",
-        username: "luna_123",
         email: "luna@nexo.local",
         password: "Password123",
         confirmPassword: "Password124",
