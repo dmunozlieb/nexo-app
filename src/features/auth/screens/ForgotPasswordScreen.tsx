@@ -3,69 +3,46 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Mail,
-  Orbit,
-  Radio,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react-native";
-import { Button } from "../../../components/ui/Button";
+import { ArrowLeft, Mail, ShieldCheck } from "lucide-react-native";
 import { TextInput } from "../../../components/ui/TextInput";
 import { fontFamilies, radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
-import { getErrorMessage } from "../../../utils/errors";
 import {
   resetPasswordSchema,
   type ResetPasswordInput,
 } from "../../../utils/validation";
 import { AuthCosmicScaffold } from "../components/AuthCosmicScaffold";
 import { useResetPasswordMutation } from "../hooks/useAuthMutations";
+import {
+  AUTH_STORY,
+  AuthErrorAlert,
+  AuthSubmitButton,
+  EMAIL_PATTERN,
+  getFriendlyResetError,
+  useAuthVisualSignals,
+} from "../shared";
 
 export function ForgotPasswordScreen() {
   const theme = useTheme();
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [resetError, setResetError] = useState<string | null>(null);
   const resetPassword = useResetPasswordMutation();
+  const visualSignals = useAuthVisualSignals();
   const form = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
     mode: "onTouched",
     reValidateMode: "onChange",
-    defaultValues: {
-      email: "",
-    },
+    defaultValues: { email: "" },
   });
   const email = form.watch("email");
   const validationErrors = form.formState.errors;
   const touched = form.formState.touchedFields;
   const emailSuccess = Boolean(
     touched.email &&
-    email.trim() &&
-    !validationErrors.email &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
+      email.trim() &&
+      !validationErrors.email &&
+      EMAIL_PATTERN.test(email.trim()),
   );
-  const visualSignals = [
-    {
-      label: "Ecos",
-      hint: "esperandote",
-      color: theme.colors.primary,
-      icon: <Sparkles size={12} color={theme.colors.primary} />,
-    },
-    {
-      label: "Orbitas",
-      hint: "vivas",
-      color: theme.colors.secondary,
-      icon: <Orbit size={12} color={theme.colors.secondary} />,
-    },
-    {
-      label: "Senales",
-      hint: "nuevas",
-      color: theme.colors.accent,
-      icon: <Radio size={12} color={theme.colors.accent} />,
-    },
-  ];
 
   async function handleReset(input: ResetPasswordInput) {
     try {
@@ -77,16 +54,20 @@ export function ForgotPasswordScreen() {
     }
   }
 
+  const scaffoldProps = {
+    storyBadge: AUTH_STORY.badge,
+    storyTitle: AUTH_STORY.title,
+    storyCopy: AUTH_STORY.copy,
+    showTabletMascot: true,
+    visualSignals,
+  };
+
   if (submitted) {
     return (
       <AuthCosmicScaffold
         title="Revisa tu email"
         subtitle="Te enviamos una senal segura para volver a entrar."
-        storyBadge="Tu galaxia te espera"
-        storyTitle="Tus Orbitas siguen girando"
-        storyCopy="Retoma conversaciones, descubre senales nuevas y reconecta con tus comunidades justo donde lo dejaste."
-        showTabletMascot
-        visualSignals={visualSignals}
+        {...scaffoldProps}
       >
         <View style={styles.form}>
           <View
@@ -106,19 +87,8 @@ export function ForgotPasswordScreen() {
             </Text>
           </View>
 
-          <Button
+          <AuthSubmitButton
             title="Volver al login"
-            size="lg"
-            gradient={["#8B5CF6", "#22D3EE"]}
-            iconRight={<ArrowRight size={18} color="#FFFFFF" />}
-            style={[
-              styles.primaryButton,
-              {
-                borderColor: "transparent",
-                shadowColor: theme.colors.primary,
-              },
-            ]}
-            textStyle={styles.primaryButtonText}
             onPress={() => router.replace("/login")}
           />
 
@@ -142,11 +112,10 @@ export function ForgotPasswordScreen() {
             >
               No te llego?{" "}
               <Text
-                style={{
-                  color: theme.colors.accent,
-                  fontFamily: fontFamilies.interSemiBold,
-                  fontWeight: "600",
-                }}
+                style={[
+                  styles.secondaryLinkAccent,
+                  { color: theme.colors.accent },
+                ]}
               >
                 Reenviar enlace
               </Text>
@@ -161,11 +130,7 @@ export function ForgotPasswordScreen() {
     <AuthCosmicScaffold
       title="Recupera tu orbita"
       subtitle="Escribe tu email y te enviamos un enlace para volver a entrar."
-      storyBadge="Tu galaxia te espera"
-      storyTitle="Tus Orbitas siguen girando"
-      storyCopy="Retoma conversaciones, descubre senales nuevas y reconecta con tus comunidades justo donde lo dejaste."
-      showTabletMascot
-      visualSignals={visualSignals}
+      {...scaffoldProps}
     >
       <View style={styles.form}>
         <Controller
@@ -198,38 +163,12 @@ export function ForgotPasswordScreen() {
           )}
         />
 
-        {resetError ? (
-          <View
-            accessibilityRole="alert"
-            style={[
-              styles.errorBlock,
-              {
-                backgroundColor: `${theme.colors.error}18`,
-                borderColor: `${theme.colors.error}70`,
-              },
-            ]}
-          >
-            <Text style={[styles.errorText, { color: theme.colors.text }]}>
-              {resetError}
-            </Text>
-          </View>
-        ) : null}
+        <AuthErrorAlert message={resetError} />
 
-        <Button
+        <AuthSubmitButton
           title="Enviar enlace"
-          size="lg"
           loading={resetPassword.isPending}
           disabled={resetPassword.isPending}
-          gradient={["#8B5CF6", "#22D3EE"]}
-          iconRight={<ArrowRight size={18} color="#FFFFFF" />}
-          style={[
-            styles.primaryButton,
-            {
-              borderColor: "transparent",
-              shadowColor: theme.colors.primary,
-            },
-          ]}
-          textStyle={styles.primaryButtonText}
           onPress={form.handleSubmit(handleReset)}
         />
 
@@ -252,44 +191,9 @@ export function ForgotPasswordScreen() {
   );
 }
 
-function getFriendlyResetError(error: unknown) {
-  const message = getErrorMessage(error).toLowerCase();
-
-  if (message.includes("rate limit")) {
-    return "Demasiados emails seguidos. Espera un poco y vuelve a intentarlo.";
-  }
-
-  if (message.includes("network") || message.includes("fetch")) {
-    return "No pudimos conectar con Nexo. Comprueba tu conexion e intenta otra vez.";
-  }
-
-  return "No pudimos enviar el enlace. Revisa el email e intentalo de nuevo.";
-}
-
 const styles = StyleSheet.create({
   form: {
     gap: 12,
-  },
-  primaryButton: {
-    marginTop: 3,
-    minHeight: 48,
-    borderRadius: radius.lg,
-    shadowOpacity: 0.34,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-  },
-  errorBlock: {
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  errorText: {
-    fontFamily: fontFamilies.interSemiBold,
-    fontSize: typography.small,
-    lineHeight: 18,
-    fontWeight: "600",
   },
   successBlock: {
     flexDirection: "row",
@@ -305,10 +209,6 @@ const styles = StyleSheet.create({
     fontSize: typography.small,
     lineHeight: 19,
     fontWeight: "500",
-  },
-  primaryButtonText: {
-    fontFamily: fontFamilies.interSemiBold,
-    fontWeight: "600",
   },
   backLink: {
     flexDirection: "row",
@@ -331,5 +231,9 @@ const styles = StyleSheet.create({
     fontSize: typography.small,
     fontWeight: "500",
     textAlign: "center",
+  },
+  secondaryLinkAccent: {
+    fontFamily: fontFamilies.interSemiBold,
+    fontWeight: "600",
   },
 });

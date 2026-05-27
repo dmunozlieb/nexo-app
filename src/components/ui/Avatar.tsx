@@ -10,6 +10,7 @@ type AvatarProps = {
 
 export function Avatar({ uri, label, size = 44 }: AvatarProps) {
   const theme = useTheme();
+  const initialsSize = Math.max(12, Math.round(size * 0.34));
   const initials = (label ?? "NX")
     .split(" ")
     .map((part) => part[0])
@@ -43,7 +44,18 @@ export function Avatar({ uri, label, size = 44 }: AvatarProps) {
         },
       ]}
     >
-      <Text style={[styles.initials, { color: theme.colors.text }]}>{initials}</Text>
+      <Text
+        style={[
+          styles.initials,
+          {
+            color: theme.colors.text,
+            fontSize: initialsSize,
+            lineHeight: initialsSize + 2,
+          },
+        ]}
+      >
+        {initials}
+      </Text>
     </View>
   );
 }
@@ -60,5 +72,8 @@ const styles = StyleSheet.create({
   },
   initials: {
     fontWeight: "800",
+    textShadowColor: "rgba(177,140,255,0.45)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
 });

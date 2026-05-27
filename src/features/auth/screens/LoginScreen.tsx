@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import {
-  Pressable,
   StyleSheet,
   Text,
   TextInput as RNTextInput,
@@ -9,22 +8,11 @@ import {
 import { Link, router } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import {
-  ArrowRight,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  Orbit,
-  Radio,
-  Sparkles,
-} from "lucide-react-native";
-import { Button } from "../../../components/ui/Button";
+import { Lock, Mail } from "lucide-react-native";
 import { TextInput } from "../../../components/ui/TextInput";
 import { env } from "../../../lib/env";
-import { fontFamilies, radius, typography } from "../../../theme/tokens";
+import { fontFamilies, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
-import { getErrorMessage } from "../../../utils/errors";
 import {
   authLoginSchema,
   type AuthLoginInput,
@@ -35,6 +23,15 @@ import {
   useGoogleLoginMutation,
   useLoginMutation,
 } from "../hooks/useAuthMutations";
+import {
+  AUTH_STORY,
+  AuthErrorAlert,
+  AuthSubmitButton,
+  EMAIL_PATTERN,
+  PasswordRevealButton,
+  getFriendlyLoginError,
+  useAuthVisualSignals,
+} from "../shared";
 
 export function LoginScreen() {
   const theme = useTheme();
@@ -43,14 +40,12 @@ export function LoginScreen() {
   const passwordRef = useRef<RNTextInput | null>(null);
   const login = useLoginMutation();
   const googleLogin = useGoogleLoginMutation();
+  const visualSignals = useAuthVisualSignals();
   const form = useForm<AuthLoginInput>({
     resolver: zodResolver(authLoginSchema),
     mode: "onTouched",
     reValidateMode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
   const email = form.watch("email");
   const password = form.watch("password");
@@ -58,9 +53,9 @@ export function LoginScreen() {
   const touched = form.formState.touchedFields;
   const emailSuccess = Boolean(
     touched.email &&
-    email.trim() &&
-    !validationErrors.email &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
+      email.trim() &&
+      !validationErrors.email &&
+      EMAIL_PATTERN.test(email.trim()),
   );
   const passwordSuccess = Boolean(
     touched.password && password && !validationErrors.password,
@@ -90,30 +85,11 @@ export function LoginScreen() {
     <AuthCosmicScaffold
       title="Vuelve a tu Orbita"
       subtitle="Retoma tus chats, comunidades y senales pendientes."
-      storyBadge="Tu galaxia te espera"
-      storyTitle="Tus Orbitas siguen girando"
-      storyCopy="Retoma conversaciones, descubre senales nuevas y reconecta con tus comunidades justo donde lo dejaste."
+      storyBadge={AUTH_STORY.badge}
+      storyTitle={AUTH_STORY.title}
+      storyCopy={AUTH_STORY.copy}
       showTabletMascot
-      visualSignals={[
-        {
-          label: "Ecos",
-          hint: "esperandote",
-          color: theme.colors.primary,
-          icon: <Sparkles size={12} color={theme.colors.primary} />,
-        },
-        {
-          label: "Orbitas",
-          hint: "vivas",
-          color: theme.colors.secondary,
-          icon: <Orbit size={12} color={theme.colors.secondary} />,
-        },
-        {
-          label: "Senales",
-          hint: "nuevas",
-          color: theme.colors.accent,
-          icon: <Radio size={12} color={theme.colors.accent} />,
-        },
-      ]}
+      visualSignals={visualSignals}
     >
       <View style={styles.form}>
         {!env.demoMode ? (
@@ -206,38 +182,12 @@ export function LoginScreen() {
           />
         </View>
 
-        {loginError ? (
-          <View
-            accessibilityRole="alert"
-            style={[
-              styles.loginError,
-              {
-                backgroundColor: `${theme.colors.error}18`,
-                borderColor: `${theme.colors.error}70`,
-              },
-            ]}
-          >
-            <Text style={[styles.loginErrorText, { color: theme.colors.text }]}>
-              {loginError}
-            </Text>
-          </View>
-        ) : null}
+        <AuthErrorAlert message={loginError} />
 
-        <Button
+        <AuthSubmitButton
           title="Entrar"
-          size="lg"
           loading={login.isPending}
           disabled={login.isPending || googleLogin.isPending}
-          gradient={["#8B5CF6", "#22D3EE"]}
-          iconRight={<ArrowRight size={18} color="#FFFFFF" />}
-          style={[
-            styles.primaryButton,
-            {
-              borderColor: "transparent",
-              shadowColor: theme.colors.primary,
-            },
-          ]}
-          textStyle={styles.primaryButtonText}
           onPress={form.handleSubmit(handleLogin)}
         />
 
@@ -259,57 +209,6 @@ export function LoginScreen() {
   );
 }
 
-function PasswordRevealButton({
-  visible,
-  onPress,
-}: {
-  visible: boolean;
-  onPress: () => void;
-}) {
-  const theme = useTheme();
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={visible ? "Ocultar contrasena" : "Mostrar contrasena"}
-      hitSlop={10}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.iconButton,
-        { opacity: pressed ? 0.68 : 1 },
-      ]}
-    >
-      {visible ? (
-        <Eye size={19} color={theme.colors.textMuted} />
-      ) : (
-        <EyeOff size={19} color={theme.colors.textMuted} />
-      )}
-    </Pressable>
-  );
-}
-
-function getFriendlyLoginError(error: unknown) {
-  const message = getErrorMessage(error).toLowerCase();
-
-  if (
-    message.includes("invalid login") ||
-    message.includes("invalid credentials") ||
-    message.includes("credentials")
-  ) {
-    return "No encontramos esa senal. Revisa tu email o contrasena e intentalo de nuevo.";
-  }
-
-  if (message.includes("rate limit")) {
-    return "Demasiados intentos seguidos. Espera un poco y vuelve a intentarlo.";
-  }
-
-  if (message.includes("network") || message.includes("fetch")) {
-    return "No pudimos conectar con Nexo. Comprueba tu conexion e intenta otra vez.";
-  }
-
-  return "No se pudo iniciar sesion. Revisa los datos e intentalo de nuevo.";
-}
-
 const styles = StyleSheet.create({
   form: {
     gap: 12,
@@ -325,7 +224,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.interSemiBold,
     fontSize: 12,
     fontWeight: "600",
-    letterSpacing: 0,
   },
   forgotLink: {
     flexShrink: 1,
@@ -334,37 +232,6 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     fontWeight: "600",
     textAlign: "right",
-  },
-  iconButton: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loginError: {
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  loginErrorText: {
-    fontFamily: fontFamilies.interSemiBold,
-    fontSize: typography.small,
-    lineHeight: 18,
-    fontWeight: "600",
-  },
-  primaryButton: {
-    marginTop: 3,
-    minHeight: 48,
-    borderRadius: radius.lg,
-    shadowOpacity: 0.34,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-  },
-  primaryButtonText: {
-    fontFamily: fontFamilies.interSemiBold,
-    fontWeight: "600",
   },
   registerWrap: {
     borderTopWidth: 1,

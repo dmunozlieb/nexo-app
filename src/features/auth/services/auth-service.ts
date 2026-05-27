@@ -159,7 +159,11 @@ export async function getCurrentSession(): Promise<Session | null> {
   return data.session;
 }
 
-export async function getProfile(userId: string) {
+// Profile rows are auto-created by the on_auth_user_created trigger
+// (see supabase/migrations/005_auto_create_profile.sql). A null result here
+// means either demo mode without a session or a legacy user predating the
+// trigger; both route through onboarding where upsertProfile creates the row.
+export async function getProfile(userId: string): Promise<Profile | null> {
   if (env.demoMode) {
     return demoGetProfile(userId);
   }
@@ -168,39 +172,13 @@ export async function getProfile(userId: string) {
     .from("profiles")
     .select("*")
     .eq("id", userId)
-    .limit(1);
+    .maybeSingle();
 
   if (error) {
     throw error;
   }
 
-  const profile = data?.[0] ?? null;
-
-  if (!profile) {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      throw userError;
-    }
-
-    if (user?.id !== userId) {
-      return null;
-    }
-
-    await upsertProfile(userId, {
-      username: getTemporaryUsername(userId),
-      displayName: getUserDisplayName(user),
-      bio: undefined,
-      avatarUrl: getUserAvatarUrl(user),
-    });
-
-    return getProfile(userId);
-  }
-
-  return profile as Profile;
+  return (data as Profile | null) ?? null;
 }
 
 const FALLBACK_INTERESTS: Interest[] = [
@@ -243,7 +221,11 @@ export async function completeOnboarding(
   }
 
   await upsertProfile(userId, input);
+  await replaceUserInterests(userId, input.interestIds);
+  return getProfile(userId);
+}
 
+async function replaceUserInterests(userId: string, interestIds: string[]) {
   try {
     const { error: deleteError } = await supabase
       .from("user_interests")
@@ -254,25 +236,27 @@ export async function completeOnboarding(
       throw deleteError;
     }
 
-    const rows = input.interestIds.map((interestId) => ({
+    if (interestIds.length === 0) {
+      return;
+    }
+
+    const rows = interestIds.map((interestId) => ({
       user_id: userId,
       interest_id: interestId,
     }));
 
-    if (rows.length) {
-      const { error: interestsError } = await supabase
-        .from("user_interests")
-        .insert(rows);
+    const { error: interestsError } = await supabase
+      .from("user_interests")
+      .insert(rows);
 
-      if (interestsError) {
-        throw interestsError;
-      }
+    if (interestsError) {
+      throw interestsError;
     }
-  } catch {
-    // Interests are non-blocking while the real database schema is being completed.
+  } catch (error) {
+    // Non-blocking: interest persistence is a soft requirement while the
+    // database schema is being finalized. Log so QA can see failures.
+    console.warn("replaceUserInterests failed", error);
   }
-
-  return getProfile(userId);
 }
 
 async function upsertProfile(
@@ -296,26 +280,6 @@ async function upsertProfile(
   if (error) {
     throw error;
   }
-}
-
-function getTemporaryUsername(userId: string) {
-  return `nexo_${userId.replaceAll("-", "").slice(0, 10)}`;
-}
-
-function getUserDisplayName(user: NonNullable<Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"]>) {
-  const metadata = user.user_metadata ?? {};
-  const fromMetadata =
-    metadata.display_name ?? metadata.full_name ?? metadata.name;
-  const fromEmail = user.email?.split("@")[0];
-
-  return String(fromMetadata ?? fromEmail ?? "Nexo Explorer").slice(0, 40);
-}
-
-function getUserAvatarUrl(user: NonNullable<Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"]>) {
-  const metadata = user.user_metadata ?? {};
-  const avatarUrl = metadata.avatar_url ?? metadata.picture;
-
-  return avatarUrl ? String(avatarUrl) : null;
 }
 
 export function isProfileComplete(profile: Profile | null) {

@@ -2,13 +2,11 @@ import {
   createElement,
   useEffect,
   useRef,
-  useState,
   type CSSProperties,
   type PropsWithChildren,
   type ReactNode,
 } from "react";
 import {
-  AccessibilityInfo,
   Animated,
   Easing,
   Platform,
@@ -23,16 +21,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
 import { fontFamilies, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
+import { useReduceMotion } from "../shared/useReduceMotion";
 import { AuthOrbitMascot } from "./AuthOrbitMascot";
 
 type AuthCosmicScaffoldProps = PropsWithChildren<{
-  title: string;
-  subtitle: string;
-  storyTitle: string;
-  storyCopy: string;
+  title?: string | undefined;
+  subtitle?: string | undefined;
+  formHeader?: ReactNode | undefined;
+  storyTitle?: string | undefined;
+  storyCopy?: string | undefined;
   storyBadge?: string | undefined;
   visualSignals?: ReadonlyArray<AuthVisualSignal> | undefined;
   showTabletMascot?: boolean | undefined;
+  hideDesktopVisual?: boolean | undefined;
 }>;
 
 type AuthVisualSignal = {
@@ -69,11 +70,13 @@ const stars: {
 export function AuthCosmicScaffold({
   title,
   subtitle,
+  formHeader,
   storyTitle,
   storyCopy,
   storyBadge,
   visualSignals,
   showTabletMascot = false,
+  hideDesktopVisual = false,
   children,
 }: AuthCosmicScaffoldProps) {
   const theme = useTheme();
@@ -102,16 +105,30 @@ export function AuthCosmicScaffold({
     >
       <RegisterBackdrop reduceMotion={reduceMotion} />
 
-      {isDesktop ? (
-        <View style={[styles.desktopLayout, { gap: desktopGap }]}>
-          <View style={styles.formColumn}>
-            <GlassCard maxWidth={formMaxWidth}>
-              {renderFormHeader(
+      {isDesktop && hideDesktopVisual ? (
+        <View style={[styles.desktopSoloLayout, { maxWidth: formMaxWidth }]}>
+          <GlassCard maxWidth={formMaxWidth}>
+            {formHeader ??
+              renderFormHeader(
                 title,
                 subtitle,
                 theme.colors.text,
                 theme.colors.textMuted,
               )}
+            {children}
+          </GlassCard>
+        </View>
+      ) : isDesktop ? (
+        <View style={[styles.desktopLayout, { gap: desktopGap }]}>
+          <View style={styles.formColumn}>
+            <GlassCard maxWidth={formMaxWidth}>
+              {formHeader ??
+                renderFormHeader(
+                  title,
+                  subtitle,
+                  theme.colors.text,
+                  theme.colors.textMuted,
+                )}
               {children}
             </GlassCard>
           </View>
@@ -173,13 +190,7 @@ export function AuthCosmicScaffold({
                       <ConceptSignal key={signal.label} signal={signal} />
                     ))}
                   </View>
-                ) : (
-                  <View style={styles.signalRow}>
-                    <SignalDot label="Orbitas" color={theme.colors.primary} />
-                    <SignalDot label="Senales" color={theme.colors.secondary} />
-                    <SignalDot label="Conexiones" color={theme.colors.accent} />
-                  </View>
-                )}
+                ) : null}
               </View>
             </View>
           </View>
@@ -196,23 +207,25 @@ export function AuthCosmicScaffold({
                 />
               ) : null}
               <GlassCard maxWidth={formMaxWidth}>
-                {renderFormHeader(
-                  title,
-                  subtitle,
-                  theme.colors.text,
-                  theme.colors.textMuted,
-                )}
+                {formHeader ??
+                  renderFormHeader(
+                    title,
+                    subtitle,
+                    theme.colors.text,
+                    theme.colors.textMuted,
+                  )}
                 {children}
               </GlassCard>
             </>
           ) : (
             <View style={styles.mobileForm}>
-              {renderFormHeader(
-                title,
-                subtitle,
-                theme.colors.text,
-                theme.colors.textMuted,
-              )}
+              {formHeader ??
+                renderFormHeader(
+                  title,
+                  subtitle,
+                  theme.colors.text,
+                  theme.colors.textMuted,
+                )}
               {children}
             </View>
           )}
@@ -223,8 +236,8 @@ export function AuthCosmicScaffold({
 }
 
 function renderFormHeader(
-  title: string,
-  subtitle: string,
+  title: string | undefined,
+  subtitle: string | undefined,
   textColor: string,
   mutedColor: string,
 ) {
@@ -244,8 +257,12 @@ function renderFormHeader(
         </View>
         <Text style={[styles.brandText, { color: mutedColor }]}>Nexo</Text>
       </View>
-      <Text style={[styles.title, { color: textColor }]}>{title}</Text>
-      <Text style={[styles.subtitle, { color: mutedColor }]}>{subtitle}</Text>
+      {title ? (
+        <Text style={[styles.title, { color: textColor }]}>{title}</Text>
+      ) : null}
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: mutedColor }]}>{subtitle}</Text>
+      ) : null}
     </View>
   );
 }
@@ -273,23 +290,6 @@ function GlassCard({
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.cardContent}>{children}</View>
-    </View>
-  );
-}
-
-function SignalDot({ label, color }: { label: string; color: string }) {
-  return (
-    <View style={styles.signal}>
-      <View
-        style={[
-          styles.signalDot,
-          {
-            backgroundColor: color,
-            shadowColor: color,
-          },
-        ]}
-      />
-      <Text style={styles.signalText}>{label}</Text>
     </View>
   );
 }
@@ -440,29 +440,6 @@ function TwinkleStar({
   );
 }
 
-function useReduceMotion() {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (mounted) {
-        setReduceMotion(enabled);
-      }
-    });
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      setReduceMotion,
-    );
-    return () => {
-      mounted = false;
-      subscription.remove();
-    };
-  }, []);
-
-  return reduceMotion;
-}
-
 const webCosmic: Record<string, CSSProperties> = {
   root: {
     position: "absolute",
@@ -571,6 +548,12 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 1500,
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  desktopSoloLayout: {
+    width: "100%",
+    alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -753,32 +736,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     textAlign: "center",
     marginBottom: 36,
-  },
-  signalRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 22,
-  },
-  signal: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  signalDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    shadowOpacity: 0.75,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  signalText: {
-    color: "rgba(255,255,255,0.46)",
-    fontFamily: fontFamilies.interMedium,
-    fontSize: typography.small,
-    fontWeight: "500",
   },
   conceptSignalRow: {
     width: "100%",

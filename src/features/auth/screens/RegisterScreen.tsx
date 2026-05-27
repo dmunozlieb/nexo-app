@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import {
-  Pressable,
   StyleSheet,
   Text,
   TextInput as RNTextInput,
@@ -9,8 +8,7 @@ import {
 import { Link, router } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
-import { Button } from "../../../components/ui/Button";
+import { Lock, Mail } from "lucide-react-native";
 import { TextInput } from "../../../components/ui/TextInput";
 import { env } from "../../../lib/env";
 import { fontFamilies, radius, typography } from "../../../theme/tokens";
@@ -19,13 +17,18 @@ import {
   authRegisterSchema,
   type AuthRegisterInput,
 } from "../../../utils/validation";
-import { getErrorMessage } from "../../../utils/errors";
 import { AuthCosmicScaffold } from "../components/AuthCosmicScaffold";
 import { SocialAuthRow } from "../components/SocialAuthRow";
 import {
   useGoogleLoginMutation,
   useRegisterMutation,
 } from "../hooks/useAuthMutations";
+import {
+  AuthErrorAlert,
+  AuthSubmitButton,
+  PasswordRevealButton,
+  getFriendlyRegisterError,
+} from "../shared";
 
 export function RegisterScreen() {
   const theme = useTheme();
@@ -47,28 +50,7 @@ export function RegisterScreen() {
     },
   });
   const password = form.watch("password");
-  const email = form.watch("email");
-  const confirmPassword = form.watch("confirmPassword");
   const passwordStrength = getPasswordStrength(password);
-  const validationErrors = form.formState.errors;
-  const touched = form.formState.touchedFields;
-  const emailSuccess = Boolean(
-    touched.email &&
-    email.trim() &&
-    !validationErrors.email &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
-  );
-  const passwordSuccess = Boolean(
-    touched.password &&
-    password &&
-    !validationErrors.password &&
-    passwordStrength.score >= 3,
-  );
-  const confirmSuccess = Boolean(
-    touched.confirmPassword &&
-    confirmPassword &&
-    !validationErrors.confirmPassword,
-  );
 
   async function handleRegister(input: AuthRegisterInput) {
     try {
@@ -131,7 +113,6 @@ export function RegisterScreen() {
               onSubmitEditing={() => passwordRef.current?.focus()}
               blurOnSubmit={false}
               error={fieldState.error?.message}
-              success={emailSuccess}
               icon={<Mail size={17} color={theme.colors.textFaint} />}
             />
           )}
@@ -164,7 +145,6 @@ export function RegisterScreen() {
                 onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                 blurOnSubmit={false}
                 error={fieldState.error?.message}
-                success={passwordSuccess}
                 icon={<Lock size={17} color={theme.colors.textFaint} />}
                 rightElement={
                   <PasswordRevealButton
@@ -203,7 +183,6 @@ export function RegisterScreen() {
               onBlur={field.onBlur}
               onSubmitEditing={form.handleSubmit(handleRegister)}
               error={fieldState.error?.message}
-              success={confirmSuccess}
               icon={<Lock size={17} color={theme.colors.textFaint} />}
               rightElement={
                 <PasswordRevealButton
@@ -217,40 +196,12 @@ export function RegisterScreen() {
           )}
         />
 
-        {registerError ? (
-          <View
-            accessibilityRole="alert"
-            style={[
-              styles.registerError,
-              {
-                backgroundColor: `${theme.colors.error}18`,
-                borderColor: `${theme.colors.error}70`,
-              },
-            ]}
-          >
-            <Text
-              style={[styles.registerErrorText, { color: theme.colors.text }]}
-            >
-              {registerError}
-            </Text>
-          </View>
-        ) : null}
+        <AuthErrorAlert message={registerError} />
 
-        <Button
+        <AuthSubmitButton
           title="Crear cuenta"
-          size="lg"
           loading={register.isPending}
           disabled={register.isPending || googleLogin.isPending}
-          gradient={["#8B5CF6", "#22D3EE"]}
-          iconRight={<ArrowRight size={18} color="#FFFFFF" />}
-          style={[
-            styles.primaryButton,
-            {
-              borderColor: "transparent",
-              shadowColor: theme.colors.primary,
-            },
-          ]}
-          textStyle={styles.primaryButtonText}
           onPress={form.handleSubmit(handleRegister)}
         />
 
@@ -285,35 +236,6 @@ export function RegisterScreen() {
         </View>
       </View>
     </AuthCosmicScaffold>
-  );
-}
-
-function PasswordRevealButton({
-  visible,
-  onPress,
-}: {
-  visible: boolean;
-  onPress: () => void;
-}) {
-  const theme = useTheme();
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={visible ? "Ocultar contrasena" : "Mostrar contrasena"}
-      hitSlop={10}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.iconButton,
-        { opacity: pressed ? 0.68 : 1 },
-      ]}
-    >
-      {visible ? (
-        <Eye size={19} color={theme.colors.textMuted} />
-      ) : (
-        <EyeOff size={19} color={theme.colors.textMuted} />
-      )}
-    </Pressable>
   );
 }
 
@@ -429,33 +351,9 @@ function getPasswordStrength(password: string): PasswordStrengthValue {
   };
 }
 
-function getFriendlyRegisterError(error: unknown) {
-  const message = getErrorMessage(error).toLowerCase();
-
-  if (message.includes("already") || message.includes("registered")) {
-    return "Ese email ya orbita con nosotros. Prueba a iniciar sesion.";
-  }
-
-  if (message.includes("rate limit")) {
-    return "Demasiados intentos seguidos. Espera un poco y vuelve a intentarlo.";
-  }
-
-  if (message.includes("network") || message.includes("fetch")) {
-    return "No pudimos conectar con Nexo. Comprueba tu conexion e intenta otra vez.";
-  }
-
-  return "No se pudo crear la cuenta. Revisa los datos e intentalo de nuevo.";
-}
-
 const styles = StyleSheet.create({
   form: {
     gap: 11,
-  },
-  iconButton: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
   },
   strengthBlock: {
     gap: 7,
@@ -492,31 +390,6 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     fontWeight: "500",
     textAlign: "right",
-  },
-  registerError: {
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  registerErrorText: {
-    fontFamily: fontFamilies.interSemiBold,
-    fontSize: typography.small,
-    lineHeight: 18,
-    fontWeight: "600",
-  },
-  primaryButton: {
-    marginTop: 3,
-    minHeight: 48,
-    borderRadius: radius.lg,
-    shadowOpacity: 0.34,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
-  },
-  primaryButtonText: {
-    fontFamily: fontFamilies.interSemiBold,
-    fontWeight: "600",
   },
   legal: {
     maxWidth: 280,
