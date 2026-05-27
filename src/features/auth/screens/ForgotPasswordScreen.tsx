@@ -5,274 +5,291 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import {
   ArrowLeft,
-  Clock,
-  Inbox,
+  ArrowRight,
   Mail,
-  Send,
+  Orbit,
+  Radio,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react-native";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
+import { fontFamilies, radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
-import { radius, typography } from "../../../theme/tokens";
+import { getErrorMessage } from "../../../utils/errors";
 import {
   resetPasswordSchema,
   type ResetPasswordInput,
 } from "../../../utils/validation";
-import { getErrorMessage } from "../../../utils/errors";
-import { AuthScaffold } from "../components/AuthScaffold";
+import { AuthCosmicScaffold } from "../components/AuthCosmicScaffold";
 import { useResetPasswordMutation } from "../hooks/useAuthMutations";
-
-const tips = [
-  {
-    Icon: Send,
-    label: "Enlace de un solo uso",
-    tone: "secondary" as const,
-  },
-  {
-    Icon: Clock,
-    label: "Caduca en 30 minutos",
-    tone: "accent" as const,
-  },
-  {
-    Icon: Inbox,
-    label: "Revisa tu spam si tarda",
-    tone: "success" as const,
-  },
-];
 
 export function ForgotPasswordScreen() {
   const theme = useTheme();
   const [submitted, setSubmitted] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
   const resetPassword = useResetPasswordMutation();
   const form = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
     mode: "onTouched",
+    reValidateMode: "onChange",
     defaultValues: {
       email: "",
     },
   });
+  const email = form.watch("email");
+  const validationErrors = form.formState.errors;
+  const touched = form.formState.touchedFields;
+  const emailSuccess = Boolean(
+    touched.email &&
+    email.trim() &&
+    !validationErrors.email &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
+  );
+  const visualSignals = [
+    {
+      label: "Ecos",
+      hint: "esperandote",
+      color: theme.colors.primary,
+      icon: <Sparkles size={12} color={theme.colors.primary} />,
+    },
+    {
+      label: "Orbitas",
+      hint: "vivas",
+      color: theme.colors.secondary,
+      icon: <Orbit size={12} color={theme.colors.secondary} />,
+    },
+    {
+      label: "Senales",
+      hint: "nuevas",
+      color: theme.colors.accent,
+      icon: <Radio size={12} color={theme.colors.accent} />,
+    },
+  ];
 
   async function handleReset(input: ResetPasswordInput) {
     try {
-      setError(null);
+      setResetError(null);
       await resetPassword.mutateAsync(input);
       setSubmitted(input.email);
-    } catch (err) {
-      setError(getErrorMessage(err));
+    } catch (error) {
+      setResetError(getFriendlyResetError(error));
     }
   }
 
   if (submitted) {
     return (
-      <AuthScaffold
-        eyebrow="Enlace enviado"
+      <AuthCosmicScaffold
         title="Revisa tu email"
-        subtitle={`Hemos mandado instrucciones a ${submitted}. Si no aparecen en un minuto, mira en spam.`}
-        storyTitle="Recupera tu orbita"
-        storyCopy="Cuando vuelvas a entrar, tus Orbitas, chats y ecos seguiran esperandote."
-        panelVariant="compact"
+        subtitle="Te enviamos una senal segura para volver a entrar."
+        storyBadge="Tu galaxia te espera"
+        storyTitle="Tus Orbitas siguen girando"
+        storyCopy="Retoma conversaciones, descubre senales nuevas y reconecta con tus comunidades justo donde lo dejaste."
+        showTabletMascot
+        visualSignals={visualSignals}
       >
-        <View
-          style={[
-            styles.successBlock,
-            {
-              backgroundColor: `${theme.colors.success}14`,
-              borderColor: `${theme.colors.success}3D`,
-            },
-          ]}
-        >
-          <ShieldCheck size={20} color={theme.colors.success} />
-          <Text style={[styles.successText, { color: theme.colors.text }]}>
-            Enlace seguro enviado. Sigue las instrucciones para crear una
-            contrasena nueva.
-          </Text>
-        </View>
-        <Button
-          title="Volver al acceso"
-          size="lg"
-          gradient={[theme.colors.primary, theme.colors.accent]}
-          iconRight={<ArrowLeft size={18} color="#FFFFFF" />}
-          style={{ shadowColor: theme.colors.primary, borderColor: "transparent" }}
-          onPress={() => router.replace("/login")}
-        />
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            setSubmitted(null);
-            form.reset({ email: submitted });
-          }}
-          style={({ pressed }) => [
-            styles.resendLink,
-            { opacity: pressed ? 0.6 : 1 },
-          ]}
-        >
-          <Text style={[styles.resendText, { color: theme.colors.textMuted }]}>
-            No te llego?{" "}
-            <Text style={{ color: theme.colors.accent, fontWeight: "900" }}>
-              Reenviar enlace
+        <View style={styles.form}>
+          <View
+            accessibilityRole="alert"
+            style={[
+              styles.successBlock,
+              {
+                backgroundColor: `${theme.colors.success}14`,
+                borderColor: `${theme.colors.success}45`,
+              },
+            ]}
+          >
+            <ShieldCheck size={20} color={theme.colors.success} />
+            <Text style={[styles.successText, { color: theme.colors.text }]}>
+              Hemos enviado instrucciones a {submitted}. Si no aparecen pronto,
+              revisa spam o promociones.
             </Text>
-          </Text>
-        </Pressable>
-      </AuthScaffold>
+          </View>
+
+          <Button
+            title="Volver al login"
+            size="lg"
+            gradient={["#8B5CF6", "#22D3EE"]}
+            iconRight={<ArrowRight size={18} color="#FFFFFF" />}
+            style={[
+              styles.primaryButton,
+              {
+                borderColor: "transparent",
+                shadowColor: theme.colors.primary,
+              },
+            ]}
+            textStyle={styles.primaryButtonText}
+            onPress={() => router.replace("/login")}
+          />
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Reenviar enlace"
+            onPress={() => {
+              setSubmitted(null);
+              form.reset({ email: submitted });
+            }}
+            style={({ pressed }) => [
+              styles.secondaryLink,
+              { opacity: pressed ? 0.62 : 1 },
+            ]}
+          >
+            <Text
+              style={[
+                styles.secondaryLinkText,
+                { color: theme.colors.textMuted },
+              ]}
+            >
+              No te llego?{" "}
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontFamily: fontFamilies.interSemiBold,
+                  fontWeight: "600",
+                }}
+              >
+                Reenviar enlace
+              </Text>
+            </Text>
+          </Pressable>
+        </View>
+      </AuthCosmicScaffold>
     );
   }
 
   return (
-    <AuthScaffold
-      eyebrow="Restablecer acceso"
-      title="Recupera tu acceso"
-      subtitle="Te enviaremos un enlace seguro para restablecer tu contrasena."
-      storyTitle="Recupera tu orbita"
-      storyCopy="Cuando vuelvas a entrar, tus Orbitas, chats y ecos seguiran esperandote."
-      panelVariant="compact"
+    <AuthCosmicScaffold
+      title="Recupera tu orbita"
+      subtitle="Escribe tu email y te enviamos un enlace para volver a entrar."
+      storyBadge="Tu galaxia te espera"
+      storyTitle="Tus Orbitas siguen girando"
+      storyCopy="Retoma conversaciones, descubre senales nuevas y reconecta con tus comunidades justo donde lo dejaste."
+      showTabletMascot
+      visualSignals={visualSignals}
     >
-      <Controller
-        control={form.control}
-        name="email"
-        render={({ field, fieldState }) => (
-          <TextInput
-            label="Email"
-            accessibilityLabel="Email"
-            placeholder="tu@email.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            autoComplete="email"
-            inputMode="email"
-            returnKeyType="send"
-            value={field.value}
-            onChangeText={(value) => {
-              setError(null);
-              field.onChange(value);
-            }}
-            onBlur={field.onBlur}
-            onSubmitEditing={form.handleSubmit(handleReset)}
-            error={fieldState.error?.message}
-            icon={<Mail size={18} color={theme.colors.textFaint} />}
-          />
-        )}
-      />
+      <View style={styles.form}>
+        <Controller
+          control={form.control}
+          name="email"
+          render={({ field, fieldState }) => (
+            <TextInput
+              compact
+              surface="auth"
+              label="Email"
+              accessibilityLabel="Email"
+              placeholder="tu@email.com"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              autoComplete="email"
+              inputMode="email"
+              returnKeyType="send"
+              value={field.value}
+              onChangeText={(value) => {
+                setResetError(null);
+                field.onChange(value);
+              }}
+              onBlur={field.onBlur}
+              onSubmitEditing={form.handleSubmit(handleReset)}
+              error={fieldState.error?.message}
+              success={emailSuccess}
+              icon={<Mail size={17} color={theme.colors.textFaint} />}
+            />
+          )}
+        />
 
-      <View
-        style={[
-          styles.tipsBlock,
-          {
-            backgroundColor: "rgba(255,255,255,0.03)",
-            borderColor: "rgba(255,255,255,0.08)",
-          },
-        ]}
-      >
-        {tips.map((tip) => {
-          const tint =
-            tip.tone === "secondary"
-              ? theme.colors.secondary
-              : tip.tone === "accent"
-                ? theme.colors.accent
-                : theme.colors.success;
-          return (
-            <View key={tip.label} style={styles.tipRow}>
-              <View
-                style={[
-                  styles.tipIcon,
-                  {
-                    backgroundColor: `${tint}1C`,
-                    borderColor: `${tint}55`,
-                  },
-                ]}
-              >
-                <tip.Icon size={14} color={tint} />
-              </View>
-              <Text style={[styles.tipText, { color: theme.colors.textMuted }]}>
-                {tip.label}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
+        {resetError ? (
+          <View
+            accessibilityRole="alert"
+            style={[
+              styles.errorBlock,
+              {
+                backgroundColor: `${theme.colors.error}18`,
+                borderColor: `${theme.colors.error}70`,
+              },
+            ]}
+          >
+            <Text style={[styles.errorText, { color: theme.colors.text }]}>
+              {resetError}
+            </Text>
+          </View>
+        ) : null}
 
-      {error ? (
-        <View
-          accessibilityRole="alert"
+        <Button
+          title="Enviar enlace"
+          size="lg"
+          loading={resetPassword.isPending}
+          disabled={resetPassword.isPending}
+          gradient={["#8B5CF6", "#22D3EE"]}
+          iconRight={<ArrowRight size={18} color="#FFFFFF" />}
           style={[
-            styles.errorBlock,
+            styles.primaryButton,
             {
-              backgroundColor: `${theme.colors.error}18`,
-              borderColor: `${theme.colors.error}70`,
+              borderColor: "transparent",
+              shadowColor: theme.colors.primary,
             },
           ]}
+          textStyle={styles.primaryButtonText}
+          onPress={form.handleSubmit(handleReset)}
+        />
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Volver al login"
+          onPress={() => router.replace("/login")}
+          style={({ pressed }) => [
+            styles.backLink,
+            { opacity: pressed ? 0.62 : 1 },
+          ]}
         >
-          <Text style={[styles.errorText, { color: theme.colors.text }]}>
-            {error}
+          <ArrowLeft size={14} color={theme.colors.textMuted} />
+          <Text style={[styles.backText, { color: theme.colors.textMuted }]}>
+            Volver al login
           </Text>
-        </View>
-      ) : null}
-
-      <Button
-        title="Enviar enlace"
-        size="lg"
-        loading={resetPassword.isPending}
-        disabled={resetPassword.isPending}
-        gradient={[theme.colors.primary, theme.colors.accent]}
-        iconRight={<Send size={16} color="#FFFFFF" />}
-        style={{ shadowColor: theme.colors.primary, borderColor: "transparent" }}
-        onPress={form.handleSubmit(handleReset)}
-      />
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Volver al inicio de sesion"
-        onPress={() => router.back()}
-        style={({ pressed }) => [
-          styles.backLink,
-          { opacity: pressed ? 0.6 : 1 },
-        ]}
-      >
-        <ArrowLeft size={14} color={theme.colors.textMuted} />
-        <Text style={[styles.backText, { color: theme.colors.textMuted }]}>
-          Volver al acceso
-        </Text>
-      </Pressable>
-    </AuthScaffold>
+        </Pressable>
+      </View>
+    </AuthCosmicScaffold>
   );
 }
 
+function getFriendlyResetError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+
+  if (message.includes("rate limit")) {
+    return "Demasiados emails seguidos. Espera un poco y vuelve a intentarlo.";
+  }
+
+  if (message.includes("network") || message.includes("fetch")) {
+    return "No pudimos conectar con Nexo. Comprueba tu conexion e intenta otra vez.";
+  }
+
+  return "No pudimos enviar el enlace. Revisa el email e intentalo de nuevo.";
+}
+
 const styles = StyleSheet.create({
-  tipsBlock: {
-    borderWidth: 1,
+  form: {
+    gap: 12,
+  },
+  primaryButton: {
+    marginTop: 3,
+    minHeight: 48,
     borderRadius: radius.lg,
-    padding: 12,
-    gap: 9,
-  },
-  tipRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  tipIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tipText: {
-    flex: 1,
-    fontSize: typography.small,
-    fontWeight: "700",
+    shadowOpacity: 0.34,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
   errorBlock: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   errorText: {
-    fontSize: 13,
+    fontFamily: fontFamilies.interSemiBold,
+    fontSize: typography.small,
     lineHeight: 18,
-    fontWeight: "800",
+    fontWeight: "600",
   },
   successBlock: {
     flexDirection: "row",
@@ -284,27 +301,35 @@ const styles = StyleSheet.create({
   },
   successText: {
     flex: 1,
-    fontSize: 13,
+    fontFamily: fontFamilies.interMedium,
+    fontSize: typography.small,
     lineHeight: 19,
-    fontWeight: "700",
+    fontWeight: "500",
+  },
+  primaryButtonText: {
+    fontFamily: fontFamilies.interSemiBold,
+    fontWeight: "600",
   },
   backLink: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 6,
-    paddingVertical: 6,
+    paddingVertical: 7,
   },
   backText: {
+    fontFamily: fontFamilies.interSemiBold,
     fontSize: typography.small,
-    fontWeight: "800",
+    fontWeight: "600",
   },
-  resendLink: {
-    paddingVertical: 6,
+  secondaryLink: {
     alignItems: "center",
+    paddingVertical: 7,
   },
-  resendText: {
+  secondaryLinkText: {
+    fontFamily: fontFamilies.interMedium,
     fontSize: typography.small,
-    fontWeight: "700",
+    fontWeight: "500",
+    textAlign: "center",
   },
 });

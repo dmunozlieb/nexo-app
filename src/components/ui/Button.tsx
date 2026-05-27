@@ -7,6 +7,7 @@ import {
   View,
   type StyleProp,
   type PressableProps,
+  type TextStyle,
   type ViewStyle,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -25,6 +26,7 @@ type ButtonProps = Omit<PressableProps, "style"> & {
   loading?: boolean;
   gradient?: readonly [string, string] | undefined;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 };
 
 export function Button({
@@ -37,6 +39,7 @@ export function Button({
   gradient,
   disabled,
   style,
+  textStyle,
   ...props
 }: ButtonProps) {
   const theme = useTheme();
@@ -50,7 +53,8 @@ export function Button({
         : variant === "danger"
           ? colors.error
           : "transparent";
-  const color = variant === "secondary" || variant === "ghost" ? colors.text : "#FFFFFF";
+  const color =
+    variant === "secondary" || variant === "ghost" ? colors.text : "#FFFFFF";
   const borderColor =
     variant === "ghost"
       ? "transparent"
@@ -88,7 +92,7 @@ export function Button({
         />
       ) : null}
       {loading ? <ActivityIndicator color={color} /> : icon}
-      <Text style={[styles.text, { color }]} numberOfLines={1}>
+      <Text style={[styles.text, { color }, textStyle]} numberOfLines={1}>
         {title}
       </Text>
       {iconRight && !loading ? <View>{iconRight}</View> : null}

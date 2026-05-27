@@ -56,25 +56,10 @@ export async function signUpWithEmail(input: AuthRegisterInput) {
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
     password: input.password,
-    options: {
-      data: {
-        display_name: input.displayName,
-        username: input.username,
-      },
-    },
   });
 
   if (error) {
     throw error;
-  }
-
-  if (data.user?.id) {
-    await upsertProfile(data.user.id, {
-      username: input.username,
-      displayName: input.displayName,
-      bio: undefined,
-      avatarUrl: null,
-    });
   }
 
   return data;

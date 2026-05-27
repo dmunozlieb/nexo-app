@@ -399,7 +399,9 @@ const savedPosts = new Set<string>([`${profiles[0]!.id}:${posts[1]!.id}`]);
 const follows = new Set<string>([`${profiles[0]!.id}:${profiles[1]!.id}`]);
 const blocks = new Set<string>();
 
-function buildDemoConversation(overrides: Partial<Conversation> & Pick<Conversation, "id" | "type">): Conversation {
+function buildDemoConversation(
+  overrides: Partial<Conversation> & Pick<Conversation, "id" | "type">,
+): Conversation {
   return {
     community_id: null,
     name: null,
@@ -636,11 +638,12 @@ export async function demoSignInWithEmail(input: AuthLoginInput) {
 export async function demoSignUpWithEmail(input: AuthRegisterInput) {
   const id = uuid();
   const email = input.email.toLowerCase();
+  const temporaryUsername = `nexo_${id.replaceAll("-", "").slice(0, 10)}`;
   demoUsers.push({ email, id });
   profiles.push({
     id,
-    username: `nexo_${id.replaceAll("-", "").slice(0, 10)}`,
-    display_name: input.displayName,
+    username: temporaryUsername,
+    display_name: null,
     bio: null,
     avatar_url: null,
     banner_url: null,
@@ -650,8 +653,7 @@ export async function demoSignUpWithEmail(input: AuthRegisterInput) {
   });
 
   const session = createDemoSession(findProfile(id), email, {
-    display_name: input.displayName,
-    username: input.username,
+    username: temporaryUsername,
   });
   await AsyncStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(session));
   notifyAuth(session);
@@ -1055,7 +1057,8 @@ export async function demoGetOrCreateCommunityConversation(
       item.is_default,
   );
   if (!conversation) {
-    const owner = communities.find((entry) => entry.id === communityId)?.owner_id ?? null;
+    const owner =
+      communities.find((entry) => entry.id === communityId)?.owner_id ?? null;
     conversation = buildDemoConversation({
       id: uuid(),
       type: "community",

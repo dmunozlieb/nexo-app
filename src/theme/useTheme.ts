@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { palette, radius, spacing, typography } from "./tokens";
+import { fontFamilies, palette, radius, spacing, typography } from "./tokens";
 import { useUiStore } from "../stores/ui-store";
 
 export function useTheme() {
@@ -12,6 +12,7 @@ export function useTheme() {
       spacing,
       radius,
       typography,
+      fontFamilies,
     }),
     [themeMode],
   );
