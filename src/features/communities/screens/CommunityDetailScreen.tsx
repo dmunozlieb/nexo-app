@@ -4,12 +4,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  CalendarDays,
-  Flame,
+  Info,
   MessagesSquare,
   MessageSquare,
   Plus,
-  Radio,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -31,11 +29,7 @@ import { LoadingState } from "../../../components/ui/LoadingState";
 import { CommunityTabs } from "../../../components/navigation/CommunityTabs";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
-import type {
-  CommunityMemberWithProfile,
-  PostWithMeta,
-  ReactionType,
-} from "../../../types/domain";
+import type { PostWithMeta, ReactionType } from "../../../types/domain";
 import { canViewModTools } from "../../../utils/community-permissions";
 import { getErrorMessage } from "../../../utils/errors";
 import { formatRelativeDate } from "../../../utils/format";
@@ -57,22 +51,33 @@ import {
   useJoinCommunityMutation,
   useLeaveCommunityMutation,
 } from "../hooks/useCommunities";
+import { FeaturedSignals } from "../components/FeaturedSignals";
+import { MembersByRole } from "../components/MembersByRole";
+import { OrbitInfoTab } from "../components/OrbitInfoTab";
 
-type CommunityTab = "posts" | "chats" | "members" | "rules" | "management";
+type CommunityTab =
+  | "signals"
+  | "featured"
+  | "chats"
+  | "members"
+  | "info"
+  | "management";
 
 const TABS: Array<{ label: string; value: CommunityTab }> = [
-  { label: "Posts", value: "posts" },
+  { label: "Senales", value: "signals" },
+  { label: "Destacados", value: "featured" },
   { label: "Chats", value: "chats" },
   { label: "Miembros", value: "members" },
-  { label: "Normas", value: "rules" },
+  { label: "Info", value: "info" },
 ];
 
 export function CommunityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
   const auth = useAuth();
-  const [activeTab, setActiveTab] = useState<CommunityTab>("posts");
+  const [activeTab, setActiveTab] = useState<CommunityTab>("signals");
   const [reportPost, setReportPost] = useState<PostWithMeta | null>(null);
+  const [reportCommunityOpen, setReportCommunityOpen] = useState(false);
   const community = useCommunity(id);
   const communityId = community.data?.id;
   const membership = useCommunityMembership(communityId, auth.session?.user.id);
@@ -102,6 +107,21 @@ export function CommunityDetailScreen() {
     reaction.mutate({ post, reaction: nextReaction });
   }
 
+  function handleCreateSignal() {
+    if (!community.data) {
+      return;
+    }
+
+    router.push({
+      pathname: "/create",
+      params: { communityId: community.data.id },
+    });
+  }
+
+  function handleOpenPost(post: PostWithMeta) {
+    router.push({ pathname: "/post/[id]", params: { id: post.id } });
+  }
+
   if (community.isLoading) {
     return <LoadingState label="Entrando en la Orbita..." />;
   }
@@ -118,27 +138,12 @@ export function CommunityDetailScreen() {
     : TABS;
   const communityTabs = baseTabs.map((tab) => ({
     ...tab,
-    icon:
-      tab.value === "posts" ? (
-        <Sparkles size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
-      ) : tab.value === "chats" ? (
-        <MessagesSquare size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
-      ) : tab.value === "members" ? (
-        <Users size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
-      ) : tab.value === "rules" ? (
-        <ShieldCheck size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
-      ) : (
-        <Settings size={15} color={activeTab === tab.value ? "#FFFFFF" : theme.colors.textMuted} />
-      ),
+    icon: tabIcon(tab.value, activeTab === tab.value, theme),
   }));
-  const rules = Array.isArray(community.data.rules)
-    ? (community.data.rules as string[])
-    : [];
   const memberRows = members.data ?? [];
   const postRows = posts.data ?? [];
   const latestPost = postRows[0];
-  const postsToday = Math.max(1, Math.min(9, postRows.length || 3));
-  const weeklyActivity = Math.max(12, (community.data.online_count ?? 4) * 3);
+  const signalsToday = postRows.length;
 
   return (
     <ScreenContainer contentStyle={styles.screen}>
@@ -149,7 +154,7 @@ export function CommunityDetailScreen() {
         <View style={[styles.spaceDust, { borderColor: `${theme.colors.secondary}20` }]} />
       </View>
       <FlatList
-        data={activeTab === "posts" ? postRows : []}
+        data={activeTab === "signals" ? postRows : []}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
@@ -222,16 +227,12 @@ export function CommunityDetailScreen() {
                 </View>
                 <View style={styles.heroStats}>
                   <SignalPill
-                    icon={<Flame size={15} color={theme.colors.accent} />}
-                    label={`${postsToday} posts nuevos hoy`}
+                    icon={<Sparkles size={15} color={theme.colors.secondary} />}
+                    label={`${signalsToday} ${signalsToday === 1 ? "senal" : "senales"}`}
                   />
                   <SignalPill
-                    icon={<Radio size={15} color={theme.colors.success} />}
-                    label={`${weeklyActivity}% actividad semanal`}
-                  />
-                  <SignalPill
-                    icon={<Star size={15} color={theme.colors.secondary} />}
-                    label="Mision semanal activa"
+                    icon={<Star size={15} color={theme.colors.accent} />}
+                    label="Orbita viva"
                   />
                 </View>
                 <Text style={styles.description}>
@@ -245,15 +246,10 @@ export function CommunityDetailScreen() {
                     onPress={() => (isMember ? leave.mutate() : join.mutate())}
                   />
                   <Button
-                    title="Publicar"
+                    title="Crear senal"
                     variant="secondary"
                     icon={<Plus size={17} color={theme.colors.text} />}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/create",
-                        params: { communityId: community.data.id },
-                      })
-                    }
+                    onPress={handleCreateSignal}
                   />
                   <Button
                     title="Chat"
@@ -273,41 +269,15 @@ export function CommunityDetailScreen() {
 
             <CommunityTabs tabs={communityTabs} value={activeTab} onChange={setActiveTab} />
 
-            <View style={styles.liveGrid}>
-              <ActivityCard
-                icon={<Flame size={18} color={theme.colors.accent} />}
-                title="Mision activa"
-                value="Lanza un eco y comparte tu mejor teoria."
-              />
-              <ActivityCard
-                icon={<CalendarDays size={18} color={theme.colors.secondary} />}
-                title="Evento proximo"
-                value="Quedada comunitaria este viernes."
-              />
-              <ActivityCard
-                icon={<ShieldCheck size={18} color={theme.colors.success} />}
-                title="Regla destacada"
-                value={(rules[0] ?? "Respeta a otras personas.").replace(/\.$/, "")}
-              />
-            </View>
-
-            {activeTab !== "posts" ? (
-              <CommunityTabContent
-                tab={activeTab}
-                members={memberRows}
-                rules={rules}
-                onOpenChat={handleChat}
-                communityId={community.data.id}
-              />
-            ) : (
+            {activeTab === "signals" ? (
               <View style={styles.feedHeader}>
                 <View>
                   <Text style={[styles.feedTitle, { color: theme.colors.text }]}>
-                    Ecos recientes
+                    Senales recientes
                   </Text>
                   <Text style={[styles.feedSubtitle, { color: theme.colors.textMuted }]}>
                     {latestPost
-                      ? `Ultimo eco ${formatRelativeDate(latestPost.created_at)}`
+                      ? `Ultima senal ${formatRelativeDate(latestPost.created_at)}`
                       : "La primera senal puede salir de aqui."}
                   </Text>
                 </View>
@@ -326,28 +296,49 @@ export function CommunityDetailScreen() {
                   </Text>
                 </View>
               </View>
+            ) : activeTab === "featured" ? (
+              <FeaturedSignals
+                posts={postRows}
+                onOpenPost={handleOpenPost}
+                onReact={handleReact}
+                onSave={(post) => save.mutate(post)}
+                onReport={setReportPost}
+              />
+            ) : activeTab === "chats" ? (
+              <CommunityChatsTab communityId={community.data.id} />
+            ) : activeTab === "members" ? (
+              members.isLoading ? (
+                <LoadingState label="Cargando miembros..." />
+              ) : (
+                <MembersByRole members={memberRows} communityId={community.data.id} />
+              )
+            ) : activeTab === "info" ? (
+              <OrbitInfoTab
+                community={community.data}
+                members={memberRows}
+                role={role}
+                onReportCommunity={() => setReportCommunityOpen(true)}
+                onEditCommunity={() =>
+                  Alert.alert("Proximamente", "La edicion de la Orbita llega pronto.")
+                }
+                onManageRoles={() =>
+                  Alert.alert("Proximamente", "La gestion de roles llega pronto.")
+                }
+              />
+            ) : (
+              <ManagementPanel />
             )}
           </View>
         }
         ListEmptyComponent={
-          activeTab === "posts" ? (
+          activeTab === "signals" ? (
             posts.isLoading ? (
-              <LoadingState label="Cargando publicaciones..." />
+              <LoadingState label="Cargando senales..." />
             ) : (
               <AlienEmptyState
                 title="Esta Orbita esta en silencio"
-                message="Publica una pregunta, historia o recomendacion para activar la conversacion."
-                action={
-                  <Button
-                    title="Crear primer eco"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/create",
-                        params: { communityId: community.data.id },
-                      })
-                    }
-                  />
-                }
+                message="Lanza una pregunta, historia o recomendacion y activa la conversacion."
+                action={<Button title="Crear primera senal" onPress={handleCreateSignal} />}
               />
             )
           ) : null
@@ -355,9 +346,7 @@ export function CommunityDetailScreen() {
         renderItem={({ item }) => (
           <PostCard
             post={item}
-            onPress={() =>
-              router.push({ pathname: "/post/[id]", params: { id: item.id } })
-            }
+            onPress={() => handleOpenPost(item)}
             onReact={(nextReaction) => handleReact(item, nextReaction)}
             onSave={() => save.mutate(item)}
             onReport={() => setReportPost(item)}
@@ -376,8 +365,43 @@ export function CommunityDetailScreen() {
           })
         }
       />
+      <ReportModal
+        visible={reportCommunityOpen}
+        onClose={() => setReportCommunityOpen(false)}
+        onSubmitReport={(reason, details) =>
+          report.mutateAsync({
+            targetType: "community",
+            targetId: community.data.id,
+            reason,
+            details,
+          })
+        }
+      />
     </ScreenContainer>
   );
+}
+
+function tabIcon(
+  value: CommunityTab,
+  active: boolean,
+  theme: ReturnType<typeof useTheme>,
+) {
+  const color = active ? "#FFFFFF" : theme.colors.textMuted;
+
+  switch (value) {
+    case "signals":
+      return <Sparkles size={15} color={color} />;
+    case "featured":
+      return <Star size={15} color={color} />;
+    case "chats":
+      return <MessagesSquare size={15} color={color} />;
+    case "members":
+      return <Users size={15} color={color} />;
+    case "info":
+      return <Info size={15} color={color} />;
+    default:
+      return <Settings size={15} color={color} />;
+  }
 }
 
 function SignalPill({ icon, label }: { icon: ReactNode; label: string }) {
@@ -401,116 +425,8 @@ function SignalPill({ icon, label }: { icon: ReactNode; label: string }) {
   );
 }
 
-function ActivityCard({
-  icon,
-  title,
-  value,
-}: {
-  icon: ReactNode;
-  title: string;
-  value: string;
-}) {
+function ManagementPanel() {
   const theme = useTheme();
-
-  return (
-    <View
-      style={[
-        styles.activityCard,
-        {
-          backgroundColor: "rgba(18,20,39,0.74)",
-          borderColor: `${theme.colors.border}CC`,
-        },
-      ]}
-    >
-      <View style={[styles.activityIcon, { backgroundColor: `${theme.colors.secondary}12` }]}>
-        {icon}
-      </View>
-      <View style={styles.activityCopy}>
-        <Text style={[styles.activityTitle, { color: theme.colors.text }]}>
-          {title}
-        </Text>
-        <Text style={[styles.activityValue, { color: theme.colors.textMuted }]} numberOfLines={2}>
-          {value}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function CommunityTabContent({
-  tab,
-  members,
-  rules,
-  onOpenChat,
-  communityId,
-}: {
-  tab: CommunityTab;
-  members: CommunityMemberWithProfile[];
-  rules: string[];
-  onOpenChat: () => void;
-  communityId: string;
-}) {
-  const theme = useTheme();
-
-  if (tab === "chats") {
-    return <CommunityChatsTab communityId={communityId} />;
-  }
-
-  if (tab === "members") {
-    return (
-      <View style={styles.membersList}>
-        {members.map((member) => {
-          const name = member.profile?.display_name ?? member.profile?.username ?? "Usuario";
-          return (
-            <Pressable
-              key={member.user_id}
-              accessibilityRole="button"
-              accessibilityLabel={`Abrir perfil de ${name}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/profile/[id]",
-                  params: { id: member.user_id, communityId },
-                })
-              }
-              style={({ pressed }) => [
-                styles.memberRow,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                  opacity: pressed ? 0.78 : 1,
-                },
-              ]}
-            >
-              <Avatar uri={member.profile?.avatar_url} label={name} size={44} />
-              <View style={styles.memberCopy}>
-                <Text style={[styles.memberName, { color: theme.colors.text }]}>{name}</Text>
-                <Text style={[styles.memberMeta, { color: theme.colors.textFaint }]}>
-                  Unido {formatRelativeDate(member.joined_at)}
-                </Text>
-              </View>
-              <RoleBadge role={member.role} />
-            </Pressable>
-          );
-        })}
-      </View>
-    );
-  }
-
-  if (tab === "rules") {
-    return (
-      <GradientCard contentStyle={styles.tabPanel}>
-        <View style={styles.panelTitleRow}>
-          <ShieldCheck size={18} color={theme.colors.success} />
-          <Text style={[styles.panelTitle, { color: theme.colors.text }]}>Normas</Text>
-        </View>
-        {(rules.length ? rules : ["Respeta a otras personas.", "Evita spam."]).map((rule) => (
-          <Text key={rule} style={[styles.rule, { color: theme.colors.textMuted }]}>
-            {rule}
-          </Text>
-        ))}
-      </GradientCard>
-    );
-  }
 
   return (
     <GradientCard contentStyle={styles.tabPanel}>
@@ -835,42 +751,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 9,
   },
-  liveGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  activityCard: {
-    flexGrow: 1,
-    flexBasis: 220,
-    minHeight: 78,
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  activityIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activityCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  activityTitle: {
-    fontSize: typography.small,
-    fontWeight: "900",
-  },
-  activityValue: {
-    fontSize: typography.small,
-    lineHeight: 18,
-    fontWeight: "700",
-  },
   panelTitleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -916,34 +796,6 @@ const styles = StyleSheet.create({
   },
   tabPanel: {
     gap: 10,
-  },
-  membersList: {
-    gap: 10,
-  },
-  memberRow: {
-    minHeight: 68,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: 11,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  memberCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  memberName: {
-    fontSize: typography.body,
-    fontWeight: "900",
-  },
-  memberMeta: {
-    fontSize: typography.tiny,
-    fontWeight: "700",
-  },
-  rule: {
-    fontSize: typography.body,
-    lineHeight: 21,
   },
   chatsTab: {
     gap: 12,
