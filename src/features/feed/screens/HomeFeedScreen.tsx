@@ -492,6 +492,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "column",
     minHeight: 0,
+    width: "100%",
+    maxWidth: 680,
+    alignSelf: "center",
   },
   mobileStageHeader: {
     flexDirection: "row",

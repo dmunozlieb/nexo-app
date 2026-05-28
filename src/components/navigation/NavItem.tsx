@@ -103,14 +103,9 @@ export function NavItem({ item, active, layout, onPress }: NavItemProps) {
       >
         {item.label}
       </Text>
-      {!isSidebar ? (
+      {!isSidebar && active ? (
         <View
-          style={[
-            styles.bottomActiveDot,
-            {
-              backgroundColor: active ? theme.colors.primary : "transparent",
-            },
-          ]}
+          style={[styles.bottomActiveDot, { backgroundColor: theme.colors.primary }]}
         />
       ) : null}
     </Pressable>

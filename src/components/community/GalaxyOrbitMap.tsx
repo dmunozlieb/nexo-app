@@ -93,6 +93,17 @@ const compactPlanetLayouts: PlanetLayout[] = [
   { top: "80%", left: "76%", size: 52, label: "bottom", hue: 4 },
 ];
 
+// Tablet: grupo centrado verticalmente que llena el lienzo (con 4 = cuadricula
+// equilibrada; el centro y el lateral solo aparecen con 5-6 orbitas).
+const tabletPlanetLayouts: PlanetLayout[] = [
+  { top: "30%", left: "30%", size: 84, label: "bottom", hue: 0 },
+  { top: "30%", left: "70%", size: 80, label: "bottom", hue: 1 },
+  { top: "63%", left: "33%", size: 76, label: "bottom", hue: 2 },
+  { top: "63%", left: "67%", size: 82, label: "bottom", hue: 3 },
+  { top: "47%", left: "50%", size: 92, label: "bottom", hue: 4 },
+  { top: "47%", left: "15%", size: 60, label: "bottom", hue: 5 },
+];
+
 const planetColors = [
   ["#7B5CFF", "#18D7FF"],
   ["#18D7FF", "#FF4FD8"],
@@ -111,6 +122,17 @@ const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
 const webHaloBlur =
   Platform.OS === "web"
     ? ({ filter: "blur(14px)" } as unknown as ViewStyle)
+    : null;
+
+// Nucleo de galaxia: glow radial suave (web) que da profundidad al centro.
+const webCoreGlow =
+  Platform.OS === "web"
+    ? ({
+        backgroundColor: "transparent",
+        backgroundImage:
+          "radial-gradient(circle, rgba(123,92,255,0.20) 0%, rgba(24,215,255,0.08) 38%, transparent 70%)",
+        filter: "blur(36px)",
+      } as unknown as ViewStyle)
     : null;
 
 const categoryVisualThemes: Record<string, CommunityVisualTheme> = {
@@ -180,7 +202,34 @@ export function GalaxyOrbitMap({
   const { width } = useWindowDimensions();
   const blurTargetRef = useRef<View | null>(null);
   const reduceMotion = useReduceMotion();
+  const coreBreath = useRef(new Animated.Value(0)).current;
   const isControlled = onSelectCommunity !== undefined;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      coreBreath.setValue(0);
+      return;
+    }
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(coreBreath, {
+          toValue: 1,
+          duration: 6400,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(coreBreath, {
+          toValue: 0,
+          duration: 6400,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [coreBreath, reduceMotion]);
   const [internalSelected, setInternalSelected] =
     useState<GalaxyCommunity | null>(null);
   const selectedCommunity = isControlled
@@ -198,14 +247,22 @@ export function GalaxyOrbitMap({
     }
   };
   const compact = width < 980;
-  const activeLayouts = compact ? compactPlanetLayouts : planetLayouts;
+  const isTablet = compact && width >= 700;
+  const activeLayouts = !compact
+    ? planetLayouts
+    : isTablet
+      ? tabletPlanetLayouts
+      : compactPlanetLayouts;
   const visibleCommunities = communities.slice(0, activeLayouts.length);
   const mobileListCommunities = communities.slice(0, 8);
   const mobileStageHeight = Math.min(420, Math.max(320, width * 0.92));
-  // Escala los planetas con el ancho: telefono ~1.0, tablet hasta ~1.55x.
-  const planetSizeScale = compact
-    ? Math.min(1.55, Math.max(1, width / 480))
-    : 1;
+  // Escala los planetas con el ancho. Tablet usa su propio layout (bases mas
+  // grandes) con un escalado leve; telefono escala desde bases pequenas.
+  const planetSizeScale = !compact
+    ? 1
+    : isTablet
+      ? Math.min(1.12, Math.max(1, width / 820))
+      : Math.min(1.3, Math.max(1, width / 430));
   const totalOnline = communities.reduce(
     (sum, community) => sum + (community.online_count ?? 0),
     0,
@@ -258,13 +315,16 @@ export function GalaxyOrbitMap({
   };
 
   // El fondo cosmico (gradiente + nebulosas + estrellas) vive a nivel de app.
-  // El mapa es transparente para no duplicar atmosfera.
+  // El mapa anade un nucleo de galaxia suave que respira para dar profundidad.
   const galaxyBackground = (
-    <BlurTargetView
-      ref={blurTargetRef}
-      pointerEvents="none"
-      style={StyleSheet.absoluteFill}
-    />
+    <>
+      <BlurTargetView
+        ref={blurTargetRef}
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+      />
+      <GalaxyCore breath={coreBreath} />
+    </>
   );
 
   if (compact) {
@@ -590,6 +650,24 @@ export function GalaxyOrbitMap({
   );
 }
 
+function GalaxyCore({ breath }: { breath: Animated.Value }) {
+  const opacity = breath.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.55, 1],
+  });
+  const scale = breath.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.94, 1.08],
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.galaxyCore, webCoreGlow, { opacity, transform: [{ scale }] }]}
+    />
+  );
+}
+
 function useReduceMotion() {
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -640,6 +718,7 @@ function PlanetNode({
   const theme = useTheme();
   const float = useRef(new Animated.Value(0)).current;
   const interaction = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
   const hovered = useRef(false);
   const pressed = useRef(false);
   const initials = getInitials(community.name);
@@ -649,6 +728,14 @@ function PlanetNode({
   const isLive = (community.online_count ?? 0) > 0;
   const initialsSize = layout.size >= 112 ? 32 : layout.size >= 92 ? 26 : 22;
   const planetOpacity = isSuggested ? 0.9 : 1;
+  const pulseScale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.5],
+  });
+  const pulseOpacity = pulse.interpolate({
+    inputRange: [0, 0.15, 1],
+    outputRange: [0, 0.3, 0],
+  });
   const floatDistance = 4 + (index % 3) * 1.2;
   const translateY = float.interpolate({
     inputRange: [0, 1],
@@ -719,6 +806,33 @@ function PlanetNode({
       animation.stop();
     };
   }, [float, index, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion || !isLive) {
+      pulse.stopAnimation();
+      pulse.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.timing(pulse, {
+        toValue: 1,
+        duration: 2800,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+
+    const startDelay = setTimeout(
+      () => animation.start(),
+      floatDelays[index % floatDelays.length],
+    );
+
+    return () => {
+      clearTimeout(startDelay);
+      animation.stop();
+    };
+  }, [pulse, index, isLive, reduceMotion]);
 
   useEffect(() => {
     animateInteraction(hovered.current || pressed.current || selected);
@@ -795,6 +909,22 @@ function PlanetNode({
             },
           ]}
         />
+        {isLive ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.planetPulse,
+              {
+                width: layout.size,
+                height: layout.size,
+                borderRadius: layout.size / 2,
+                borderColor: visualTheme.accent,
+                opacity: pulseOpacity,
+                transform: [{ scale: pulseScale }],
+              },
+            ]}
+          />
+        ) : null}
         <View
           style={[
             styles.planetWrap,
@@ -924,6 +1054,7 @@ function MobileOrbitNode({
   const theme = useTheme();
   const float = useRef(new Animated.Value(0)).current;
   const interaction = useRef(new Animated.Value(selected ? 1 : 0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
   const initials = getInitials(community.name);
   const imageUri = community.avatar_url ?? community.banner_url;
   const online = (community.online_count ?? 0) > 0;
@@ -940,6 +1071,14 @@ function MobileOrbitNode({
   const haloBreathScale = float.interpolate({
     inputRange: [0, 1],
     outputRange: [1, reduceMotion ? 1 : 1.07],
+  });
+  const pulseScale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.5],
+  });
+  const pulseOpacity = pulse.interpolate({
+    inputRange: [0, 0.15, 1],
+    outputRange: [0, 0.3, 0],
   });
 
   const animateInteraction = (active: boolean) => {
@@ -992,6 +1131,33 @@ function MobileOrbitNode({
   }, [float, index, reduceMotion]);
 
   useEffect(() => {
+    if (reduceMotion || !online) {
+      pulse.stopAnimation();
+      pulse.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.timing(pulse, {
+        toValue: 1,
+        duration: 2800,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+
+    const startDelay = setTimeout(
+      () => animation.start(),
+      floatDelays[index % floatDelays.length],
+    );
+
+    return () => {
+      clearTimeout(startDelay);
+      animation.stop();
+    };
+  }, [pulse, index, online, reduceMotion]);
+
+  useEffect(() => {
     animateInteraction(selected);
   }, [selected, reduceMotion]);
 
@@ -1035,6 +1201,22 @@ function MobileOrbitNode({
             },
           ]}
         />
+        {online ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.planetPulse,
+              {
+                width: layout.size,
+                height: layout.size,
+                borderRadius: layout.size / 2,
+                borderColor: visualTheme.accent,
+                opacity: pulseOpacity,
+                transform: [{ scale: pulseScale }],
+              },
+            ]}
+          />
+        ) : null}
         <View
           style={[
             styles.mobilePlanetWrap,
@@ -1225,6 +1407,8 @@ export function OrbitDetailPanel({
   onOpenChat: ((community: GalaxyCommunity) => void) | undefined;
 }) {
   const theme = useTheme();
+  const reduceMotion = useReduceMotion();
+  const enter = useRef(new Animated.Value(compact ? 1 : 0)).current;
   const orbitType = getOrbitType(community);
   const online = community.online_count ?? 0;
   const canOpenChat = Boolean(community.user_role && onOpenChat);
@@ -1235,6 +1419,28 @@ export function OrbitDetailPanel({
     theme.colors.primary,
     theme.colors.accent,
   ] as const;
+  const enterTranslateY = enter.interpolate({
+    inputRange: [0, 1],
+    outputRange: [14, 0],
+  });
+  const enterScale = enter.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.97, 1],
+  });
+
+  useEffect(() => {
+    if (compact) {
+      enter.setValue(1);
+      return;
+    }
+
+    Animated.timing(enter, {
+      toValue: 1,
+      duration: reduceMotion ? 0 : 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [compact, enter, reduceMotion]);
 
   const content = (
     <View
@@ -1416,7 +1622,12 @@ export function OrbitDetailPanel({
   }
 
   return (
-    <View style={styles.detailPanelInline}>
+    <Animated.View
+      style={[
+        styles.detailPanelInline,
+        { opacity: enter, transform: [{ translateY: enterTranslateY }, { scale: enterScale }] },
+      ]}
+    >
       <View
         pointerEvents="none"
         style={[styles.detailPanelGlow, { backgroundColor: colors[1] }]}
@@ -1437,7 +1648,7 @@ export function OrbitDetailPanel({
       >
         {content}
       </BlurView>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -1571,6 +1782,19 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderRadius: 0,
     marginBottom: 0,
+  },
+  galaxyCore: {
+    position: "absolute",
+    width: "62%",
+    height: "62%",
+    left: "19%",
+    top: "19%",
+    borderRadius: 9999,
+    backgroundColor: "rgba(123,92,255,0.10)",
+    shadowColor: "#7B5CFF",
+    shadowOpacity: 0.4,
+    shadowRadius: 80,
+    shadowOffset: { width: 0, height: 0 },
   },
   mapMobileFull: {
     minHeight: 0,
@@ -1713,6 +1937,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.45,
     shadowRadius: 40,
     shadowOffset: { width: 0, height: 0 },
+  },
+  planetPulse: {
+    position: "absolute",
+    borderWidth: 1.5,
   },
   planetWrap: {
     alignItems: "center",
@@ -1907,20 +2135,20 @@ const styles = StyleSheet.create({
     width: "100%",
     maxHeight: "100%",
     borderRadius: 24,
-    shadowColor: "#18D7FF",
-    shadowOpacity: 0.28,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 18 },
-    elevation: 16,
+    shadowColor: "#000000",
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 12,
   },
   detailPanelGlow: {
     position: "absolute",
     left: 18,
     right: 18,
     top: 24,
-    bottom: -18,
+    bottom: -10,
     borderRadius: 24,
-    opacity: 0.2,
+    opacity: 0.08,
   },
   detailPanelGlass: {
     borderWidth: 1,
