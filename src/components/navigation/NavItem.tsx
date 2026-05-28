@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { radius, typography } from "../../theme/tokens";
+import { radius } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
 
 export type NavItemLayout = "bottom" | "sidebar";
@@ -27,11 +26,16 @@ export function NavItem({ item, active, layout, onPress }: NavItemProps) {
   const [focused, setFocused] = useState(false);
   const motion = useRef(new Animated.Value(active ? 1 : 0)).current;
   const interactive = hovered || focused;
-  const iconColor = active ? "#FFFFFF" : theme.colors.textMuted;
-  const size = layout === "bottom" ? 20 : 19;
+  const isSidebar = layout === "sidebar";
+  const iconColor = active
+    ? "#FFFFFF"
+    : isSidebar
+      ? theme.colors.textMuted
+      : theme.colors.textFaint;
+  const size = isSidebar ? 18 : 20;
   const scale = motion.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, layout === "bottom" ? 1.08 : 1.02],
+    outputRange: [1, isSidebar ? 1.0 : 1.08],
   });
 
   useEffect(() => {
@@ -54,53 +58,56 @@ export function NavItem({ item, active, layout, onPress }: NavItemProps) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        layout === "bottom" ? styles.bottom : styles.sidebar,
-        {
-          backgroundColor:
-            layout === "sidebar" && interactive && !active
-              ? `${theme.colors.elevated}AA`
-              : "transparent",
-          borderColor:
-            layout === "sidebar"
-              ? active
-                ? theme.colors.secondary
+        isSidebar ? styles.sidebar : styles.bottom,
+        isSidebar
+          ? {
+              backgroundColor: active
+                ? "rgba(123,92,255,0.16)"
                 : interactive
-                  ? theme.colors.primary
-                  : "transparent"
-              : "transparent",
-          opacity: pressed ? 0.78 : 1,
-        },
+                  ? "rgba(255,255,255,0.05)"
+                  : "transparent",
+              borderColor: active
+                ? "rgba(123,92,255,0.35)"
+                : "transparent",
+              opacity: pressed ? 0.82 : 1,
+            }
+          : { opacity: pressed ? 0.78 : 1 },
       ]}
     >
-      {active ? (
-        <LinearGradient
-          colors={[`${theme.colors.primary}D9`, `${theme.colors.secondary}5C`]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.activeGlow,
-            layout === "bottom" ? styles.bottomGlow : styles.sidebarGlow,
-          ]}
+      {active && isSidebar ? (
+        <View
+          style={[styles.sidebarIndicator, { backgroundColor: theme.colors.primary }]}
         />
       ) : null}
       <Animated.View
         style={[
-          layout === "bottom" ? styles.bottomIconWrap : styles.sidebarIconWrap,
+          isSidebar ? styles.sidebarIconWrap : styles.bottomIconWrap,
           { transform: [{ scale }] },
         ]}
       >
-        {active ? <View style={styles.orbitRing} /> : null}
         {item.icon({ size, color: iconColor })}
       </Animated.View>
       <Text
         style={[
-          layout === "bottom" ? styles.bottomLabel : styles.sidebarLabel,
-          { color: active ? "#FFFFFF" : theme.colors.textMuted },
+          isSidebar ? styles.sidebarLabel : styles.bottomLabel,
+          {
+            color: active
+              ? "#FFFFFF"
+              : isSidebar
+                ? theme.colors.textMuted
+                : theme.colors.textFaint,
+            fontWeight: active ? "600" : "500",
+          },
         ]}
         numberOfLines={1}
       >
         {item.label}
       </Text>
+      {!isSidebar && active ? (
+        <View
+          style={[styles.bottomActiveDot, { backgroundColor: theme.colors.primary }]}
+        />
+      ) : null}
     </Pressable>
   );
 }
@@ -111,36 +118,40 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   bottom: {
-    width: 50,
-    minHeight: 52,
+    width: 56,
+    minHeight: 58,
     borderRadius: radius.lg,
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
+    gap: 4,
   },
   sidebar: {
-    minHeight: 46,
+    minHeight: 44,
     borderWidth: 1,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     paddingHorizontal: 12,
   },
-  activeGlow: {
+  sidebarIndicator: {
     position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
     left: 0,
+    top: "50%",
+    marginTop: -10,
+    width: 3,
+    height: 20,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
   },
-  bottomGlow: {
-    borderRadius: radius.lg,
-    opacity: 0.56,
-  },
-  sidebarGlow: {
-    borderRadius: radius.md,
-    opacity: 0.48,
+  bottomActiveDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    shadowColor: "#7B5CFF",
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
   },
   bottomIconWrap: {
     width: 27,
@@ -149,27 +160,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sidebarIconWrap: {
-    width: 28,
-    height: 28,
+    width: 24,
+    height: 24,
     alignItems: "center",
     justifyContent: "center",
   },
-  orbitRing: {
-    position: "absolute",
-    width: 25,
-    height: 14,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.74)",
-    transform: [{ rotate: "-24deg" }],
-  },
   bottomLabel: {
-    fontSize: typography.tiny,
-    fontWeight: "900",
+    fontSize: 10,
+    fontWeight: "500",
   },
   sidebarLabel: {
     flex: 1,
-    fontSize: typography.body,
-    fontWeight: "900",
+    fontSize: 14,
+    fontWeight: "500",
   },
 });

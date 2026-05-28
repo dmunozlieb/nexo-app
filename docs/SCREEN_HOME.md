@@ -36,11 +36,110 @@ Home es la **primera pantalla real** despues de auth/onboarding. Es el espacio q
 
 ---
 
+## 0.5 Esencial para la IA de diseno (si solo lees una cosa)
+
+**No tienes acceso al repo ni a las pantallas existentes.** Todo lo que necesitas para diseñar Home esta inlined en este doc. No abras links a otros archivos `.md` — no los puedes leer. Diseña todo lo que se describe; cuando algo se llama "ya existe" en el doc, asumelo como una spec a respetar visualmente (descripcion abajo), no como excusa para saltartelo.
+
+### TL;DR (6 cosas que no puedes fallar)
+
+1. **Atmosfera cosmica continua**: fondo casi negro con nebulosas blureadas y estrellas titilantes, sin cortes entre regiones de la pantalla. Topbar/sidebar/bottomnav son **capas glass por encima** del fondo, no fondos nuevos opacos.
+2. **El mapa orbital es el protagonista** (anatomia visual completa en §2.4.1). Diseña el chrome alrededor (header, stats, panel detalle, columna de actividad).
+3. **Sin TopBar movil en Home**. El mapa lleva su propio header. En desktop si hay TopBar (alto 68 px) + Sidebar (ancho 286 px).
+4. **Mobile = una sola vista sin scroll vertical**: mapa + strip horizontal de actividad + BottomNav. Ya.
+5. **Sentence case en todo el copy**. Cero UPPERCASE.
+6. **Pinta los estados** (loading, empty sin Orbitas, empty sin actividad, error, offline), no solo el happy path.
+
+### Paleta dark mode (la unica que importa para V1)
+
+| Token | Hex | Uso |
+|---|---|---|
+| background | `#070B1A` | Fondo base de la app. |
+| surface | `#0D1230` | Cards solidas (cuando no son glass). |
+| elevated | `#182044` | Inputs, hover/active states. |
+| border | `#303A66` | Bordes neutros. |
+| primary (violeta) | `#7B5CFF` | Acciones principales, dot activo. |
+| secondary (cyan) | `#18D7FF` | Links, eyebrows, borders seleccion. |
+| accent (magenta) | `#FF4FD8` | Accents puntuales (badges, glow especifico). |
+| success | `#22E6B9` | Online dot, confirmaciones. |
+| warning | `#FF7AA8` | Avisos suaves. |
+| error | `#FF5C8A` | Errores y alerts. |
+| text | `#F6F7FB` | Texto primario. |
+| textMuted | `#B9C1D9` | Texto secundario. |
+| textFaint | `#8490B4` | Texto terciario, helpers. |
+
+### Tipografia, spacing, radius
+
+- **Familia**: Inter (weights 400/500/600/700/800).
+- **Escala texto**: 11 / 13 / 15 / 17 / 20 / 24 / 28 px.
+- **Spacing**: 4 / 8 / 12 / 16 / 24 / 32 / 48.
+- **Radius**: 4 / 6 / 8 / 12 / pill (999). Glass cards grandes usan 24.
+
+### Atmosfera cosmica del fondo (spec completa, pintar tal cual)
+
+El fondo es **una sola capa continua** que ocupa todo el viewport (full bleed) por DEBAJO del topbar/sidebar/bottomnav. No se reinicia en cada region.
+
+Composicion (de fondo a primer plano):
+
+1. **Gradiente vertical base** (top → bottom): `#070622` → `#090A1F` → `#050611`. Casi negro con tinte ligeramente violeta.
+2. **Nebulosas radiales blureadas** (3 manchas grandes, blur ~64 px, sin bordes definidos):
+   - Violeta `rgba(123,92,255,0.12)`: circulo ~540 px, posicion top-left (top: -220, left: -170).
+   - Cyan `rgba(24,215,255,0.07)`: circulo ~560 px, posicion right-bottom (right: -180, bottom: -100).
+   - Magenta `rgba(255,79,216,0.07)`: circulo ~480 px, posicion bottom-center (bottom: -180, left: ~33%).
+3. **Dos circulos de orbita decorativos** (border 1 px, sin fill):
+   - Grande: ~930 px diametro, border `rgba(255,255,255,0.035)`, posicion left: 12%, top: 6%.
+   - Pequeño: ~620 px diametro, border `rgba(123,92,255,0.045)`, posicion left: -8%, bottom: -18%.
+4. **~16 estrellas blancas** distribuidas, 1-2 px, con halo (shadow blur 6, color blanco opacidad 0.8). Opacidad base entre 0.35 y 0.72 segun la estrella; en una version animada, parpadean entre 0.18 y 1.0 con duraciones distintas (1.6-2.2 s por estrella). Respeta `prefers-reduced-motion` → estaticas.
+
+> **Importante**: este fondo se ve por debajo del sidebar y del topbar a traves del BlurView. Cuando diseñes los mockups, asegurate de que la nebulosa/estrellas se perciban (suavemente) atravesando el cristal del sidebar/topbar.
+
+### Glass cards (componentes con BlurView)
+
+Topbar, Sidebar, BottomNav y el panel lateral de detalle de Orbita son **glass cards** con esta receta:
+
+- **Backdrop blur** equivalente a `backdrop-filter: blur(28-40px)`.
+- **Tint dark**: capa de color `rgba(13, 18, 48, 0.55-0.7)` por encima del blur (mas opaca = mas "solida").
+- **Gradient overlay sutil**: `linear-gradient(135deg, rgba(255,255,255,0.045), rgba(123,92,255,0.055), rgba(255,255,255,0.02))`.
+- **Border**: 1 px `rgba(255,255,255,0.1)`.
+- **Border radius**: 24 px en panel lateral, 0 en topbar/sidebar (van pegados al borde del viewport).
+- **Shadow** (opcional, solo en piezas flotantes como el panel lateral): `0 18px 28px rgba(0,0,0,0.45)`.
+
+### CTAs primary (botones de accion principal)
+
+- **Pill**: border-radius 999, altura min 48 px, padding horizontal 20.
+- **Gradient diagonal**: `linear-gradient(135deg, #8B5CF6, #22D3EE)`.
+- **Texto blanco**, Inter SemiBold 15.
+- **Shadow violeta**: `shadow-color: #7B5CFF`, opacity 0.34, radius 18, offset (0, 10).
+- **Estados**: hover/pressed `opacity 0.82`, disabled `opacity 0.48`, loading muestra spinner blanco en lugar del texto.
+
+### Mascotas (hay dos en el sistema — no las mezcles)
+
+- **`NexoMascot`** (la que usa Home) — alien 3D estilizado: cabeza grande casi circular, dos antenas con bolas luminosas, ojos cyan grandes con highlight blanco, cuerpo violeta con gradient. Aparece en Home en el `AppTopBar` (size 48, izquierda junto al saludo) y en empty states del strip de actividad reciente.
+- **`AuthOrbitMascot`** (NO usar en Home) — variante con halo violeta-magenta y dos orbitas elipticas animadas alrededor de la cabeza. Reservada para flujo auth/onboarding. Mencionada solo para que no la dibujes aqui por error.
+
+> Si necesitas referencias visuales de la mascota, el usuario puede adjuntar capturas. Si no, pintala segun la descripcion: alien amigable, paleta violeta con ojos cyan, antenas con esfera al final.
+
+### Anatomia visual de los componentes que viven en Home
+
+| Componente | Spec resumida (detalle completo en §2) |
+|---|---|
+| `GalaxyOrbitMap` | Lienzo con 5-6 planetas circulares gradient flotando, estrellas estaticas, capa de "via lactea" suave. Anatomia completa en §2.4.1. |
+| `AppTopBar` (desktop) | 68 px alto, full width, glass card. Mascot 48 + saludo + (flex) + search + bell + avatar. |
+| `AppSidebar` (desktop) | 286 px ancho, full height, glass card. Logo + nav + "Tus Orbitas" + footer perfil. |
+| `AppBottomNav` (mobile) | Glass card flotante en bottom, 64-72 px alto. 5 slots: Home / Explorar / Crear (centro destacado) / Chats / Perfil. |
+| `BottomSheet` (mobile) | Sheet glass desde abajo al tocar planeta. Misma receta visual del panel lateral desktop pero apilado vertical. |
+| `Avatar` | Circulo con imagen o gradient + inicial blanca en bold si no hay imagen. Tamaños comunes: 28/40/48/72/88. |
+
+Tu trabajo es: pintar el **stage** (zona derecha del sidebar en desktop, viewport casi entero en mobile), el **mapa orbital con su chrome** (header, stats), el **panel lateral derecho** desktop al tocar planeta (§2.4.2), la **columna/strip de actividad reciente** (§2.5 / §3.3) y los **estados** (§5). Topbar/Sidebar/BottomNav los pintas tambien (con la spec resumida arriba y la detallada en §2).
+
+> **Recomendado al pasar este doc**: si el usuario puede adjuntar **screenshots de las pantallas de Login y Onboarding ya rediseñadas**, te servira de referencia visual de la atmosfera cosmica y los glass cards. Si no, sigue la spec descrita aqui literal — esta calibrada al codigo.
+
+---
+
 ## 1. Identidad y principios
 
-- **Dark mode primario**. Fondo casi negro con capa de "via lactea" suave ya implementada en `GalaxyOrbitMap`.
+- **Dark mode primario**. Fondo casi negro con la atmosfera cosmica descrita en §0.5 (gradiente vertical oscuro + nebulosas blureadas + estrellas titilantes + dos orbitas decorativas). El fondo es **continuo**: ocupa todo el viewport por debajo de las capas glass del topbar/sidebar/bottomnav.
 - **Sentence case en todo el copy** (no UPPERCASE en eyebrows, stat labels, ni section titles). Esta decision se tomo en la sesion 2026-05-25 y debe mantenerse.
-- **Mascota Nexo** presente como acento, no como protagonista. En Home aparece en el TopBar desktop como icono del saludo; en movil no aparece en pantalla Home directamente.
+- **Mascota `NexoMascot` (descrita en §0.5)** presente como acento, no como protagonista. En Home aparece en el TopBar desktop a tamaño 48 junto al saludo, y en los empty states del strip de actividad. En movil **no aparece en el viewport principal de Home** (el mapa ya manda).
 - **Sin ruido**: Home debe sentirse calmado, no abarrotado. El sistema orbital es lo que llama la atencion; el resto vive en segundo plano.
 - **Espacio para respirar**. En movil, prohibido scroll vertical de bloques apilados. En desktop, columna derecha contenida (max ~320-360 px).
 
@@ -111,15 +210,106 @@ Datos necesarios:
 Ocupa el centro del Stage, flex 1. Internamente:
 
 - **Header del stage**:
-  - Eyebrow corto: "Tu galaxia".
-  - Subtitulo conversacional: "Esto es lo que orbita a tu alrededor. Toca un planeta y aterriza." (copy ya definido).
-  - **Stats** a la derecha: `Orbitas {N} · Online {M}`. Sentence case.
-- **Body**: `GalaxyOrbitMap` con planetas de las Orbitas del usuario primero, recomendaciones despues.
-- Al **clickear un planeta**: se abre un **panel lateral derecho** sobre la columna de actividad (push o overlay) con el detalle de la Orbita — nombre, avatar, descripcion corta, miembros, online, acciones primarias (entrar, abrir chat).
+  - Eyebrow corto: "Tu galaxia" (Inter SemiBold 11, color secondary cyan, letter-spacing 0.4, sentence case).
+  - Titulo/subtitulo conversacional: "Esto es lo que orbita a tu alrededor. Toca un planeta y aterriza." (Inter Medium 15, color textMuted).
+  - **Stats** a la derecha: `Orbitas {N} · Online {M}`. Sentence case, Inter SemiBold 13, color textFaint con el numero en color text.
+- **Body**: `GalaxyOrbitMap` con planetas de las Orbitas del usuario primero, recomendaciones despues. Anatomia visual completa en §2.4.1.
+- Al **clickear un planeta**: se abre un **panel lateral derecho** sobre la columna de actividad (overlay, no push) con el detalle de la Orbita. Anatomia visual completa en §2.4.2.
 
 Datos necesarios:
 - `useUserCommunities()` — Orbitas del usuario con metadata.
 - `useRecommendedCommunities()` — Orbitas sugeridas por intereses.
+
+### 2.4.1 Anatomia visual del `GalaxyOrbitMap`
+
+Lienzo rectangular que ocupa el cuerpo del stage. Es la pieza visual central, asi que dale espacio.
+
+**Distribucion de planetas — desktop (≥720 px)**: 6 planetas en posiciones fijas (porcentajes relativos al canvas, anchor desde el centro del planeta):
+
+| # | Top | Left | Diametro | Label posicion |
+|---|---|---|---|---|
+| P1 | 22% | 18% | 116 px | derecha |
+| P2 | 26% | 72% | 108 px | izquierda |
+| P3 | 62% | 46% | **132 px** (mas grande) | abajo |
+| P4 | 40% | 44% | 78 px (mas pequeño) | izquierda |
+| P5 | 70% | 16% | 92 px | derecha |
+| P6 | 66% | 80% | 88 px | izquierda |
+
+**Distribucion compacta — mobile (<720 px)**: 5 planetas redistribuidos, tamaños 50-70 px (canvas mas estrecho).
+
+**Anatomia de cada planeta** (esfera flotante con vida):
+
+1. **Cuerpo del planeta**: circulo con gradient diagonal (uno de 6 presets, rotado por planeta):
+   - Preset A: `#7B5CFF → #18D7FF` (violeta a cyan)
+   - Preset B: `#18D7FF → #FF4FD8` (cyan a magenta)
+   - Preset C: `#FF4FD8 → #B18CFF` (magenta a violeta claro)
+   - Preset D: `#22E6B9 → #18D7FF` (mint a cyan)
+   - Preset E: `#FF7AA8 → #FF4FD8` (rosa a magenta)
+   - Preset F: `#B18CFF → #22E6B9` (violeta claro a mint)
+2. **Halo difuso**: shadow exterior del color principal del planeta, radius 20-40 px segun tamaño, opacidad 0.5.
+3. **Anillo orbital propio**: elipse fina alrededor del planeta (border 1.5-2 px del color secundario del planeta, opacidad 0.4), rotada un angulo distinto segun la categoria de la Orbita (-18°, 14°, -8°, etc.). Da sensacion de planeta con orbita propia.
+4. **Contenido central**: avatar de la Orbita (imagen circular) si tiene; si no, inicial del nombre en Inter Bold tamaño 24-32 (segun tamaño del planeta), color blanco con shadow sutil.
+5. **Label flotante**: nombre de la Orbita pegado al lado/abajo segun `Label posicion`. Inter SemiBold 13, color text, con halo violeta sutil detras para legibilidad sobre el fondo cosmico.
+6. **Float animado**: el planeta flota arriba-abajo con amplitud ~6 px, periodo 4.8-8 s, fase distinta por planeta para que no se sincronicen. Respeta `prefers-reduced-motion`.
+
+**Signals de actividad** (badges pequeños pegados al planeta, esquina superior-derecha del cuerpo del planeta — solo visibles si la Orbita tiene actividad):
+
+- 📄 `posts nuevos` (icono FileText 12 px) — chip con border cyan.
+- 💬 `chat activo` (icono MessageSquare 12 px) — chip con border violeta.
+- 📅 `evento hoy` (icono Calendar 12 px) — chip con border magenta.
+- 📡 `mision activa` (icono Radio 12 px) — chip con border mint.
+
+Si la Orbita tiene varios signals, se apilan horizontalmente (max 2-3 visibles).
+
+**Fondo del canvas**:
+- Capa de "via lactea" suave: gradiente radial muy difuso al centro (violeta `rgba(123,92,255,0.08)` → transparent en 60%).
+- ~40 estrellas estaticas (puntos blancos 1-2 px) distribuidas, opacidad 0.3-0.7. Estas son adicionales al starfield global del fondo de la app (mas densidad aqui).
+- **NO** dibujes las orbitas grandes (esas viven en el fondo global de la app, §0.5).
+
+**Distincion "tus Orbitas" vs "recomendaciones"**:
+- **Tus Orbitas**: primeras posiciones (P1, P2, P3), planetas mas grandes (>= 100 px), gradients saturados, opacidad 1.0, anillo orbital visible.
+- **Recomendaciones**: posiciones secundarias (P4, P5, P6), planetas mas pequeños (78-92 px), opacidad 0.85, anillo orbital mas tenue (opacidad 0.25), label con badge pequeño "Sugerido" en cyan al lado.
+
+**Estado interactivo**:
+- **Hover/focus en planeta**: scale 1.05, shadow del halo intensifica (opacity 0.8), cursor pointer.
+- **Tap/click**: scale rebound + abre panel lateral (desktop) o BottomSheet (mobile).
+
+### 2.4.2 Panel lateral derecho desktop — detalle de Orbita
+
+Aparece al tocar un planeta. **Glass card flotante** alineada al borde derecho del Stage, encima de la columna de actividad reciente (la difumina detras, no la empuja).
+
+**Dimensiones y posicion**:
+- Ancho: 340 px fijo.
+- Alto: hasta 80% del viewport (max ~720 px), centrado verticalmente.
+- Margen: 16 px al borde derecho.
+- Border radius: 24 px en las cuatro esquinas.
+- Glass card receta de §0.5 (blur + tint dark + gradient overlay + border `rgba(255,255,255,0.1)` + shadow `0 18px 28px rgba(0,0,0,0.45)`).
+
+**Estructura vertical (de arriba a abajo)**:
+
+1. **Banner header** (altura 108 px, ancho total del panel, esquinas superiores con el mismo radius del panel):
+   - Imagen del banner de la Orbita si tiene; si no, gradient diagonal en los dos colores del planeta correspondiente (preset A-F de §2.4.1).
+   - **Boton cerrar (X)** flotante en esquina superior derecha (28x28 px, circulo `rgba(0,0,0,0.4)`, icono X 14 px blanco). Hit slop generoso.
+2. **Avatar de la Orbita** circular **80 px**, posicionado pisando el borde inferior del banner (overlap 40 px, margin-left 20). Border 3 px del color de background `#070B1A` (corte limpio). Si no hay imagen, gradient del planeta + inicial.
+3. **Bloque info** (padding 20 horizontal, 14 top, gap 12):
+   - **Nombre Orbita**: Inter Bold 20, color text. Sentence case.
+   - **Handle**: `@slug` en Inter SemiBold 13, color secondary cyan.
+   - **Stats compactas** (fila): `{N} miembros · {M} online`. Inter Medium 13, textMuted. Dot mint 6 px junto al numero de online.
+   - **Tags/categoria** (fila chips, max 3 visibles): chip de 24 px alto, padding 10 horizontal, border 1 px del color de la categoria (cyan/violeta/magenta segun), background `rgba(<color>, 0.12)`, texto Inter SemiBold 11.
+   - **Descripcion**: 3-4 lineas max, Inter Regular 14, lineHeight 20, textMuted. Truncada con elipsis si excede.
+4. **Footer sticky** (border-top 1 px `rgba(255,255,255,0.06)`, padding 16, gap 10):
+   - **CTA principal "Entrar a la Orbita"**: receta CTA primary de §0.5 (gradient + pill + sombra violeta). Full width.
+   - **CTA secundario "Abrir chat"**: pill ghost, border 1 px `rgba(255,255,255,0.14)`, background `rgba(255,255,255,0.04)`, texto blanco SemiBold. Full width. Icono MessageSquare 16 px a la izquierda.
+   - **Link "Ver detalle completo"**: texto centrado Inter Medium 13, color textFaint, padding vertical 6. Subrayado en hover.
+
+**Animacion de apertura**: slide-in horizontal desde la derecha (+24 px) + fade-in 220 ms, easing `cubic-bezier(0.2, 0.8, 0.2, 1)`. Respeta `prefers-reduced-motion` → solo fade.
+
+**Estados**:
+- Cierre por: tap fuera, X, tecla ESC.
+- Al cerrar: el planeta correspondiente recupera su scale base.
+- Backdrop detras: la columna de actividad se difumina ligeramente (filter blur 4 + opacity 0.6) mientras el panel esta abierto.
+
+> En mobile (§3.2) este mismo contenido vive como `BottomSheet` desde abajo: misma receta visual y misma estructura, pero apilada vertical y ocupando 80% del alto. Footer sticky sigue siendo el mismo (CTA primary + secundario + link).
 
 ### 2.5 Columna de actividad reciente (desktop)
 
@@ -372,7 +562,7 @@ Tono general: **conversacional, ligero, ligeramente alien**. Sin tecnicismos. Ev
 7. **Pinta los estados, no solo el happy path**. Loading, empty, error, offline deben tener mockup propio.
 8. **Define spacing en multiplos de 4 u 8**. Manten escala coherente con el resto de pantallas.
 9. **No tomes decisiones de backend**. Si un bloque pide datos que no existen, marca un placeholder y pregunta antes de inventar el endpoint.
-10. **Coordina con el doc de Login** que ya rediseno el usuario. La transicion auth → home debe sentirse continua (transiciones, fondo cosmico que persiste, etc.).
+10. **Continuidad cosmica**: el fondo descrito en §0.5 debe sentirse el mismo a lo largo de la pantalla. No introduzcas un fondo opaco nuevo en ninguna region — el sidebar, el topbar y el bottomnav son glass cards que dejan respirar la atmosfera.
 
 ---
 

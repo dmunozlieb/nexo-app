@@ -14,7 +14,7 @@ import { useJoinedCommunities } from "../../features/communities/hooks/useCommun
 import { useTheme } from "../../theme/useTheme";
 import type { CommunityWithMeta } from "../../types/domain";
 import { AppBottomNav } from "./AppBottomNav";
-import { AppSidebar, APP_SIDEBAR_WIDTH } from "./AppSidebar";
+import { AppSidebar } from "./AppSidebar";
 import { AppTopBar, APP_TOP_BAR_HEIGHT } from "./AppTopBar";
 import type { NavItemConfig } from "./NavItem";
 
@@ -80,36 +80,33 @@ export function AppNavigationFrame({ children }: PropsWithChildren) {
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       {isDesktop ? (
-        <AppSidebar
-          items={NAV_ITEMS.filter((item) => item.routeName !== "profile")}
-          activeRouteName={activeRouteName}
-          topInset={insets.top}
-          bottomInset={insets.bottom}
-          communities={joinedCommunities.data ?? []}
-          loadingCommunities={joinedCommunities.isLoading}
-          profile={auth.profile}
-          onSelect={handleSelect}
-          onOpenCommunity={handleOpenCommunity}
-          onOpenProfile={() => router.push("/profile")}
-        />
-      ) : null}
-      <View
-        style={[
-          styles.scene,
-          isDesktop
-            ? { marginLeft: APP_SIDEBAR_WIDTH }
-            : { paddingBottom: MOBILE_NAV_SPACE },
-        ]}
-      >
-        {isDesktop ? (
+        <>
           <AppTopBar
             profile={auth.profile}
             onOpenSearch={() => router.push("/discover")}
             onOpenProfile={() => router.push("/profile")}
           />
-        ) : null}
-        <View style={styles.sceneContent}>{children}</View>
-      </View>
+          <View style={styles.desktopBody}>
+            <AppSidebar
+              items={NAV_ITEMS.filter((item) => item.routeName !== "profile")}
+              activeRouteName={activeRouteName}
+              topInset={0}
+              bottomInset={insets.bottom}
+              communities={joinedCommunities.data ?? []}
+              loadingCommunities={joinedCommunities.isLoading}
+              profile={auth.profile}
+              onSelect={handleSelect}
+              onOpenCommunity={handleOpenCommunity}
+              onOpenProfile={() => router.push("/profile")}
+            />
+            <View style={styles.sceneContent}>{children}</View>
+          </View>
+        </>
+      ) : (
+        <View style={[styles.scene, { paddingBottom: MOBILE_NAV_SPACE }]}>
+          <View style={styles.sceneContent}>{children}</View>
+        </View>
+      )}
       {!isDesktop ? (
         <AppBottomNav
           items={NAV_ITEMS}
@@ -150,6 +147,11 @@ function getActiveRouteName(pathname: string) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  desktopBody: {
+    flex: 1,
+    flexDirection: "row",
+    minHeight: 0,
   },
   scene: {
     flex: 1,

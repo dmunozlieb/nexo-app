@@ -30,7 +30,6 @@ export function ScreenContainer({
     <View
       style={[
         styles.content,
-        { backgroundColor: theme.colors.background },
         contentStyle,
       ]}
     >
@@ -42,14 +41,13 @@ export function ScreenContainer({
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
-      style={[styles.root, { backgroundColor: theme.colors.background }]}
+      style={styles.root}
     >
       {scroll ? (
         <ScrollView
-          style={{ backgroundColor: theme.colors.background }}
+          style={{ backgroundColor: "transparent" }}
           contentContainerStyle={[
             styles.scrollContent,
-            { backgroundColor: theme.colors.background },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
