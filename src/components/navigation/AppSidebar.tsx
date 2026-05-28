@@ -1,13 +1,11 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { ChevronRight, Settings } from "lucide-react-native";
+import { Settings } from "lucide-react-native";
 import { Avatar } from "../ui/Avatar";
-import { NexoMark } from "../ui/NexoMark";
 import { radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
 import type { CommunityWithMeta, Profile } from "../../types/domain";
-import { formatCompactNumber } from "../../utils/format";
 import { CreateActionButton } from "./CreateActionButton";
 import { NavItem, type NavItemConfig } from "./NavItem";
 
@@ -55,26 +53,23 @@ export function AppSidebar({
       ]}
     >
       <BlurView
-        intensity={74}
+        intensity={70}
         tint="dark"
         blurMethod="dimezisBlurViewSdk31Plus"
         style={styles.blur}
       />
-      <LinearGradient
-        colors={["rgba(124,92,255,0.12)", "rgba(0,212,255,0.06)", "rgba(255,79,216,0.08)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.backdrop}
-      />
+      <View style={styles.tint} />
 
       <View style={styles.brand}>
-        <NexoMark size={40} />
-        <View style={styles.brandCopy}>
-          <Text style={[styles.brandName, { color: theme.colors.text }]}>Nexo</Text>
-          <Text style={[styles.brandMeta, { color: theme.colors.textFaint }]}>
-            orbita social
-          </Text>
-        </View>
+        <LinearGradient
+          colors={[theme.colors.primary, theme.colors.secondary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.brandMark}
+        >
+          <Text style={styles.brandMarkText}>N</Text>
+        </LinearGradient>
+        <Text style={[styles.brandName, { color: theme.colors.text }]}>Nexo</Text>
       </View>
 
       <View style={styles.navList}>
@@ -98,22 +93,20 @@ export function AppSidebar({
         )}
       </View>
 
+      <View style={styles.sectionDivider} />
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>Tus Orbitas</Text>
-        <View style={[styles.countPill, { backgroundColor: "rgba(255,255,255,0.06)" }]}>
-          <Text style={[styles.countText, { color: theme.colors.textMuted }]}>
-            {communities.length}
-          </Text>
-        </View>
+        <Text style={[styles.sectionTitle, { color: theme.colors.secondary }]}>
+          Tus Orbitas
+        </Text>
       </View>
 
       <ScrollView
+        style={styles.communitiesScroll}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.communities}
       >
         {communities.slice(0, 10).map((community) => {
-          const online = community.online_count ?? 0;
-          const isLive = online > 0;
+          const isLive = (community.online_count ?? 0) > 0;
 
           return (
             <Pressable
@@ -125,38 +118,27 @@ export function AppSidebar({
                 styles.communityRow,
                 {
                   backgroundColor: hovered
-                    ? "rgba(255,255,255,0.06)"
+                    ? "rgba(255,255,255,0.05)"
                     : "transparent",
                   opacity: pressed ? 0.78 : 1,
                 },
               ]}
             >
-              <View style={styles.communityAvatarWrap}>
-                <Avatar uri={community.avatar_url} label={community.name} size={32} />
-                {isLive ? (
-                  <View
-                    style={[
-                      styles.communityLiveDot,
-                      { backgroundColor: theme.colors.success },
-                    ]}
-                  />
-                ) : null}
-              </View>
-              <View style={styles.communityCopy}>
-                <Text
-                  style={[styles.communityName, { color: theme.colors.text }]}
-                  numberOfLines={1}
-                >
-                  {community.name}
-                </Text>
-                <Text
-                  style={[styles.communityMetaText, { color: theme.colors.textFaint }]}
-                  numberOfLines={1}
-                >
-                  {formatCompactNumber(community.member_count)} miembros
-                  {isLive ? ` - ${formatCompactNumber(online)} online` : ""}
-                </Text>
-              </View>
+              <Avatar uri={community.avatar_url} label={community.name} size={28} />
+              <Text
+                style={[styles.communityName, { color: theme.colors.text }]}
+                numberOfLines={1}
+              >
+                {community.name}
+              </Text>
+              {isLive ? (
+                <View
+                  style={[
+                    styles.communityOnlineDot,
+                    { backgroundColor: theme.colors.success },
+                  ]}
+                />
+              ) : null}
             </Pressable>
           );
         })}
@@ -203,8 +185,7 @@ export function AppSidebar({
             {handleLabel}
           </Text>
         </View>
-        <Settings size={15} color={theme.colors.textFaint} />
-        <ChevronRight size={14} color={theme.colors.textFaint} />
+        <Settings size={16} color={theme.colors.textFaint} />
       </Pressable>
     </View>
   );
@@ -212,13 +193,9 @@ export function AppSidebar({
 
 const styles = StyleSheet.create({
   root: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
     borderRightWidth: 1,
     paddingHorizontal: 14,
-    backgroundColor: "rgba(9,10,18,0.76)",
+    backgroundColor: "rgba(26,34,68,0.55)",
     overflow: "hidden",
   },
   blur: {
@@ -228,63 +205,67 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
-  backdrop: {
+  tint: {
     position: "absolute",
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
+    backgroundColor: "rgba(26,34,68,0.28)",
   },
   brand: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingBottom: 22,
+    paddingBottom: 24,
   },
-  brandCopy: {
-    flex: 1,
-  },
-  brandName: {
-    fontSize: typography.h2,
-    fontWeight: "900",
-  },
-  brandMeta: {
-    fontSize: typography.tiny,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-  },
-  navList: {
-    gap: 8,
-    paddingBottom: 22,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: typography.small,
-    fontWeight: "700",
-  },
-  countPill: {
-    minWidth: 28,
-    minHeight: 24,
-    borderRadius: radius.pill,
+  brandMark: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
+    shadowColor: "#7B5CFF",
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
   },
-  countText: {
+  brandMarkText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  brandName: {
+    fontSize: typography.h3,
+    fontWeight: "700",
+  },
+  navList: {
+    gap: 6,
+    paddingBottom: 4,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginVertical: 18,
+  },
+  sectionHeader: {
+    paddingBottom: 12,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
     fontSize: typography.tiny,
-    fontWeight: "900",
+    fontWeight: "600",
+    letterSpacing: 0.6,
+  },
+  communitiesScroll: {
+    flex: 1,
   },
   communities: {
     gap: 2,
     paddingBottom: 12,
   },
   communityRow: {
-    minHeight: 48,
+    minHeight: 40,
     borderRadius: radius.md,
     flexDirection: "row",
     alignItems: "center",
@@ -292,31 +273,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
-  communityAvatarWrap: {
-    position: "relative",
-  },
-  communityLiveDot: {
-    position: "absolute",
-    right: -1,
-    bottom: -1,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: "#070B1A",
-  },
-  communityCopy: {
+  communityName: {
     flex: 1,
     minWidth: 0,
-    gap: 2,
-  },
-  communityName: {
     fontSize: typography.small,
-    fontWeight: "800",
+    fontWeight: "500",
   },
-  communityMetaText: {
-    fontSize: typography.tiny,
-    fontWeight: "700",
+  communityOnlineDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    shadowColor: "#22E6B9",
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
   },
   empty: {
     minHeight: 58,
@@ -335,12 +305,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     minHeight: 56,
     borderWidth: 1,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   profileFooterCopy: {
     flex: 1,
@@ -348,10 +318,10 @@ const styles = StyleSheet.create({
   },
   profileFooterName: {
     fontSize: typography.small,
-    fontWeight: "900",
+    fontWeight: "600",
   },
   profileFooterHandle: {
     fontSize: typography.tiny,
-    fontWeight: "700",
+    fontWeight: "500",
   },
 });

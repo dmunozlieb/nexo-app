@@ -675,7 +675,7 @@ export async function demoGetCurrentSession() {
 }
 
 export async function demoGetProfile(userId: string) {
-  return findProfile(userId);
+  return profiles.find((item) => item.id === userId) ?? null;
 }
 
 export async function demoListInterests() {
@@ -686,12 +686,29 @@ export async function demoCompleteOnboarding(
   userId: string,
   input: OnboardingInput,
 ) {
-  const profile = findProfile(userId);
-  profile.username = input.username;
-  profile.display_name = input.displayName;
-  profile.bio = input.bio ?? null;
-  profile.avatar_url = input.avatarUrl ?? null;
-  profile.updated_at = now();
+  let profile = profiles.find((item) => item.id === userId);
+
+  if (!profile) {
+    profile = {
+      id: userId,
+      username: input.username,
+      display_name: input.displayName,
+      bio: input.bio ?? null,
+      avatar_url: input.avatarUrl ?? null,
+      banner_url: null,
+      created_at: now(),
+      updated_at: now(),
+      is_banned: false,
+    };
+    profiles.push(profile);
+  } else {
+    profile.username = input.username;
+    profile.display_name = input.displayName;
+    profile.bio = input.bio ?? null;
+    profile.avatar_url = input.avatarUrl ?? null;
+    profile.updated_at = now();
+  }
+
   userInterests.set(userId, input.interestIds);
   return profile;
 }

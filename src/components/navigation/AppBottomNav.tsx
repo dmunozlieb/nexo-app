@@ -84,14 +84,13 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    alignItems: "center",
-    paddingHorizontal: 10,
+    alignItems: "stretch",
+    paddingHorizontal: 12,
     paddingTop: 6,
   },
   shell: {
     width: "100%",
-    maxWidth: 398,
-    minHeight: 62,
+    minHeight: 68,
     borderWidth: 1,
     borderRadius: 28,
     overflow: "hidden",
@@ -101,7 +100,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   blur: {
-    minHeight: 62,
+    minHeight: 68,
     justifyContent: "center",
   },
   tint: {
@@ -114,10 +113,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   row: {
-    minHeight: 62,
+    minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
+    justifyContent: "space-around",
+    paddingHorizontal: 12,
   },
 });

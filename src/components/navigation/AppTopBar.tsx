@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     position: "relative",
     borderBottomWidth: 1,
     overflow: "hidden",
-    backgroundColor: "rgba(7,11,26,0.62)",
+    backgroundColor: "rgba(26,34,68,0.55)",
   },
   blur: {
     position: "absolute",
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "rgba(7,11,26,0.4)",
+    backgroundColor: "rgba(26,34,68,0.28)",
   },
   row: {
     flex: 1,
