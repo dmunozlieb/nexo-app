@@ -275,8 +275,10 @@ function CtaButton({ accent, cta }: { accent: string; cta: EmptyCta }) {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {icon}
-      <Text style={[styles.ctaText, { color: textColor }]}>{cta.label}</Text>
+      <View style={styles.ctaInner}>
+        {icon}
+        <Text style={[styles.ctaText, { color: textColor }]}>{cta.label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -330,11 +332,14 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: radius.pill,
     paddingHorizontal: 22,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
     overflow: "hidden",
+  },
+  ctaInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   ctaText: {
     fontSize: typography.body,
