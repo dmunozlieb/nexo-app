@@ -46,8 +46,12 @@ export function MembersByRole({ members, communityId }: MembersByRoleProps) {
   if (members.length === 0) {
     return (
       <AlienEmptyState
-        title="Esta Orbita aun no tiene tripulacion"
-        message="Cuando alguien se una, aparecera aqui con su rol."
+        eyebrow="Miembros"
+        title="La tripulacion aun no aterriza"
+        message="En cuanto alguien se una a la Orbita, lo veras flotando por aqui con su rol."
+        accent={theme.colors.success}
+        mood="friendly"
+        accessory="crew"
       />
     );
   }

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { PostCard } from "../../../components/content/PostCard";
 import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
+import { useTheme } from "../../../theme/useTheme";
 import type { PostWithMeta, ReactionType } from "../../../types/domain";
 
 type FeaturedSignalsProps = {
@@ -26,6 +27,7 @@ export function FeaturedSignals({
   onSave,
   onReport,
 }: FeaturedSignalsProps) {
+  const theme = useTheme();
   // TODO: incluir Senales fijadas por mods (post_pins) cuando exista backend.
   const featured = useMemo(
     () =>
@@ -39,8 +41,12 @@ export function FeaturedSignals({
   if (featured.length === 0) {
     return (
       <AlienEmptyState
-        title="Aun no hay senales destacadas"
-        message="Cuando una senal recoja Ecos, brillara aqui. Lanza la primera y empieza el movimiento."
+        eyebrow="Destacados"
+        title="Aun no hay nada brillando"
+        message="Cuando una senal recoja Ecos, subira hasta aqui para brillar frente a toda la tripulacion."
+        accent={theme.colors.emptyAuroraGold}
+        mood="delighted"
+        accessory="sparkle"
       />
     );
   }

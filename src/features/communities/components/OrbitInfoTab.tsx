@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import {
   CalendarDays,
-  Flag,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -31,7 +30,6 @@ type OrbitInfoTabProps = {
   community: CommunityWithMeta;
   members: CommunityMemberWithProfile[];
   role: CommunityRole | null;
-  onReportCommunity: () => void;
   onEditCommunity: () => void;
   onManageRoles: () => void;
 };
@@ -40,7 +38,6 @@ export function OrbitInfoTab({
   community,
   members,
   role,
-  onReportCommunity,
   onEditCommunity,
   onManageRoles,
 }: OrbitInfoTabProps) {
@@ -173,14 +170,6 @@ export function OrbitInfoTab({
           </View>
         </GradientCard>
       ) : null}
-
-      <Button
-        title="Reportar comunidad"
-        variant="ghost"
-        size="sm"
-        icon={<Flag size={15} color={theme.colors.warning} />}
-        onPress={onReportCommunity}
-      />
     </View>
   );
 }

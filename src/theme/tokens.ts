@@ -13,6 +13,11 @@ export const palette = {
     text: "#F6F7FB",
     textMuted: "#B9C1D9",
     textFaint: "#8490B4",
+    // Empty states (escena cosmica): glow/void/estrellas + acento calido de Ecos.
+    emptyVoid: "#0A0F24",
+    emptyNebulaEdge: "#120A33",
+    emptyStarlight: "#DCE6FF",
+    emptyAuroraGold: "#FFC861",
     overlay: "rgba(7, 11, 26, 0.84)",
   },
   light: {
@@ -29,6 +34,11 @@ export const palette = {
     text: "#171927",
     textMuted: "#596176",
     textFaint: "#80889C",
+    // Empty states: misma escena cosmica (se renderiza sobre superficie oscura).
+    emptyVoid: "#0A0F24",
+    emptyNebulaEdge: "#120A33",
+    emptyStarlight: "#DCE6FF",
+    emptyAuroraGold: "#FFC861",
     overlay: "rgba(9, 10, 18, 0.46)",
   },
 } as const;

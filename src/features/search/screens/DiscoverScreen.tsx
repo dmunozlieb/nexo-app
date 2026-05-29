@@ -165,14 +165,17 @@ export function DiscoverScreen() {
               </View>
             ) : data.length === 0 ? (
               <AlienEmptyState
+                eyebrow={hasFilters ? "Busqueda" : "Explorar"}
+                mood={hasFilters ? "curious" : "calm"}
+                accessory={hasFilters ? "magnifier" : undefined}
                 title={
                   hasFilters
-                    ? "Nex no encontro orbitas por aqui..."
+                    ? "Nada orbita por aqui"
                     : "Todavia no hay orbitas activas"
                 }
                 message={
                   hasFilters
-                    ? "Prueba otra busqueda o crea una nueva comunidad para lanzar la senal."
+                    ? "No encontramos coincidencias. Prueba con otras palabras o crea una nueva comunidad."
                     : "Esta zona del espacio esta tranquila por ahora. Lanza la primera senal."
                 }
                 action={
