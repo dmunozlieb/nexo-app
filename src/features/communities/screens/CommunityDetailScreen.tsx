@@ -41,6 +41,7 @@ import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { GradientCard } from "../../../components/ui/GradientCard";
 import { LoadingState } from "../../../components/ui/LoadingState";
+import { NebulaBackdrop } from "../../../components/ui/NebulaBackdrop";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
@@ -200,14 +201,10 @@ export function CommunityDetailScreen() {
           { maxWidth, paddingHorizontal: horizontalPad },
         ]}
       >
-        <View pointerEvents="none" style={styles.backgroundArt}>
-          <Image
-            source={require("../../../../assets/orbit-bg-nebula.png")}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-          />
-          <View style={[StyleSheet.absoluteFill, styles.backgroundDim]} />
-        </View>
+        <NebulaBackdrop
+          source={require("../../../../assets/orbit-bg-nebula.png")}
+          dim="rgba(9,10,18,0.62)"
+        />
 
         {hasSidebar ? null : (
           <View style={styles.topBar}>
@@ -984,17 +981,6 @@ function CommunityChatsTab({ communityId }: { communityId: string }) {
 const styles = StyleSheet.create({
   screen: {
     maxWidth: 860,
-  },
-  backgroundArt: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    overflow: "hidden",
-  },
-  backgroundDim: {
-    backgroundColor: "rgba(9,10,18,0.62)",
   },
   topBar: {
     flexDirection: "row",

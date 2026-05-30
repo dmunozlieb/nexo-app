@@ -1,12 +1,8 @@
-import { memo, useMemo } from "react";
-import {
-  Animated,
-  Easing,
-  StyleSheet,
-  View,
-} from "react-native";
-import { Image } from "expo-image";
+import { memo, useEffect, useMemo, useRef } from "react";
+import { Animated, Easing, StyleSheet, View } from "react-native";
+import { useReducedMotion } from "../../hooks/useReducedMotion";
 import { useTheme } from "../../theme/useTheme";
+import { NebulaBackdrop } from "./NebulaBackdrop";
 
 type Star = {
   top: number;
@@ -37,11 +33,15 @@ function useStars(count: number, seed = 1): Star[] {
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-function StarElement({ star, index }: { star: Star; index: number }) {
-  const pulse = useMemo(() => new Animated.Value(0), []);
+function StarElement({ star, reducedMotion }: { star: Star; reducedMotion: boolean }) {
+  const pulse = useRef(new Animated.Value(0)).current;
 
-  useMemo(() => {
-    Animated.loop(
+  useEffect(() => {
+    if (reducedMotion) {
+      return;
+    }
+
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.delay(star.delay),
         Animated.timing(pulse, {
@@ -57,17 +57,18 @@ function StarElement({ star, index }: { star: Star; index: number }) {
           useNativeDriver: true,
         }),
       ]),
-    ).start();
-  }, [pulse, star.delay, star.duration]);
+    );
 
-  const opacity = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.18, 1.0],
-  });
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, star.delay, star.duration, reducedMotion]);
+
+  const opacity = reducedMotion
+    ? star.opacity
+    : pulse.interpolate({ inputRange: [0, 1], outputRange: [0.18, 1.0] });
 
   return (
     <AnimatedView
-      key={index}
       style={[
         styles.star,
         {
@@ -84,6 +85,7 @@ function StarElement({ star, index }: { star: Star; index: number }) {
 
 export const CosmicBackground = memo(function CosmicBackground() {
   const theme = useTheme();
+  const reducedMotion = useReducedMotion();
   const stars = useStars(16, 1);
 
   if (theme.mode !== "dark") {
@@ -91,32 +93,18 @@ export const CosmicBackground = memo(function CosmicBackground() {
   }
 
   return (
-    <View style={styles.container} pointerEvents="none">
-      <Image
-        source={require("../../../assets/orbit-bg-galaxy.png")}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-      />
-      <View style={[StyleSheet.absoluteFill, styles.dim]} />
+    <NebulaBackdrop
+      source={require("../../../assets/orbit-bg-galaxy.png")}
+      dim="rgba(5,6,18,0.50)"
+    >
       {stars.map((star, index) => (
-        <StarElement key={index} star={star} index={index} />
+        <StarElement key={index} star={star} reducedMotion={reducedMotion} />
       ))}
-    </View>
+    </NebulaBackdrop>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    overflow: "hidden",
-  },
-  dim: {
-    backgroundColor: "rgba(5,6,18,0.50)",
-  },
   star: {
     position: "absolute",
     borderRadius: 9999,
