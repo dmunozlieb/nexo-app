@@ -22,7 +22,7 @@ export function SectionHeader({ title, subtitle, meta }: SectionHeaderProps) {
         ) : null}
       </View>
       {meta ? (
-        <Text style={[styles.meta, { color: theme.colors.textFaint }]}>{meta}</Text>
+        <Text style={[styles.meta, { color: theme.colors.text }]}>{meta}</Text>
       ) : null}
     </View>
   );

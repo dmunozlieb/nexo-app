@@ -9,11 +9,18 @@ import { formatCompactNumber } from "../../utils/format";
 type OnlineIndicatorProps = {
   count?: number | null;
   compact?: boolean;
+  /** Resalta el texto con el mismo verde que el punto (presencia destacada). */
+  solid?: boolean;
 };
 
-export function OnlineIndicator({ count = 1, compact = false }: OnlineIndicatorProps) {
+export function OnlineIndicator({
+  count = 1,
+  compact = false,
+  solid = false,
+}: OnlineIndicatorProps) {
   const theme = useTheme();
   const reducedMotion = useReducedMotion();
+  const accent = solid ? theme.colors.aurora : theme.colors.success;
   const pulse = useRef(new Animated.Value(0)).current;
   const scale = pulse.interpolate({
     inputRange: [0, 1],
@@ -55,16 +62,16 @@ export function OnlineIndicator({ count = 1, compact = false }: OnlineIndicatorP
           style={[
             styles.pulse,
             {
-              backgroundColor: theme.colors.success,
+              backgroundColor: accent,
               opacity: reducedMotion ? 0 : opacity,
               transform: [{ scale }],
             },
           ]}
         />
-        <View style={[styles.dot, { backgroundColor: theme.colors.success }]} />
+        <View style={[styles.dot, { backgroundColor: accent }]} />
       </View>
-      {!compact ? <Radio size={13} color={theme.colors.success} /> : null}
-      <Text style={[styles.text, { color: theme.colors.textFaint }]}>
+      {!compact ? <Radio size={13} color={accent} /> : null}
+      <Text style={[styles.text, { color: solid ? accent : theme.colors.textFaint }]}>
         {formatCompactNumber(count ?? 1)} online
       </Text>
     </View>

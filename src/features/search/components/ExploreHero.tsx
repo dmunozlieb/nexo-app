@@ -1,92 +1,111 @@
-import { StyleSheet, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Compass, Plus, Radio, Sparkles, Users } from "lucide-react-native";
+import type { ReactNode } from "react";
+import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Compass, Plus, Radio, Search, Sparkles, Users } from "lucide-react-native";
 import { Button } from "../../../components/ui/Button";
+import { TextInput } from "../../../components/ui/TextInput";
 import { OnlineIndicator } from "../../../components/content/OnlineIndicator";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import { formatCompactNumber } from "../../../utils/format";
 
 type ExploreHeroProps = {
+  query: string;
+  onQuery: (value: string) => void;
   communityCount: number;
   memberCount: number;
   onlineCount: number;
-  selectedCategory?: string | undefined;
   onCreate: () => void;
 };
 
 export function ExploreHero({
+  query,
+  onQuery,
   communityCount,
   memberCount,
   onlineCount,
-  selectedCategory,
   onCreate,
 }: ExploreHeroProps) {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
+  const stack = width < 720;
 
   return (
-    <View
-      style={[
-        styles.hero,
-        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-      ]}
-    >
-      <LinearGradient
-        colors={[
-          `${theme.colors.primary}E8`,
-          `${theme.colors.secondary}B8`,
-          `${theme.colors.accent}AA`,
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.orbitLine} />
-      <View style={styles.heroTop}>
-        <View style={styles.heroIcon}>
-          <Compass size={24} color="#FFFFFF" />
-        </View>
-        <View style={styles.heroCopy}>
-          <View style={styles.kickerRow}>
-            <Sparkles size={14} color="#FFFFFF" />
-            <Text style={styles.heroKicker}>Explorar orbitas</Text>
+    <View style={[styles.hero, { borderColor: `${theme.colors.secondary}2E` }]}>
+      <View style={[styles.topRow, stack ? styles.topRowStack : null]}>
+        <View style={styles.copy}>
+          <View style={styles.kicker}>
+            <Compass size={14} color={theme.colors.secondary} />
+            <Text style={[styles.kickerText, { color: theme.colors.secondary }]}>
+              Explorar orbitas
+            </Text>
           </View>
-          <Text style={styles.heroTitle}>Encuentra tu proximo circulo</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            Encuentra tu proximo circulo
+          </Text>
+          <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
+            Comunidades vivas para descubrir, crear y conectar con gente que vibra en tu misma orbita.
+          </Text>
         </View>
-      </View>
-      <Text style={styles.heroText}>
-        Comunidades vivas para descubrir, crear y conectar con personas que vibran en tu misma orbita.
-      </Text>
-      <View style={styles.heroAction}>
         <Button
           title="Crear Orbita"
           size="sm"
-          variant="secondary"
-          icon={<Plus size={16} color={theme.colors.text} />}
-          style={styles.heroButton}
+          icon={<Plus size={16} color="#FFFFFF" />}
           onPress={onCreate}
+          style={stack ? styles.createStack : styles.create}
         />
       </View>
-      <View style={styles.heroStats}>
-        <View style={styles.heroStat}>
-          <Radio size={15} color="#FFFFFF" />
-          <Text style={styles.heroStatValue}>{formatCompactNumber(communityCount)}</Text>
-          <Text style={styles.heroStatLabel}>activas</Text>
+
+      <TextInput
+        accessibilityLabel="Buscar Orbitas"
+        value={query}
+        onChangeText={onQuery}
+        placeholder="Buscar por nombre, categoria o descripcion"
+        icon={<Search size={18} color={theme.colors.textFaint} />}
+      />
+
+      <View style={styles.stats}>
+        <Stat
+          icon={<Radio size={14} color={theme.colors.secondary} />}
+          value={formatCompactNumber(communityCount)}
+          label="activas"
+        />
+        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+        <Stat
+          icon={<Users size={14} color={theme.colors.accent} />}
+          value={formatCompactNumber(memberCount)}
+          label="miembros"
+        />
+        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+        <View style={styles.stat}>
+          <OnlineIndicator count={onlineCount} solid />
         </View>
-        <View style={styles.heroStat}>
-          <Users size={15} color="#FFFFFF" />
-          <Text style={styles.heroStatValue}>{formatCompactNumber(memberCount)}</Text>
-          <Text style={styles.heroStatLabel}>miembros</Text>
-        </View>
-        <View style={styles.heroStat}>
-          <OnlineIndicator count={onlineCount} />
-        </View>
-        <View style={styles.heroStat}>
-          <Sparkles size={15} color="#FFFFFF" />
-          <Text style={styles.heroStatValue}>{selectedCategory ?? "Todas"}</Text>
-          <Text style={styles.heroStatLabel}>categoria</Text>
-        </View>
+        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+        <Stat
+          icon={<Sparkles size={14} color={theme.colors.aurora} />}
+          value="Live"
+          label="ahora"
+        />
       </View>
+    </View>
+  );
+}
+
+function Stat({
+  icon,
+  value,
+  label,
+}: {
+  icon: ReactNode;
+  value: string;
+  label: string;
+}) {
+  const theme = useTheme();
+
+  return (
+    <View style={styles.stat}>
+      {icon}
+      <Text style={[styles.statValue, { color: theme.colors.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: theme.colors.textFaint }]}>{label}</Text>
     </View>
   );
 }
@@ -95,97 +114,72 @@ const styles = StyleSheet.create({
   hero: {
     borderWidth: 1,
     borderRadius: radius.lg,
-    overflow: "hidden",
+    padding: 16,
+    gap: 14,
+    backgroundColor: "rgba(13,18,48,0.62)",
   },
-  orbitLine: {
-    position: "absolute",
-    width: "72%",
-    height: 112,
-    right: "-16%",
-    top: 28,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-    borderRadius: radius.pill,
-    transform: [{ rotate: "-15deg" }],
-  },
-  heroTop: {
+  topRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 18,
-    paddingBottom: 10,
+    alignItems: "flex-start",
+    gap: 16,
   },
-  heroIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(9,10,18,0.30)",
+  topRowStack: {
+    flexDirection: "column",
   },
-  heroCopy: {
+  copy: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: 5,
   },
-  kickerRow: {
+  kicker: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  heroKicker: {
-    color: "rgba(255,255,255,0.78)",
+  kickerText: {
     fontSize: typography.tiny,
     fontWeight: "900",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  heroTitle: {
-    color: "#FFFFFF",
+  title: {
     fontSize: typography.h1,
     fontWeight: "900",
     lineHeight: 29,
   },
-  heroText: {
-    color: "rgba(255,255,255,0.88)",
+  subtitle: {
     fontSize: typography.body,
     lineHeight: 22,
-    maxWidth: 720,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
+    maxWidth: 640,
   },
-  heroAction: {
-    paddingHorizontal: 18,
-    paddingBottom: 18,
-  },
-  heroButton: {
+  create: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderColor: "rgba(255,255,255,0.24)",
   },
-  heroStats: {
+  createStack: {
+    alignSelf: "stretch",
+  },
+  stats: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.18)",
-    backgroundColor: "rgba(9,10,18,0.30)",
-  },
-  heroStat: {
-    flex: 1,
-    minWidth: 132,
-    minHeight: 62,
     alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
+    flexWrap: "wrap",
+    gap: 10,
   },
-  heroStatValue: {
-    color: "#FFFFFF",
+  stat: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  statValue: {
     fontSize: typography.small,
     fontWeight: "900",
   },
-  heroStatLabel: {
-    color: "rgba(255,255,255,0.70)",
+  statLabel: {
     fontSize: typography.tiny,
-    fontWeight: "900",
+    fontWeight: "800",
     textTransform: "uppercase",
+  },
+  divider: {
+    width: 1,
+    height: 16,
   },
 });

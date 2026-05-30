@@ -2,6 +2,8 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { LinearGradient } from "expo-linear-gradient";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
+import { hoverTransition } from "../../../utils/web-style";
+import { categoryIcon } from "../categoryMeta";
 
 type CategoryChipsProps = {
   categories: string[];
@@ -51,6 +53,7 @@ function Chip({
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const Icon = categoryIcon(label);
 
   return (
     <Pressable
@@ -58,10 +61,15 @@ function Chip({
       accessibilityLabel={label}
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         styles.chip,
+        hoverTransition,
         {
-          borderColor: selected ? theme.colors.secondary : theme.colors.border,
+          borderColor: selected
+            ? theme.colors.secondary
+            : hovered
+              ? theme.colors.secondary
+              : theme.colors.border,
           backgroundColor: selected ? "transparent" : theme.colors.surface,
           opacity: pressed ? 0.78 : 1,
           transform: [{ scale: pressed ? 0.98 : 1 }],
@@ -76,10 +84,8 @@ function Chip({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <Text
-        style={[styles.text, { color: selected ? "#FFFFFF" : theme.colors.textMuted }]}
-        numberOfLines={1}
-      >
+      <Icon size={14} color="#FFFFFF" />
+      <Text style={[styles.text, { color: "#FFFFFF" }]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
@@ -97,13 +103,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    minHeight: 36,
+    minHeight: 38,
     borderRadius: radius.pill,
     borderWidth: 1,
     overflow: "hidden",
-    paddingHorizontal: 14,
+    paddingHorizontal: 15,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 7,
   },
   text: {
     fontSize: typography.small,

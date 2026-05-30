@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
 import { ChevronRight, Hash, Lock, Users } from "lucide-react-native";
 import { radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
+import { hoverTransition, pointerStyle } from "../../utils/web-style";
 import type { CommunityWithMeta } from "../../types/domain";
 import { formatCompactNumber, formatRelativeDate } from "../../utils/format";
 import { Avatar } from "../ui/Avatar";
@@ -23,8 +23,6 @@ type CommunityCardProps = {
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 };
-
-const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
 
 export function CommunityCard({ community, onPress, style }: CommunityCardProps) {
   const theme = useTheme();
@@ -47,7 +45,8 @@ export function CommunityCard({ community, onPress, style }: CommunityCardProps)
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        Platform.OS === "web" ? pointerStyle : null,
+        hoverTransition,
+        pointerStyle,
         {
           backgroundColor: theme.colors.surface,
           borderColor: interactive ? theme.colors.secondary : theme.colors.border,
@@ -66,14 +65,6 @@ export function CommunityCard({ community, onPress, style }: CommunityCardProps)
           name={community.name}
           category={community.category}
         />
-        <View style={styles.bannerOverlay}>
-          <View style={[styles.liveDot, { backgroundColor: theme.colors.success }]} />
-          <Text style={styles.bannerText}>Orbita activa</Text>
-        </View>
-        <View style={[styles.hoverHint, { opacity: interactive ? 1 : 0 }]}>
-          <Text style={styles.hoverHintText}>Ver Orbita</Text>
-          <ChevronRight size={15} color="#FFFFFF" />
-        </View>
       </View>
       <View style={styles.body}>
         <View style={[styles.avatarLift, { backgroundColor: theme.colors.surface }]}>
@@ -137,44 +128,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     overflow: "hidden",
   },
-  bannerOverlay: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    margin: 10,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    backgroundColor: "rgba(9,10,18,0.42)",
-  },
-  liveDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  bannerText: {
-    color: "#FFFFFF",
-    fontSize: typography.tiny,
-    fontWeight: "900",
-  },
-  hoverHint: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-    minHeight: 28,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "rgba(9,10,18,0.50)",
-  },
-  hoverHintText: {
-    color: "#FFFFFF",
-    fontSize: typography.tiny,
-    fontWeight: "900",
-  },
   body: {
     flexDirection: "row",
     gap: 12,
@@ -206,6 +159,8 @@ const styles = StyleSheet.create({
   description: {
     fontSize: typography.small,
     lineHeight: 18,
+    // Reserva 2 lineas siempre para que todas las tarjetas midan igual.
+    minHeight: 36,
   },
   meta: {
     flexDirection: "row",

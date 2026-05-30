@@ -7,6 +7,10 @@ export const palette = {
     primary: "#7B5CFF",
     secondary: "#18D7FF",
     accent: "#FF4FD8",
+    // Acentos semanticos de descubrimiento: destacados/eventos (ambar) y
+    // presencia/vivo ahora (verde aurora).
+    featured: "#FFC24D",
+    aurora: "#4DF0B0",
     success: "#22E6B9",
     warning: "#FF7AA8",
     error: "#FF5C8A",
@@ -28,6 +32,8 @@ export const palette = {
     primary: "#6548EE",
     secondary: "#008FB3",
     accent: "#C920A7",
+    featured: "#FFC24D",
+    aurora: "#4DF0B0",
     success: "#0B8F5E",
     warning: "#A86600",
     error: "#D1345B",
