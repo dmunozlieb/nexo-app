@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { hitSlop, radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
+import { hoverTransition } from "../../utils/web-style";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
@@ -70,14 +71,16 @@ export function Button({
       accessibilityLabel={props.accessibilityLabel ?? title}
       hitSlop={hitSlop}
       disabled={disabled || loading}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         styles.base,
         styles[size],
+        hoverTransition,
         hasGradient ? styles.clipped : null,
         {
           backgroundColor: hasGradient ? "transparent" : background,
           borderColor,
           opacity: disabled ? 0.48 : pressed ? 0.82 : 1,
+          transform: [{ translateY: pressed ? 1 : hovered && !disabled ? -1 : 0 }],
         },
         style,
       ]}

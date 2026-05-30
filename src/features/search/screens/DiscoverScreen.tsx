@@ -1,22 +1,30 @@
 import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { router } from "expo-router";
-import { Search } from "lucide-react-native";
+import { Radio, Star, TrendingUp } from "lucide-react-native";
 import { CommunityCard } from "../../../components/content/CommunityCard";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
+import { CosmicBackground } from "../../../components/ui/CosmicBackground";
 import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
-import { TextInput } from "../../../components/ui/TextInput";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
-import { radius } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import type { CommunityWithMeta } from "../../../types/domain";
 import { useCommunities } from "../../communities/hooks/useCommunities";
 import { CategoryChips } from "../components/CategoryChips";
+import {
+  LiveCard,
+  NewCard,
+  Rail,
+  TrendCard,
+} from "../components/DiscoveryRails";
 import { ExploreHero } from "../components/ExploreHero";
-import { ExploreRightPanel } from "../components/ExploreRightPanel";
+import { FeaturedHero } from "../components/FeaturedHero";
+import { PulsePanel } from "../components/PulsePanel";
 import { SectionHeader } from "../components/SectionHeader";
 import { SkeletonCommunityCard } from "../components/SkeletonCommunityCard";
+import { buildSignals } from "../../../components/content/SignalChips";
+import { daysSince, onlineOf } from "../helpers";
 
 const CATEGORIES = [
   "Arte",
@@ -28,14 +36,6 @@ const CATEGORIES = [
   "Tecnologia",
 ];
 
-const stars = [
-  { top: 18, left: "8%", size: 2, opacity: 0.24 },
-  { top: 104, left: "62%", size: 2, opacity: 0.18 },
-  { top: 248, left: "28%", size: 3, opacity: 0.14 },
-  { top: 422, left: "86%", size: 2, opacity: 0.20 },
-  { top: 560, left: "12%", size: 2, opacity: 0.16 },
-] as const;
-
 export function DiscoverScreen() {
   const theme = useTheme();
   const { width } = useWindowDimensions();
@@ -44,21 +44,18 @@ export function DiscoverScreen() {
   const debouncedQuery = useDebouncedValue(query, 280);
   const communities = useCommunities(debouncedQuery, category);
   const data = communities.data ?? [];
-  const showRightPanel = width >= 1240;
-  const twoColumns = width >= 1180;
+  const twoColumns = width >= 720;
+  const showPanel = width >= 1180;
   const hasFilters = Boolean(debouncedQuery.trim() || category);
+  const browseMode = !hasFilters;
   const communityCount = data.length;
+
   const memberCount = useMemo(
     () => data.reduce((sum, community) => sum + community.member_count, 0),
     [data],
   );
   const onlineCount = useMemo(
-    () =>
-      data.reduce(
-        (sum, community) =>
-          sum + (community.online_count ?? Math.max(1, Math.ceil(community.member_count * 0.35))),
-        0,
-      ),
+    () => data.reduce((sum, community) => sum + onlineOf(community), 0),
     [data],
   );
   const popular = useMemo(
@@ -66,154 +63,196 @@ export function DiscoverScreen() {
     [data],
   );
   const mostOnline = useMemo(
-    () =>
-      [...data].sort(
-        (a, b) => (b.online_count ?? 1) - (a.online_count ?? 1),
-      ),
+    () => [...data].sort((a, b) => onlineOf(b) - onlineOf(a)),
     [data],
   );
   const newest = useMemo(
     () =>
-      [...data].sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      ),
+      [...data]
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
+        .filter((community) => daysSince(community.created_at) <= 30),
     [data],
   );
+  const featured = useMemo(() => {
+    if (data.length === 0) {
+      return null;
+    }
+    return [...data].sort(
+      (a, b) =>
+        onlineOf(b) + buildSignals(b).length * 120 -
+        (onlineOf(a) + buildSignals(a).length * 120),
+    )[0];
+  }, [data]);
 
   function openCommunity(community: CommunityWithMeta) {
     router.push({ pathname: "/community/[id]", params: { id: community.id } });
   }
 
-  return (
-    <ScreenContainer contentStyle={styles.screen}>
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        {stars.map((star) => (
+  function renderGrid(items: CommunityWithMeta[]) {
+    return (
+      <View style={styles.grid}>
+        {items.map((community) => (
           <View
-            key={`${star.top}-${star.left}`}
-            style={[
-              styles.star,
-              {
-                top: star.top,
-                left: star.left,
-                width: star.size,
-                height: star.size,
-                borderRadius: star.size / 2,
-                opacity: star.opacity,
-              },
-            ]}
-          />
+            key={community.id}
+            style={[styles.cardSlot, twoColumns ? styles.cardSlotTwo : null]}
+          >
+            <CommunityCard community={community} onPress={() => openCommunity(community)} />
+          </View>
         ))}
       </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-      >
-        <ExploreHero
-          communityCount={communityCount}
-          memberCount={memberCount}
-          onlineCount={onlineCount}
-          selectedCategory={category}
-          onCreate={() => router.push("/community/create")}
-        />
+    );
+  }
 
-        <View style={styles.layout}>
-          <View style={styles.mainColumn}>
+  function renderBody() {
+    if (communities.isError) {
+      return <ErrorState onRetry={() => void communities.refetch()} />;
+    }
+
+    if (communities.isLoading) {
+      return (
+        <View style={styles.grid}>
+          {Array.from({ length: twoColumns ? 4 : 3 }).map((_, index) => (
             <View
-              style={[
-                styles.filters,
-                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
-              ]}
+              key={index}
+              style={[styles.cardSlot, twoColumns ? styles.cardSlotTwo : null]}
             >
-              <TextInput
-                accessibilityLabel="Buscar Orbitas"
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Buscar por nombre, categoria o descripcion"
-                icon={<Search size={18} color={theme.colors.textFaint} />}
-              />
-              <CategoryChips
-                categories={CATEGORIES}
-                selected={category}
-                onSelect={setCategory}
-              />
+              <SkeletonCommunityCard />
             </View>
-
-            <SectionHeader
-              title={hasFilters ? "Resultados encontrados" : "Orbitas recomendadas"}
-              subtitle={
-                hasFilters
-                  ? "Senales que coinciden con tu busqueda."
-                  : "Comunidades con actividad, identidad clara y espacio para conectar."
-              }
-              meta={`${communityCount} resultados`}
-            />
-
-            {communities.isError ? (
-              <ErrorState onRetry={() => void communities.refetch()} />
-            ) : communities.isLoading ? (
-              <View style={styles.grid}>
-                {Array.from({ length: twoColumns ? 4 : 3 }).map((_, index) => (
-                  <View
-                    key={index}
-                    style={[styles.cardSlot, twoColumns ? styles.cardSlotTwo : null]}
-                  >
-                    <SkeletonCommunityCard />
-                  </View>
-                ))}
-              </View>
-            ) : data.length === 0 ? (
-              <AlienEmptyState
-                eyebrow={hasFilters ? "Busqueda" : "Explorar"}
-                mood={hasFilters ? "curious" : "calm"}
-                accessory={hasFilters ? "magnifier" : undefined}
-                title={
-                  hasFilters
-                    ? "Nada orbita por aqui"
-                    : "Todavia no hay orbitas activas"
-                }
-                message={
-                  hasFilters
-                    ? "No encontramos coincidencias. Prueba con otras palabras o crea una nueva comunidad."
-                    : "Esta zona del espacio esta tranquila por ahora. Lanza la primera senal."
-                }
-                cta={{
-                  label: "Crear Orbita",
-                  onPress: () => router.push("/community/create"),
-                }}
-              />
-            ) : (
-              <View style={styles.grid}>
-                {data.map((community) => (
-                  <View
-                    key={community.id}
-                    style={[styles.cardSlot, twoColumns ? styles.cardSlotTwo : null]}
-                  >
-                    <CommunityCard
-                      community={community}
-                      onPress={() => openCommunity(community)}
-                    />
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {showRightPanel && data.length > 0 ? (
-            <ExploreRightPanel
-              popular={popular}
-              online={mostOnline}
-              newest={newest}
-              onOpenCommunity={openCommunity}
-            />
-          ) : null}
+          ))}
         </View>
-      </ScrollView>
-    </ScreenContainer>
+      );
+    }
+
+    if (data.length === 0) {
+      return (
+        <AlienEmptyState
+          eyebrow={hasFilters ? "Busqueda" : "Explorar"}
+          mood={hasFilters ? "curious" : "calm"}
+          accessory={hasFilters ? "magnifier" : undefined}
+          title={hasFilters ? "Nada orbita por aqui" : "Todavia no hay orbitas activas"}
+          message={
+            hasFilters
+              ? "No encontramos coincidencias. Prueba con otras palabras o crea una nueva comunidad."
+              : "Esta zona del espacio esta tranquila por ahora. Lanza la primera senal."
+          }
+          cta={{ label: "Crear Orbita", onPress: () => router.push("/community/create") }}
+        />
+      );
+    }
+
+    if (!browseMode) {
+      return (
+        <>
+          <SectionHeader
+            title="Resultados encontrados"
+            subtitle="Senales que coinciden con tu busqueda."
+            meta={`${communityCount} resultados`}
+          />
+          {renderGrid(data)}
+        </>
+      );
+    }
+
+    const mainColumn = (
+      <>
+        {featured ? <FeaturedHero community={featured} onOpen={openCommunity} /> : null}
+        <Rail
+          title="Tendencia ahora"
+          accent={theme.colors.secondary}
+          icon={<TrendingUp size={15} color={theme.colors.secondary} />}
+        >
+          {popular.slice(0, 8).map((community, index) => (
+            <TrendCard
+              key={community.id}
+              community={community}
+              rank={index + 1}
+              onOpen={openCommunity}
+            />
+          ))}
+        </Rail>
+        <Rail
+          title="Vivas ahora mismo"
+          accent={theme.colors.aurora}
+          icon={<Radio size={15} color={theme.colors.aurora} />}
+        >
+          {mostOnline.slice(0, 8).map((community) => (
+            <LiveCard key={community.id} community={community} onOpen={openCommunity} />
+          ))}
+        </Rail>
+        {newest.length > 0 ? (
+          <Rail
+            title="Nuevas orbitas"
+            accent={theme.colors.accent}
+            icon={<Star size={15} color={theme.colors.accent} />}
+          >
+            {newest.slice(0, 8).map((community) => (
+              <NewCard key={community.id} community={community} onOpen={openCommunity} />
+            ))}
+          </Rail>
+        ) : null}
+        <SectionHeader
+          title="Todas las orbitas"
+          subtitle="Comunidades con actividad, identidad clara y espacio para conectar."
+          meta={`${communityCount} orbitas`}
+        />
+        {renderGrid(data)}
+      </>
+    );
+
+    if (!showPanel) {
+      return mainColumn;
+    }
+
+    return (
+      <View style={styles.withPanel}>
+        <View style={styles.colMain}>{mainColumn}</View>
+        <PulsePanel
+          data={data}
+          liveList={mostOnline}
+          categories={CATEGORIES}
+          onOpenCommunity={openCommunity}
+          onSelectCategory={setCategory}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.root}>
+      <CosmicBackground />
+      <ScreenContainer contentStyle={styles.screen}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scroll}
+        >
+          <ExploreHero
+            query={query}
+            onQuery={setQuery}
+            communityCount={communityCount}
+            memberCount={memberCount}
+            onlineCount={onlineCount}
+            onCreate={() => router.push("/community/create")}
+          />
+          <CategoryChips
+            categories={CATEGORIES}
+            selected={category}
+            onSelect={setCategory}
+          />
+          {renderBody()}
+        </ScrollView>
+      </ScreenContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    position: "relative",
+  },
   screen: {
     maxWidth: 1360,
     paddingHorizontal: 18,
@@ -221,27 +260,17 @@ const styles = StyleSheet.create({
   scroll: {
     gap: 16,
     paddingTop: 10,
-    paddingBottom: 28,
+    paddingBottom: 40,
   },
-  star: {
-    position: "absolute",
-    backgroundColor: "#FFFFFF",
-  },
-  layout: {
+  withPanel: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 16,
+    gap: 22,
   },
-  mainColumn: {
+  colMain: {
     flex: 1,
     minWidth: 0,
-    gap: 14,
-  },
-  filters: {
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    padding: 12,
-    gap: 12,
+    gap: 20,
   },
   grid: {
     flexDirection: "row",
