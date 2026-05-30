@@ -201,9 +201,12 @@ export function CommunityDetailScreen() {
         ]}
       >
         <View pointerEvents="none" style={styles.backgroundArt}>
-          <View style={[styles.nebulaOne, { backgroundColor: `${theme.colors.primary}18` }]} />
-          <View style={[styles.nebulaTwo, { backgroundColor: `${theme.colors.accent}12` }]} />
-          <View style={[styles.nebulaThree, { backgroundColor: `${theme.colors.secondary}10` }]} />
+          <Image
+            source={require("../../../../assets/orbit-bg-nebula.png")}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+          />
+          <View style={[StyleSheet.absoluteFill, styles.backgroundDim]} />
         </View>
 
         {hasSidebar ? null : (
@@ -439,15 +442,6 @@ function CommunityHero({
           style={styles.bannerFill}
         />
       )}
-      <LinearGradient
-        colors={["rgba(255,255,255,0.08)", "transparent", "rgba(9,10,18,0.42)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.bannerFill}
-      />
-      <View style={[styles.bannerOrbit, { borderColor: "rgba(255,255,255,0.34)" }]} />
-      <View style={[styles.bannerSparkOne, { backgroundColor: "#FFFFFF" }]} />
-      <View style={[styles.bannerSparkTwo, { backgroundColor: theme.colors.accent }]} />
       <View style={styles.bannerOverlay} />
     </View>
   );
@@ -884,17 +878,19 @@ function CommunityChatsTab({ communityId }: { communityId: string }) {
             Chats de la Orbita
           </Text>
         </View>
-        <Button
-          title="Crear chat"
-          size="sm"
-          icon={<Plus size={15} color="#FFFFFF" />}
-          onPress={() =>
-            router.push({
-              pathname: "/chat/create",
-              params: { communityId },
-            })
-          }
-        />
+        {!chats.isLoading && list.length > 0 ? (
+          <Button
+            title="Crear chat"
+            size="sm"
+            icon={<Plus size={15} color="#FFFFFF" />}
+            onPress={() =>
+              router.push({
+                pathname: "/chat/create",
+                params: { communityId },
+              })
+            }
+          />
+        ) : null}
       </View>
 
       {chats.isLoading ? (
@@ -997,29 +993,8 @@ const styles = StyleSheet.create({
     left: 0,
     overflow: "hidden",
   },
-  nebulaOne: {
-    position: "absolute",
-    width: 360,
-    height: 360,
-    borderRadius: 180,
-    top: 20,
-    right: -110,
-  },
-  nebulaTwo: {
-    position: "absolute",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    bottom: 120,
-    left: -130,
-  },
-  nebulaThree: {
-    position: "absolute",
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    top: "44%",
-    right: "20%",
+  backgroundDim: {
+    backgroundColor: "rgba(9,10,18,0.62)",
   },
   topBar: {
     flexDirection: "row",
@@ -1073,32 +1048,6 @@ const styles = StyleSheet.create({
     right: 0,
     left: 0,
     bottom: 0,
-  },
-  bannerOrbit: {
-    position: "absolute",
-    width: 260,
-    height: 90,
-    borderWidth: 2,
-    borderRadius: 999,
-    top: 42,
-    right: -40,
-    transform: [{ rotate: "-18deg" }],
-  },
-  bannerSparkOne: {
-    position: "absolute",
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    top: 44,
-    right: 90,
-  },
-  bannerSparkTwo: {
-    position: "absolute",
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    top: 118,
-    right: 180,
   },
   bannerOverlay: {
     position: "absolute",
