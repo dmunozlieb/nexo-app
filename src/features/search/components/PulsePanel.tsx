@@ -5,11 +5,9 @@ import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import type { CommunityWithMeta } from "../../../types/domain";
 import { formatCompactNumber } from "../../../utils/format";
-import { hoverTransition } from "../../../utils/web-style";
+import { hoverTransition, pointerStyle } from "../../../utils/web-style";
 import { categoryIcon } from "../categoryMeta";
 import { onlineOf } from "../helpers";
-
-const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
 
 // Panel flotante: se mantiene visible al hacer scroll por la columna principal.
 // position: sticky es exclusivo de react-native-web (el panel solo se ve en desktop).
@@ -67,7 +65,7 @@ export function PulsePanel({
             style={({ pressed, hovered }) => [
               styles.mini,
               hoverTransition,
-              Platform.OS === "web" ? pointerStyle : null,
+              pointerStyle,
               { opacity: pressed ? 0.8 : 1, backgroundColor: hovered ? theme.colors.elevated : "transparent" },
             ]}
           >
@@ -101,7 +99,7 @@ export function PulsePanel({
                 style={({ pressed, hovered }) => [
                   styles.cat,
                   hoverTransition,
-                  Platform.OS === "web" ? pointerStyle : null,
+                  pointerStyle,
                   {
                     borderColor: hovered ? theme.colors.secondary : theme.colors.border,
                     opacity: pressed ? 0.8 : 1,

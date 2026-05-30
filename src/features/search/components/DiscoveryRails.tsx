@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
   Platform,
   Pressable,
@@ -7,6 +7,7 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type StyleProp,
   type ViewStyle,
 } from "react-native";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
@@ -17,11 +18,10 @@ import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import type { CommunityWithMeta } from "../../../types/domain";
 import { formatCompactNumber } from "../../../utils/format";
-import { hoverTransition } from "../../../utils/web-style";
+import { hoverTransition, pointerStyle } from "../../../utils/web-style";
 import { buildSignals, SignalChips } from "../../../components/content/SignalChips";
+import { BREAKPOINTS } from "../constants";
 import { onlineOf } from "../helpers";
-
-const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
 
 type RailProps = {
   title: string;
@@ -104,7 +104,7 @@ export function Rail({ title, icon, accent, children }: RailProps) {
   const scrollRef = useRef<ScrollView>(null);
   const offsetRef = useRef(0);
   // Flechas solo en desktop; en mobile/tablet basta el swipe/arrastre.
-  const showArrows = Platform.OS === "web" && width >= 1180;
+  const showArrows = Platform.OS === "web" && width >= BREAKPOINTS.desktop;
 
   useDragToScroll(scrollRef);
 
@@ -159,7 +159,7 @@ function RailArrow({
       style={({ hovered, pressed }) => [
         styles.arrow,
         hoverTransition,
-        Platform.OS === "web" ? pointerStyle : null,
+        pointerStyle,
         {
           backgroundColor: hovered ? theme.colors.elevated : theme.colors.surface,
           borderColor: hovered ? theme.colors.secondary : theme.colors.border,
@@ -172,43 +172,54 @@ function RailArrow({
   );
 }
 
-function useHover() {
-  const [hovered, setHovered] = useState(false);
-  return {
-    hovered,
-    handlers: {
-      onHoverIn: () => setHovered(true),
-      onHoverOut: () => setHovered(false),
-    },
-  };
-}
-
 type CardProps = {
   community: CommunityWithMeta;
   onOpen: (community: CommunityWithMeta) => void;
 };
 
-export function TrendCard({ community, rank, onOpen }: CardProps & { rank: number }) {
+/**
+ * Carcasa comun de las tarjetas de carrusel: lift + borde de acento en hover.
+ * Cada rail aporta su `accent` (color del borde al pasar) y su contenido.
+ */
+function RailCard({
+  community,
+  onOpen,
+  accent,
+  style,
+  children,
+}: CardProps & {
+  accent: string;
+  style: StyleProp<ViewStyle>;
+  children: ReactNode;
+}) {
   const theme = useTheme();
-  const { hovered, handlers } = useHover();
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Abrir ${community.name}`}
       onPress={() => onOpen(community)}
-      {...handlers}
-      style={[
-        styles.tcard,
+      style={({ hovered }) => [
+        style,
         hoverTransition,
-        Platform.OS === "web" ? pointerStyle : null,
+        pointerStyle,
         {
           backgroundColor: theme.colors.surface,
-          borderColor: hovered ? theme.colors.secondary : theme.colors.border,
+          borderColor: hovered ? accent : theme.colors.border,
           transform: [{ translateY: hovered ? -3 : 0 }],
         },
       ]}
     >
+      {children}
+    </Pressable>
+  );
+}
+
+export function TrendCard({ community, rank, onOpen }: CardProps & { rank: number }) {
+  const theme = useTheme();
+
+  return (
+    <RailCard community={community} onOpen={onOpen} accent={theme.colors.secondary} style={styles.tcard}>
       <View style={styles.tban}>
         <CommunityBanner uri={community.banner_url} name={community.name} category={community.category} />
         <View style={[styles.rank, { backgroundColor: theme.colors.featured }]}>
@@ -229,32 +240,16 @@ export function TrendCard({ community, rank, onOpen }: CardProps & { rank: numbe
           <OnlineIndicator count={onlineOf(community)} compact />
         </View>
       </View>
-    </Pressable>
+    </RailCard>
   );
 }
 
 export function LiveCard({ community, onOpen }: CardProps) {
   const theme = useTheme();
-  const { hovered, handlers } = useHover();
   const signal = buildSignals(community)[0];
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Abrir ${community.name}`}
-      onPress={() => onOpen(community)}
-      {...handlers}
-      style={[
-        styles.lcard,
-        hoverTransition,
-        Platform.OS === "web" ? pointerStyle : null,
-        {
-          backgroundColor: theme.colors.surface,
-          borderColor: hovered ? theme.colors.aurora : theme.colors.border,
-          transform: [{ translateY: hovered ? -3 : 0 }],
-        },
-      ]}
-    >
+    <RailCard community={community} onOpen={onOpen} accent={theme.colors.aurora} style={styles.lcard}>
       <View style={[styles.lav, { borderColor: `${theme.colors.aurora}80` }]}>
         <Avatar uri={community.avatar_url} label={community.name} size={44} />
       </View>
@@ -265,31 +260,15 @@ export function LiveCard({ community, onOpen }: CardProps) {
         <OnlineIndicator count={onlineOf(community)} solid />
         {signal ? <SignalChips community={community} limit={1} /> : null}
       </View>
-    </Pressable>
+    </RailCard>
   );
 }
 
 export function NewCard({ community, onOpen }: CardProps) {
   const theme = useTheme();
-  const { hovered, handlers } = useHover();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Abrir ${community.name}`}
-      onPress={() => onOpen(community)}
-      {...handlers}
-      style={[
-        styles.ncard,
-        hoverTransition,
-        Platform.OS === "web" ? pointerStyle : null,
-        {
-          backgroundColor: theme.colors.surface,
-          borderColor: hovered ? theme.colors.accent : theme.colors.border,
-          transform: [{ translateY: hovered ? -3 : 0 }],
-        },
-      ]}
-    >
+    <RailCard community={community} onOpen={onOpen} accent={theme.colors.accent} style={styles.ncard}>
       <View style={styles.nban}>
         <CommunityBanner uri={community.banner_url} name={community.name} category={community.category} />
         <View style={[styles.ntag, { backgroundColor: theme.colors.accent }]}>
@@ -310,7 +289,7 @@ export function NewCard({ community, onOpen }: CardProps) {
         </View>
         <OnlineIndicator count={onlineOf(community)} compact />
       </View>
-    </Pressable>
+    </RailCard>
   );
 }
 

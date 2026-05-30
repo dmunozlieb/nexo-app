@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -11,7 +10,7 @@ import {
 import { ChevronRight, Hash, Lock, Users } from "lucide-react-native";
 import { radius, typography } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
-import { hoverTransition } from "../../utils/web-style";
+import { hoverTransition, pointerStyle } from "../../utils/web-style";
 import type { CommunityWithMeta } from "../../types/domain";
 import { formatCompactNumber, formatRelativeDate } from "../../utils/format";
 import { Avatar } from "../ui/Avatar";
@@ -24,8 +23,6 @@ type CommunityCardProps = {
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 };
-
-const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
 
 export function CommunityCard({ community, onPress, style }: CommunityCardProps) {
   const theme = useTheme();
@@ -49,7 +46,7 @@ export function CommunityCard({ community, onPress, style }: CommunityCardProps)
       style={({ pressed }) => [
         styles.card,
         hoverTransition,
-        Platform.OS === "web" ? pointerStyle : null,
+        pointerStyle,
         {
           backgroundColor: theme.colors.surface,
           borderColor: interactive ? theme.colors.secondary : theme.colors.border,

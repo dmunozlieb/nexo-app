@@ -14,3 +14,7 @@ export const hoverTransition: ViewStyle | null =
         transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
       } as unknown as ViewStyle)
     : null;
+
+/** Cursor de mano en elementos pulsables (solo web; null en nativo). */
+export const pointerStyle: ViewStyle | null =
+  Platform.OS === "web" ? ({ cursor: "pointer" } as unknown as ViewStyle) : null;

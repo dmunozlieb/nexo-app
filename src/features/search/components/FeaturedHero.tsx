@@ -1,4 +1,4 @@
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from "react-native";
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowRight, Flame, Users } from "lucide-react-native";
 import { Avatar } from "../../../components/ui/Avatar";
@@ -8,8 +8,9 @@ import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import type { CommunityWithMeta } from "../../../types/domain";
 import { formatCompactNumber, formatRelativeDate } from "../../../utils/format";
-import { hoverTransition } from "../../../utils/web-style";
+import { hoverTransition, pointerStyle } from "../../../utils/web-style";
 import { SignalChips } from "../../../components/content/SignalChips";
+import { BREAKPOINTS } from "../constants";
 import { onlineOf } from "../helpers";
 
 type FeaturedHeroProps = {
@@ -17,16 +18,14 @@ type FeaturedHeroProps = {
   onOpen: (community: CommunityWithMeta) => void;
 };
 
-const pointerStyle = { cursor: "pointer" } as unknown as ViewStyle;
-
 export function FeaturedHero({ community, onOpen }: FeaturedHeroProps) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  const wide = width >= 720;
+  const wide = width >= BREAKPOINTS.tablet;
 
   const minHeight = wide ? 320 : 360;
   const pad = wide ? 28 : 18;
-  const titleSize = width >= 1180 ? 36 : wide ? 32 : 26;
+  const titleSize = width >= BREAKPOINTS.desktop ? 36 : wide ? 32 : 26;
 
   return (
     <Pressable
@@ -36,7 +35,7 @@ export function FeaturedHero({ community, onOpen }: FeaturedHeroProps) {
       style={({ hovered, pressed }) => [
         styles.card,
         hoverTransition,
-        Platform.OS === "web" ? pointerStyle : null,
+        pointerStyle,
         {
           borderColor: hovered ? theme.colors.secondary : theme.colors.border,
           transform: [{ translateY: hovered ? -2 : 0 }],

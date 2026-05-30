@@ -24,6 +24,7 @@ import { PulsePanel } from "../components/PulsePanel";
 import { SectionHeader } from "../components/SectionHeader";
 import { SkeletonCommunityCard } from "../components/SkeletonCommunityCard";
 import { buildSignals } from "../../../components/content/SignalChips";
+import { BREAKPOINTS } from "../constants";
 import { daysSince, onlineOf } from "../helpers";
 
 const CATEGORIES = [
@@ -44,8 +45,8 @@ export function DiscoverScreen() {
   const debouncedQuery = useDebouncedValue(query, 280);
   const communities = useCommunities(debouncedQuery, category);
   const data = communities.data ?? [];
-  const twoColumns = width >= 720;
-  const showPanel = width >= 1180;
+  const twoColumns = width >= BREAKPOINTS.tablet;
+  const showPanel = width >= BREAKPOINTS.desktop;
   const hasFilters = Boolean(debouncedQuery.trim() || category);
   const browseMode = !hasFilters;
   const communityCount = data.length;
@@ -76,15 +77,19 @@ export function DiscoverScreen() {
         .filter((community) => daysSince(community.created_at) <= 30),
     [data],
   );
+  // Destacado = mayor "energia" (presencia + senales activas). Un solo recorrido
+  // que calcula el score una vez por orbita, en vez de ordenar toda la lista.
   const featured = useMemo(() => {
-    if (data.length === 0) {
-      return null;
+    let best: CommunityWithMeta | null = null;
+    let bestScore = -Infinity;
+    for (const community of data) {
+      const score = onlineOf(community) + buildSignals(community).length * 120;
+      if (score > bestScore) {
+        bestScore = score;
+        best = community;
+      }
     }
-    return [...data].sort(
-      (a, b) =>
-        onlineOf(b) + buildSignals(b).length * 120 -
-        (onlineOf(a) + buildSignals(a).length * 120),
-    )[0];
+    return best;
   }, [data]);
 
   function openCommunity(community: CommunityWithMeta) {
