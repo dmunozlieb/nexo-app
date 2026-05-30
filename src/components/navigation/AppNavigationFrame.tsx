@@ -64,6 +64,13 @@ export function AppNavigationFrame({ children }: PropsWithChildren) {
   const joinedCommunities = useJoinedCommunities(auth.session?.user.id);
   const isDesktop = width >= DESKTOP_WIDTH;
   const activeRouteName = getActiveRouteName(pathname);
+  // El detalle de Orbita es inmersivo en mobile/tablet: sin bottom-nav, solo la
+  // flecha atras del propio screen. En desktop conserva el sidebar (la columna
+  // centrada flotaria en el vacio si no). Crear Orbita mantiene el chrome.
+  const isImmersive =
+    !isDesktop &&
+    pathname.startsWith("/community/") &&
+    !pathname.startsWith("/community/create");
 
   function handleSelect(item: NavItemConfig) {
     if (activeRouteName === item.routeName && pathname === item.href) {
@@ -75,6 +82,14 @@ export function AppNavigationFrame({ children }: PropsWithChildren) {
 
   function handleOpenCommunity(community: CommunityWithMeta) {
     router.push({ pathname: "/community/[id]", params: { id: community.id } });
+  }
+
+  if (isImmersive) {
+    return (
+      <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.sceneContent}>{children}</View>
+      </View>
+    );
   }
 
   return (

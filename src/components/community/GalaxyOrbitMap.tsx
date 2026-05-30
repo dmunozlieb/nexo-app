@@ -2167,7 +2167,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(7,11,26,0.18)",
   },
   detailBanner: {
-    height: 108,
+    height: 150,
     overflow: "hidden",
     backgroundColor: "rgba(255,255,255,0.04)",
   },
@@ -2188,7 +2188,7 @@ const styles = StyleSheet.create({
   detailAvatarOverlap: {
     position: "absolute",
     left: 20,
-    top: 68,
+    top: 110,
     zIndex: 3,
     width: 80,
     height: 80,
