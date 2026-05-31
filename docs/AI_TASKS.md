@@ -46,8 +46,11 @@ Usa este archivo como backlog practico. Marca o actualiza tareas cuando se compl
 - [ ] Pulir responsive mobile del sistema orbital.
 - [ ] Revisar solapamientos y legibilidad en `GalaxyOrbitMap`.
 - [ ] Extender bottom sheets a filtros de explorar y acciones contextuales.
-- [ ] Mejorar perfil con banner real en vista y edicion.
-- [ ] Mostrar intereses y Orbitas en perfiles.
+- [ ] **Rediseno `ProfileScreen`** — estructura cerrada en `docs/SCREEN_PROFILE.md` (cabecera + tabs Publicaciones/Orbitas/Info, 3 modos, acciones limpias). UI primero con datos existentes.
+  - [ ] UI: banner real, tabs (`SectionTabs`), tab Orbitas (`CommunityCard` + `listJoinedCommunities`), stats parciales (orbitas/publicaciones), acciones (propio solo "Editar perfil"; ajeno Seguir/Mensaje + `•••`).
+  - [ ] Servicio `getUserInterests(userId)` + demo → chips de intereses.
+  - [ ] Servicio de conteo seguidores/siguiendo + `isFollowing(viewer, profile)` + demo → stats y toggle real Seguir/Siguiendo.
+  - [ ] Bio por Orbita: migracion (columna en `community_members`) + tipo `CommunityMember` + `updateMembershipBio` + demo + UI en modo contextual.
 - [ ] Convertir `online_count` aproximado en presencia real.
 - [ ] Mejorar cola de moderacion con preview del contenido reportado.
 - [ ] Crear UI para gestionar bloqueos.
