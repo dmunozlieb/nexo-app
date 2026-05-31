@@ -66,6 +66,8 @@ La misma pantalla sirve **tres modos** con la misma estructura; solo cambian acc
 | textMuted | `#B9C1D9` | Texto secundario. |
 | textFaint | `#8490B4` | Texto terciario, helpers. |
 
+> **Libertad cromatica en esta pantalla.** Esta paleta es una **referencia**, no una camisa de fuerza. En Profile tienes libertad para proponer acentos, degradados y combinaciones de color propias (por ejemplo, una identidad cromatica derivada del avatar/banner del usuario, o un acento distinto por modo). Las unicas condiciones: (1) mantener el caracter **dark/cosmico/alien** de la app, (2) garantizar **contraste y legibilidad** (WCAG AA) del texto sobre el fondo, y (3) no romper la **continuidad** con el fondo cosmico continuo (los acentos van sobre esa atmosfera, no la sustituyen por un fondo opaco nuevo). Si te apartas de la paleta base, hazlo de forma coherente en toda la pantalla.
+
 ### Tipografia, spacing, radius
 
 - **Familia**: Inter (weights 400/500/600/700/800/900).
@@ -274,7 +276,7 @@ Tono: conversacional, ligero, ligeramente alien. Evita "feed/timeline". Usa "Orb
 
 ## 9. Reglas de oro para la IA de diseno
 
-1. **Esto es estructura, no diseno cerrado**. Tienes libertad para resolver la jerarquia visual de cabecera, stats y tabs. Respeta el orden y el contenido de §2-§3.
+1. **Esto es estructura, no diseno cerrado**. Tienes libertad para resolver la jerarquia visual y el **color** (ver nota de libertad cromatica en §0.5) de cabecera, stats y tabs. Respeta el orden y el contenido de §2-§3.
 2. **No anadas bloques fuera de scope** (§0). Si crees que falta algo, registralo como propuesta V2, no lo metas.
 3. **Pinta los tres modos** (propio / ajeno / contextual) — no solo el propio.
 4. **Pinta los estados** (loading, empty por tab, error), no solo el happy path.
