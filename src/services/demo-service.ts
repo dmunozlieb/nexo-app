@@ -620,6 +620,36 @@ export function onDemoAuthStateChange(listener: DemoAuthListener) {
   return () => authListeners.delete(listener);
 }
 
+export type DemoAccount = {
+  email: string;
+  password: string;
+  displayName: string;
+  username: string;
+};
+
+/**
+ * Cuentas semilla del modo demo, para ofrecerlas como acceso rapido en el login
+ * y que cualquiera pueda entrar sin conocer las credenciales.
+ */
+export function demoListAccounts(): DemoAccount[] {
+  return demoUsers
+    .map((user) => {
+      const profile = profiles.find((item) => item.id === user.id);
+
+      if (!profile) {
+        return null;
+      }
+
+      return {
+        email: user.email,
+        password: DEMO_PASSWORD,
+        displayName: profile.display_name ?? profile.username,
+        username: profile.username,
+      } satisfies DemoAccount;
+    })
+    .filter((account): account is DemoAccount => account !== null);
+}
+
 export async function demoSignInWithEmail(input: AuthLoginInput) {
   const email = input.email.trim().toLowerCase();
   const password = input.password.trim();
@@ -671,7 +701,47 @@ export async function demoSignOut() {
 
 export async function demoGetCurrentSession() {
   const raw = await AsyncStorage.getItem(DEMO_SESSION_KEY);
-  return raw ? (JSON.parse(raw) as Session) : null;
+  const session = raw ? (JSON.parse(raw) as Session) : null;
+
+  // El dataset demo es in-memory y se resetea en cada reload, pero la sesion se
+  // persiste. Si la sesion guardada apunta a una cuenta creada en runtime
+  // (registro/onboarding), su perfil ya no existe tras recargar. Lo
+  // reconstruimos desde los metadatos de la sesion para que el perfil propio y
+  // el saludo no rompan.
+  if (session?.user?.id) {
+    rehydrateSessionProfile(session);
+  }
+
+  return session;
+}
+
+function rehydrateSessionProfile(session: Session) {
+  const { id, email, user_metadata: metadata, created_at } = session.user;
+
+  if (profiles.some((item) => item.id === id)) {
+    return;
+  }
+
+  const username =
+    (metadata?.username as string | undefined) ??
+    `nexo_${id.replaceAll("-", "").slice(0, 10)}`;
+
+  profiles.push({
+    id,
+    username,
+    display_name:
+      (metadata?.display_name as string | undefined) ?? username,
+    bio: null,
+    avatar_url: null,
+    banner_url: null,
+    created_at: created_at ?? now(),
+    updated_at: now(),
+    is_banned: false,
+  });
+
+  if (email && !demoUsers.some((item) => item.id === id)) {
+    demoUsers.push({ email, id });
+  }
 }
 
 export async function demoGetProfile(userId: string) {

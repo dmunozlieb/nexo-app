@@ -7,11 +7,13 @@ import {
   demoCompleteOnboarding,
   demoGetCurrentSession,
   demoGetProfile,
+  demoListAccounts,
   demoListInterests,
   demoResetPassword,
   demoSignInWithEmail,
   demoSignOut,
   demoSignUpWithEmail,
+  type DemoAccount,
 } from "../../../services/demo-service";
 import type { Interest, Profile } from "../../../types/domain";
 import type {
@@ -29,6 +31,13 @@ function getOAuthRedirectTo() {
   }
 
   return "nexo://auth/callback";
+}
+
+export type { DemoAccount };
+
+/** Cuentas demo disponibles para acceso rapido en el login (vacio fuera de demo). */
+export function listDemoAccounts(): DemoAccount[] {
+  return env.demoMode ? demoListAccounts() : [];
 }
 
 export async function signInWithEmail(input: AuthLoginInput) {

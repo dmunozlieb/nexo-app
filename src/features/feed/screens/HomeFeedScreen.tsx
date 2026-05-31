@@ -36,6 +36,7 @@ import {
 } from "../components/HomeActivity";
 
 const DEFAULT_PLANET_COLORS: PlanetColors = ["#7B5CFF", "#18D7FF"];
+const HOME_BACKGROUND = require("../../../../assets/orbit-bg-home.png");
 const webBlur = { filter: "blur(4px)" };
 
 export function HomeFeedScreen() {
@@ -133,7 +134,7 @@ export function HomeFeedScreen() {
   if (isDesktop) {
     return (
       <View style={styles.root}>
-        <CosmicBackground />
+        <CosmicBackground source={HOME_BACKGROUND} />
         <ScreenContainer contentStyle={styles.screen}>
           <View style={styles.desktopLayout}>
             {/* Stage: header + mapa */}
@@ -216,7 +217,7 @@ export function HomeFeedScreen() {
   // Mobile layout
   return (
     <View style={styles.root}>
-      <CosmicBackground />
+      <CosmicBackground source={HOME_BACKGROUND} />
       <ScreenContainer contentStyle={styles.screen}>
         <View style={styles.mobileLayout}>
           {/* Header comprimido */}

@@ -1,8 +1,18 @@
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, type ComponentProps } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
+import { Image } from "expo-image";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 import { useTheme } from "../../theme/useTheme";
 import { NebulaBackdrop } from "./NebulaBackdrop";
+
+type CosmicBackgroundProps = {
+  /** Imagen de fondo. Por defecto la galaxia de marca. */
+  source?: NonNullable<ComponentProps<typeof Image>["source"]>;
+  /** Color del velo oscuro superpuesto para mantener legible el contenido. */
+  dim?: string;
+};
+
+const DEFAULT_SOURCE = require("../../../assets/orbit-bg-galaxy.png");
 
 type Star = {
   top: number;
@@ -83,7 +93,10 @@ function StarElement({ star, reducedMotion }: { star: Star; reducedMotion: boole
   );
 }
 
-export const CosmicBackground = memo(function CosmicBackground() {
+export const CosmicBackground = memo(function CosmicBackground({
+  source = DEFAULT_SOURCE,
+  dim = "rgba(5,6,18,0.50)",
+}: CosmicBackgroundProps) {
   const theme = useTheme();
   const reducedMotion = useReducedMotion();
   const stars = useStars(16, 1);
@@ -93,10 +106,7 @@ export const CosmicBackground = memo(function CosmicBackground() {
   }
 
   return (
-    <NebulaBackdrop
-      source={require("../../../assets/orbit-bg-galaxy.png")}
-      dim="rgba(5,6,18,0.50)"
-    >
+    <NebulaBackdrop source={source} dim={dim}>
       {stars.map((star, index) => (
         <StarElement key={index} star={star} reducedMotion={reducedMotion} />
       ))}
