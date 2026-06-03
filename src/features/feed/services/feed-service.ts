@@ -27,7 +27,7 @@ export async function listFeed({
   let query = supabase
     .from("posts")
     .select(
-      "*, author:profiles(*), community:communities(*), reactions:post_reactions(reaction,user_id), saved_posts(user_id)",
+      "*, author:profiles!posts_author_id_fkey(*), community:communities(*), reactions:post_reactions(reaction,user_id), saved_posts(user_id)",
     )
     .eq("status", "published")
     .order("created_at", { ascending: false })
