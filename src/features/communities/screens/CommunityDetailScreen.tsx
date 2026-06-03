@@ -41,7 +41,6 @@ import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { GradientCard } from "../../../components/ui/GradientCard";
 import { LoadingState } from "../../../components/ui/LoadingState";
-import { NebulaBackdrop } from "../../../components/ui/NebulaBackdrop";
 import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
@@ -181,10 +180,10 @@ export function CommunityDetailScreen() {
         ? 220
         : 200;
   const avatarSize = heroCompact ? 64 : bp === "desktop" ? 96 : bp === "tablet" ? 88 : 80;
-  // Tablet y desktop usan todo el ancho disponible; mobile va a ancho completo
-  // por defecto (la columna nunca se cap a por debajo de 768).
-  const maxWidth = hasSidebar || bp === "tablet" ? "100%" : 860;
-  const horizontalPad = hasSidebar ? 64 : bp === "tablet" ? 24 : 16;
+  // Desktop topa en 1360 centrado, igual que Home/Discover/Profile; tablet usa
+  // todo el ancho; mobile va a ancho completo (la columna nunca cap a < 768).
+  const maxWidth = hasSidebar ? 1360 : bp === "tablet" ? "100%" : 860;
+  const horizontalPad = hasSidebar ? 36 : bp === "tablet" ? 24 : 16;
   const verticalGap = bp === "desktop" ? 20 : bp === "tablet" ? 16 : 14;
   // Sin posts no hay nada que proteger del FAB: recorta el padding inferior
   // para que el empty state no deje un hueco muerto debajo del CTA.
@@ -201,11 +200,6 @@ export function CommunityDetailScreen() {
           { maxWidth, paddingHorizontal: horizontalPad },
         ]}
       >
-        <NebulaBackdrop
-          source={require("../../../../assets/orbit-bg-nebula.png")}
-          dim="rgba(9,10,18,0.62)"
-        />
-
         {hasSidebar ? null : (
           <View style={styles.topBar}>
             <Pressable

@@ -90,7 +90,10 @@ const styles = StyleSheet.create({
   },
   shell: {
     width: "100%",
-    maxWidth: 680,
+    // Topa antes para que en tablet la barra sea una pildora compacta centrada
+    // en vez de estirar los iconos de borde a borde. En movil estrecho sigue
+    // ocupando el ancho disponible.
+    maxWidth: 480,
     minHeight: 68,
     borderWidth: 1,
     borderRadius: 28,

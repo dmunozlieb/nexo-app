@@ -94,7 +94,13 @@ export function Button({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      {loading ? <ActivityIndicator color={color} /> : icon}
+      {loading ? (
+        <ActivityIndicator color={color} />
+      ) : icon ? (
+        // Envuelto en View: en react-native-web el degradado (position:absolute)
+        // tapa los SVG estaticos; un View (position:relative) los deja por encima.
+        <View>{icon}</View>
+      ) : null}
       <Text style={[styles.text, { color }, textStyle]} numberOfLines={1}>
         {title}
       </Text>

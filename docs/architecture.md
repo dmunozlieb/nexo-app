@@ -195,7 +195,7 @@ Tipos centrales en `src/types/domain.ts`:
 - `Visibility = "public" | "private" | "unlisted"`
 - `CommunityRole = "owner" | "admin" | "mod" | "helper" | "member"`
 - `PostType = "debate" | "help" | "fanart" | "poll" | "story" | "recommendation" | "event"`
-- `ReactionType = "inspire" | "relate" | "curious" | "support"`
+- `ReactionType = "inspire" | "relate" | "curious" | "support"` (el Eco es una unica interaccion: el cliente solo escribe `inspire` y desde la migracion `009` el CHECK de `post_reactions` solo admite ese valor; los literales legacy quedan en la union por compat de lectura)
 - `ConversationType = "direct" | "community"`
 - `ReportTargetType = "post" | "comment" | "message" | "profile" | "community"`
 

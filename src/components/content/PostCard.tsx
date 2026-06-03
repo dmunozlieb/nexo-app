@@ -1,7 +1,20 @@
 import { useRef, type ReactNode } from "react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Bookmark, Flag, MessageCircle, Sparkles } from "lucide-react-native";
+import {
+  BarChart3,
+  Bookmark,
+  BookOpen,
+  Calendar,
+  Flag,
+  HelpCircle,
+  Megaphone,
+  MessageCircle,
+  Palette,
+  Sparkles,
+  Star,
+  type LucideIcon,
+} from "lucide-react-native";
 import {
   Animated,
   Pressable,
@@ -12,12 +25,11 @@ import {
 } from "react-native";
 import { POST_TYPES } from "../../constants/post";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
-import { radius, typography } from "../../theme/tokens";
+import { radius } from "../../theme/tokens";
 import { useTheme } from "../../theme/useTheme";
-import type { PostWithMeta, ReactionType } from "../../types/domain";
-import { formatRelativeDate } from "../../utils/format";
+import type { PostType, PostWithMeta, ReactionType } from "../../types/domain";
+import { formatCompactNumber, formatRelativeDate } from "../../utils/format";
 import { Avatar } from "../ui/Avatar";
-import { ReactionBar } from "./ReactionBar";
 
 type PostCardProps = {
   post: PostWithMeta;
@@ -27,6 +39,22 @@ type PostCardProps = {
   onReport?: () => void;
   compact?: boolean;
 };
+
+// Cada tipo de senal estrena su propio glifo, igual que en el diseno de
+// referencia (Debate -> megafono, Recomendacion -> estrella, etc.).
+const TYPE_ICONS: Record<PostType, LucideIcon> = {
+  debate: Megaphone,
+  help: HelpCircle,
+  fanart: Palette,
+  poll: BarChart3,
+  story: BookOpen,
+  recommendation: Star,
+  event: Calendar,
+};
+
+// El boton de Ecos colapsa las reacciones en un unico gesto. "inspire" actua
+// como el Eco canonico que se alterna al pulsar.
+const ECO_REACTION: ReactionType = "inspire";
 
 export function PostCard({
   post,
@@ -39,26 +67,48 @@ export function PostCard({
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const type = POST_TYPES.find((item) => item.value === post.type) ?? POST_TYPES[0]!;
+  const TypeIcon = TYPE_ICONS[post.type] ?? Sparkles;
   const authorName = post.author?.display_name ?? post.author?.username ?? "Usuario";
+  const orbitaName = post.community?.name ?? "Orbita";
   // Cap de altura para que una imagen unica no se dispare a ancho completo en
   // desktop/tablet; en mobile el aspect ratio ya la mantiene contenida.
   const mediaMaxHeight = width >= 1100 ? 420 : width >= 768 ? 360 : undefined;
 
+  const ecoCount = Object.values(post.reaction_counts).reduce(
+    (total, count) => total + count,
+    0,
+  );
+  const ecoed = post.user_reactions.includes(ECO_REACTION);
+
   const content = (
     <>
       <View style={styles.header}>
-        <Avatar uri={post.author?.avatar_url} label={authorName} size={38} />
+        <Avatar uri={post.author?.avatar_url} label={authorName} size={40} />
         <View style={styles.headerCopy}>
           <Text style={[styles.author, { color: theme.colors.text }]} numberOfLines={1}>
             {authorName}
           </Text>
-          <Text style={[styles.meta, { color: theme.colors.textFaint }]} numberOfLines={1}>
-            {post.community?.name ?? "Orbita"} - {formatRelativeDate(post.created_at)}
-          </Text>
+          <View style={styles.sub}>
+            <Text style={[styles.subOrbita, { color: type.color }]} numberOfLines={1}>
+              {orbitaName}
+            </Text>
+            <Text style={[styles.subDot, { color: theme.colors.textFaint }]}>·</Text>
+            <Text style={[styles.subTime, { color: theme.colors.textFaint }]} numberOfLines={1}>
+              {formatRelativeDate(post.created_at)}
+            </Text>
+          </View>
         </View>
-        <View style={[styles.energyBadge, { backgroundColor: `${type.color}22` }]}>
-          <Sparkles size={13} color={type.color} />
-          <Text style={[styles.energyText, { color: type.color }]}>{type.label}</Text>
+        <View
+          style={[
+            styles.typeBadge,
+            {
+              backgroundColor: `${type.color}24`,
+              borderColor: `${type.color}57`,
+            },
+          ]}
+        >
+          <TypeIcon size={13} color={type.color} />
+          <Text style={[styles.typeText, { color: type.color }]}>{type.label}</Text>
         </View>
       </View>
 
@@ -97,29 +147,25 @@ export function PostCard({
   );
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: "rgba(18,20,39,0.78)",
-          borderColor: `${type.color}38`,
-          shadowColor: type.color,
-        },
-      ]}
-    >
+    <View style={[styles.card, { borderColor: "rgba(255,255,255,0.09)" }]}>
       <LinearGradient
-        colors={[`${type.color}16`, "rgba(255,255,255,0.015)", "transparent"]}
+        colors={["rgba(24,32,68,0.42)", "rgba(13,18,48,0.5)"]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={styles.cardWash}
       />
-      <View style={[styles.accentLine, { backgroundColor: type.color }]} />
+      <LinearGradient
+        colors={[type.color, "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.rail}
+      />
       {onPress ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={post.title ?? "Abrir publicacion"}
           onPress={onPress}
-          style={({ pressed }) => [styles.contentButton, { opacity: pressed ? 0.82 : 1 }]}
+          style={({ pressed }) => [styles.contentButton, { opacity: pressed ? 0.85 : 1 }]}
         >
           {content}
         </Pressable>
@@ -127,45 +173,105 @@ export function PostCard({
         <View style={styles.contentButton}>{content}</View>
       )}
 
-      <ReactionBar
-        counts={post.reaction_counts}
-        active={post.user_reactions}
-        onToggle={onReact}
-      />
-
-      <View style={styles.actions}>
-        <IconAction
-          label="Comentar"
-          icon={<MessageCircle size={17} color={theme.colors.textMuted} />}
-          onPress={onPress}
+      <View style={[styles.footer, { borderTopColor: "rgba(255,255,255,0.07)" }]}>
+        <EcoButton
+          count={ecoCount}
+          active={ecoed}
+          accent={theme.colors.featured}
+          onPress={() => onReact(ECO_REACTION)}
         />
-        {onSave ? (
+        <View style={styles.actions}>
           <IconAction
-            label={post.is_saved ? "Guardado" : "Guardar"}
-            active={post.is_saved}
-            accent={theme.colors.secondary}
-            icon={
-              <Bookmark
-                size={17}
-                color={post.is_saved ? theme.colors.secondary : theme.colors.textMuted}
-                fill={post.is_saved ? theme.colors.secondary : "transparent"}
-              />
-            }
-            onPress={onSave}
+            label="Comentar"
+            icon={<MessageCircle size={17} color={theme.colors.textFaint} />}
+            onPress={onPress}
           />
-        ) : null}
-        {onReport ? (
-          <>
-            <View style={styles.actionsSpacer} />
+          {onSave ? (
+            <IconAction
+              label={post.is_saved ? "Guardado" : "Guardar"}
+              active={post.is_saved}
+              accent={theme.colors.secondary}
+              icon={
+                <Bookmark
+                  size={17}
+                  color={post.is_saved ? theme.colors.secondary : theme.colors.textFaint}
+                  fill={post.is_saved ? theme.colors.secondary : "transparent"}
+                />
+              }
+              onPress={onSave}
+            />
+          ) : null}
+          {onReport ? (
             <IconAction
               label="Reportar"
-              icon={<Flag size={17} color={theme.colors.textFaint} />}
+              faint
+              icon={<Flag size={16} color={theme.colors.textFaint} />}
               onPress={onReport}
             />
-          </>
-        ) : null}
+          ) : null}
+        </View>
       </View>
     </View>
+  );
+}
+
+type EcoButtonProps = {
+  count: number;
+  active: boolean;
+  accent: string;
+  onPress: () => void;
+};
+
+function EcoButton({ count, active, accent, onPress }: EcoButtonProps) {
+  const theme = useTheme();
+  const reducedMotion = useReducedMotion();
+  const scale = useRef(new Animated.Value(1)).current;
+
+  function handlePress() {
+    onPress();
+
+    if (reducedMotion) {
+      return;
+    }
+
+    scale.stopAnimation();
+    scale.setValue(1);
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.3, duration: 110, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, friction: 4, tension: 140, useNativeDriver: true }),
+    ]).start();
+  }
+
+  const tint = active ? accent : theme.colors.textMuted;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Dar un Eco"
+      accessibilityState={{ selected: active }}
+      onPress={handlePress}
+      style={({ pressed }) => [
+        styles.ecoBtn,
+        {
+          backgroundColor: active ? `${accent}24` : "rgba(255,255,255,0.04)",
+          borderColor: active ? `${accent}61` : "rgba(255,255,255,0.1)",
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+    >
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Sparkles size={16} color={active ? accent : theme.colors.textFaint} />
+      </Animated.View>
+      <Text style={[styles.ecoCount, { color: tint }]}>{formatCompactNumber(count)}</Text>
+      <Text
+        style={[
+          styles.ecoWord,
+          { color: active ? accent : theme.colors.textFaint },
+        ]}
+      >
+        Ecos
+      </Text>
+    </Pressable>
   );
 }
 
@@ -242,9 +348,10 @@ type IconActionProps = {
   onPress?: (() => void) | undefined;
   active?: boolean;
   accent?: string;
+  faint?: boolean;
 };
 
-function IconAction({ label, icon, onPress, active = false, accent }: IconActionProps) {
+function IconAction({ label, icon, onPress, active = false, accent, faint = false }: IconActionProps) {
   const theme = useTheme();
   const reducedMotion = useReducedMotion();
   const scale = useRef(new Animated.Value(1)).current;
@@ -270,12 +377,16 @@ function IconAction({ label, icon, onPress, active = false, accent }: IconAction
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       onPress={handlePress}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         styles.iconAction,
         {
-          backgroundColor: active && accent ? `${accent}24` : theme.colors.surface,
-          borderColor: active && accent ? accent : theme.colors.border,
-          opacity: pressed ? 0.85 : 1,
+          backgroundColor:
+            active && accent
+              ? `${accent}1F`
+              : hovered
+                ? "rgba(255,255,255,0.07)"
+                : "transparent",
+          opacity: pressed ? 0.7 : faint ? 0.7 : 1,
         },
       ]}
     >
@@ -286,15 +397,15 @@ function IconAction({ label, icon, onPress, active = false, accent }: IconAction
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radius.md,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 14,
+    // Card opaca para que el fondo cosmico no se transparente a traves del post.
+    backgroundColor: "#0E1330",
+    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
     gap: 13,
     overflow: "hidden",
-    shadowOpacity: 0.2,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
   },
   cardWash: {
     position: "absolute",
@@ -303,57 +414,73 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
   },
-  accentLine: {
+  rail: {
     position: "absolute",
-    top: 16,
-    bottom: 16,
+    top: 14,
+    bottom: 14,
     left: 0,
     width: 3,
-    borderTopRightRadius: 999,
-    borderBottomRightRadius: 999,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
   },
   contentButton: {
-    gap: 13,
+    gap: 7,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
+    marginBottom: 7,
   },
   headerCopy: {
     flex: 1,
     minWidth: 0,
   },
   author: {
-    fontSize: typography.body,
-    fontWeight: "800",
-  },
-  meta: {
-    fontSize: typography.tiny,
+    fontSize: 14.5,
     fontWeight: "700",
+    letterSpacing: -0.1,
   },
-  energyBadge: {
-    minHeight: 28,
+  sub: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 1,
+  },
+  subOrbita: {
+    flexShrink: 1,
+    fontSize: 12.5,
+    fontWeight: "600",
+  },
+  subDot: {
+    fontSize: 12.5,
+    opacity: 0.6,
+  },
+  subTime: {
+    fontSize: 12.5,
+    fontWeight: "500",
+  },
+  typeBadge: {
+    minHeight: 26,
     borderRadius: radius.pill,
-    paddingHorizontal: 8,
+    paddingHorizontal: 11,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
   },
-  energyText: {
-    fontSize: typography.tiny,
-    fontWeight: "900",
-    textTransform: "uppercase",
+  typeText: {
+    fontSize: 12,
+    fontWeight: "700",
   },
   title: {
-    fontSize: typography.h3,
-    fontWeight: "900",
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.3,
     lineHeight: 23,
   },
   body: {
-    fontSize: typography.body,
+    fontSize: 15,
     lineHeight: 23,
   },
   mediaSingle: {
@@ -414,12 +541,12 @@ const styles = StyleSheet.create({
   },
   mediaMoreText: {
     color: "#FFFFFF",
-    fontSize: typography.h2,
+    fontSize: 20,
     fontWeight: "900",
   },
   reason: {
     flex: 1,
-    fontSize: typography.small,
+    fontSize: 13,
     fontWeight: "700",
   },
   reasonBox: {
@@ -430,21 +557,43 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    marginTop: 6,
+  },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 3,
+    paddingTop: 13,
+    borderTopWidth: 1,
+  },
+  ecoBtn: {
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  ecoCount: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  ecoWord: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-  },
-  actionsSpacer: {
-    flex: 1,
+    gap: 4,
   },
   iconAction: {
-    minHeight: 38,
-    minWidth: 44,
-    borderWidth: 1,
+    height: 36,
+    minWidth: 36,
     borderRadius: radius.pill,
-    paddingHorizontal: 12,
+    paddingHorizontal: 9,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -128,7 +128,7 @@ Implementado:
 - Tipos de post: debate, ayuda, fanart, encuesta, historia, recomendacion, evento.
 - Detalle de post.
 - Comentarios y replies basicos.
-- Reacciones/Ecos: inspirar, me pasa, curiosidad, apoyo.
+- Eco: una unica reaccion por post (boton "Eco" que se alterna). El cliente escribe `inspire`; la migracion `009` dejo el schema `post_reactions` admitiendo solo ese valor.
 - Guardar/desguardar post.
 - Reportar posts.
 - Feed por comunidad.
@@ -207,11 +207,13 @@ Implementado:
 
 Pendiente:
 
-- Banner real en perfil y editor.
-- Listado de Orbitas del usuario.
-- Intereses visibles/editables.
-- Stats sociales.
-- Estado de follow real en UI.
+- **Rediseno de `ProfileScreen` con estructura cerrada** (spec en `docs/SCREEN_PROFILE.md`): cabecera de identidad + tabs Publicaciones / Orbitas / Info, 3 modos (propio / ajeno / contextual), acciones limpias (propio solo "Editar perfil"; ajeno Seguir/Mensaje + `•••` con Bloquear/Reportar). Orden de trabajo: UI primero con datos existentes, servicios nuevos en 2a tanda.
+- Banner real en perfil y editor (campo `banner_url` ya existe, falta pintarlo).
+- Listado de Orbitas del usuario (tab Orbitas — `listJoinedCommunities` listo).
+- Intereses visibles/editables (requiere `getUserInterests(userId)`; onboarding solo escribe).
+- Stats sociales: seguidores/siguiendo (requiere servicio de conteo); orbitas/publicaciones salen del largo de las listas.
+- Estado de follow real en UI (requiere `isFollowing`; hoy el follow es a ciegas).
+- Bio por Orbita en modo contextual (columna nueva en `community_members` + `updateMembershipBio` + migracion + demo).
 - Gestion de bloqueos.
 
 ## Moderacion, reportes y bloqueos

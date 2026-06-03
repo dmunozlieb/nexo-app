@@ -1,4 +1,4 @@
-import type { PostType, ReactionType } from "../types/domain";
+import type { PostType } from "../types/domain";
 
 export const POST_TYPES: Array<{
   value: PostType;
@@ -47,37 +47,5 @@ export const POST_TYPES: Array<{
     label: "Evento",
     description: "Organiza una cita o actividad de comunidad.",
     color: "#FF7A59",
-  },
-];
-
-export const REACTION_TYPES: Array<{
-  value: ReactionType;
-  label: string;
-  shortLabel: string;
-  color: string;
-}> = [
-  {
-    value: "inspire",
-    label: "Me inspira",
-    shortLabel: "Inspira",
-    color: "#7C5CFF",
-  },
-  {
-    value: "relate",
-    label: "Me representa",
-    shortLabel: "Representa",
-    color: "#FF4FD8",
-  },
-  {
-    value: "curious",
-    label: "Quiero saber mas",
-    shortLabel: "Curiosidad",
-    color: "#00D4FF",
-  },
-  {
-    value: "support",
-    label: "Apoyo",
-    shortLabel: "Apoyo",
-    color: "#37E29F",
   },
 ];

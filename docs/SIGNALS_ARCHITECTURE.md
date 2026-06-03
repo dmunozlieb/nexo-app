@@ -11,7 +11,7 @@ Documento autoritativo para implementar el backend, datos, permisos y logica del
 ### Naming
 
 - **Senal**: la entidad de contenido publicado dentro de una Orbita. A nivel de schema y codigo se mantiene la tabla y tipo `posts` (decision pragmatica para no romper lo que ya esta). A nivel de **copy de producto** y de **lenguaje en docs/UI** se llama **Senal**.
-- **Eco**: la reaccion a una Senal. 4 sabores fijos: `inspire`, `relate`, `curious`, `support`. Status quo, no cambia.
+- **Eco**: la reaccion a una Senal. **Una unica interaccion** (boton "Eco" que se alterna). El cliente escribe siempre `inspire`. La migracion `009_post_reactions_single_eco.sql` estrecho el CHECK de `post_reactions` para que **solo admita `inspire`**: los tipos legacy `relate`/`curious`/`support` ya no se permiten (la migracion los convirtio a `inspire` y los borro). Con la reaccion constante, la PK `(post_id, user_id, reaction)` garantiza un unico Eco por usuario y Senal.
 - **Comentario**: respuesta textual a una Senal. Anidamiento a 1 nivel.
 
 Regla: el schema mantiene `posts` / `post_reactions` / `comments` / `saved_posts` para evitar migracion masiva. Toda la documentacion de producto y los nuevos copy hablan de "Senal" y "Eco".
@@ -50,7 +50,7 @@ Supabase (PostgreSQL + RLS + Storage + RPCs), TanStack Query en cliente, modo de
 - **Tipos de Senal**:
   - **Cosmeticos** (sin schema extra, solo el `type` string): `debate`, `fanart`, `story`, `recommendation`. Se renderizan distinto pero comparten esquema.
   - **Estructurados** (con tablas hijas): `poll`, `event`, `help`.
-- **Eco (`post_reactions`)**: PK composite `(post_id, user_id, reaction)`. Un usuario puede dejar varios Ecos distintos en la misma Senal, pero no repetir el mismo. 4 tipos: `inspire | relate | curious | support`.
+- **Eco (`post_reactions`)**: PK composite `(post_id, user_id, reaction)`. El producto colapso el Eco en una **unica interaccion**: el cliente solo escribe `inspire` y, desde la migracion `009`, el CHECK **solo admite `inspire`** (los tipos `relate/curious/support` quedaron eliminados del schema). Con la reaccion constante, la PK equivale a un unico Eco por `(post, usuario)`.
 - **Comentario (`comments`)**: respuesta textual. `parent_id` opcional → 1 nivel de reply. Body 1-1000 chars.
 - **Guardado (`saved_posts`)**: bookmark personal. PK `(user_id, post_id)`.
 
@@ -62,6 +62,9 @@ Definidos en `src/types/domain.ts`. No duplicar.
 export type PostType =
   | "debate" | "help" | "fanart" | "poll" | "story" | "recommendation" | "event";
 export type ContentStatus = "published" | "hidden" | "deleted";
+// El Eco es una unica interaccion: el cliente solo escribe "inspire" y, desde la
+// migracion 009, el CHECK de post_reactions solo admite "inspire". La union
+// conserva los literales legacy por historia/compat de lectura; no se generan.
 export type ReactionType = "inspire" | "relate" | "curious" | "support";
 
 export type Post = {
@@ -1105,7 +1108,7 @@ Migracion sugerida: incluir en `024_community_audit_log.sql` o crear `025_commun
 - **Sin video, gif animado o scheduled posts en V1**. Solo imagenes (jpeg/png/webp), bucket `post-media` ya creado con 10 MB max.
 - **Comentarios a 1 nivel** (parent_id existente). Sin Reddit-style infinito.
 - **Soft delete por defecto**. Hard delete reservado para owner de la Orbita en casos extremos.
-- **`Eco` sigue siendo el nombre de las 4 reacciones** (`inspire, relate, curious, support`). No cambia.
+- **`Eco` es una unica interaccion** (boton que se alterna). El cliente escribe solo `inspire` y la migracion `009` estrecho el CHECK de `post_reactions` a `reaction = 'inspire'` (los tipos `relate/curious/support` se eliminaron del schema). _(Decision revisada en el rediseno de Senales, 2026-06; antes eran 4 reacciones tipadas.)_
 - **Rate limit inicial: 5/hora globales, 15/24h por Orbita** para Senales; **30/hora para comentarios**. Ajustable via constantes en la RPC, no exposed en UI.
 
 ---
@@ -1118,7 +1121,7 @@ Migracion sugerida: incluir en `024_community_audit_log.sql` o crear `025_commun
 4. **No relajar RLS** para "que funcione". Si una operacion no pasa, ajustar la RPC o la operacion cliente, no la policy.
 5. **No crear migraciones renombrando archivos previos**. Cada cambio = migracion nueva. Las 014+ son tuyas.
 6. **Mentions y rate limit SIEMPRE server-side**. Cliente puede asistir con autocomplete y countdown, pero la barrera real es la RPC.
-7. **`Eco` no muta**. 4 tipos, PK composite `(post_id, user_id, reaction)`. Si producto pide un 5o tipo, va a una migracion explicita con justificacion.
+7. **`Eco` es una sola interaccion** (`inspire`). PK composite `(post_id, user_id, reaction)` intacta; desde la migracion `009` el CHECK solo admite `inspire`. Reintroducir Ecos tipados (o un 5o tipo) es una decision de producto con migracion nueva que reabra el CHECK y justificacion explicita.
 8. **No tocar UI** salvo para mover logica al hook/servicio. TODO claro al diseno cuando aparezca friccion.
 9. **Mantener paridad tipos / SQL / demo** en la misma sesion.
 10. **Validar con `npm run typecheck` y `npm test` antes de cerrar**. Si tocas SQL, prueba la migracion en una base limpia.

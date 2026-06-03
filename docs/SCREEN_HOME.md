@@ -324,7 +324,7 @@ Lado derecho del stage, ancho 320-360 px. Contiene:
 
 Tipos de item para V1 (mezclados, ordenados por `created_at` desc):
 
-1. **Eco recibido**: "Kai dejo un Eco {inspire|relate|curious|support} en tu Senal" → navega al post.
+1. **Eco recibido**: "Kai dejo un Eco en tu Senal" → navega al post. (El Eco es una unica interaccion; ya no hay que distinguir el tipo.)
 2. **Comentario en tu Senal**: "Iris comento en tu Senal" → navega al post.
 3. **Mencion**: "Luna te menciono en {Orbita}" → navega al post o comentario.
 4. **Nueva Senal en tus Orbitas** (solo si trending o de alguien que sigues): "Hay 3 Senales nuevas en Yoaki Gordo" → navega a la Orbita. **Agrupado por Orbita**.

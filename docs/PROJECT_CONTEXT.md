@@ -25,7 +25,7 @@ La diferencia frente a una red social generica esta en:
 ## Conceptos clave
 
 - **Orbitas**: comunidades. Tienen nombre, categoria, descripcion, reglas, visibilidad, avatar, banner, miembros, posts y chat general.
-- **Ecos**: interacciones/reacciones en posts. Tipos actuales: `inspire`, `relate`, `curious`, `support`.
+- **Ecos**: la reaccion a un post. Es una **unica interaccion** (un boton "Eco" que se alterna). El cliente solo escribe `inspire` y, desde la migracion `009`, el schema `post_reactions` solo admite ese valor (los tipos `relate`/`curious`/`support` se eliminaron).
 - **Mascota alien**: identidad visual de Nexo, implementada como `NexoMascot`.
 - **Sistema orbital**: pantalla principal/home, implementada con `GalaxyOrbitMap`. Muestra comunidades como planetas con senales de actividad.
 - **Roles de comunidad**: `owner`, `admin`, `mod`, `helper`, `member`.
