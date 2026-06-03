@@ -40,11 +40,35 @@ La misma pantalla sirve **tres modos** con la misma estructura; solo cambian acc
 ### TL;DR
 
 1. **Atmosfera cosmica continua** (misma de Home, descrita abajo): fondo casi negro con nebulosas blureadas y estrellas titilantes, sin cortes. Topbar/sidebar/bottomnav son glass cards por encima.
-2. **La cabecera de identidad es el ancla**; las tabs organizan el resto. Una sola columna, sin layout de dos columnas.
+2. **La cabecera de identidad es el ancla**; el contenido (posts, orbitas, info) se organiza debajo. El **layout es tuyo**: una o dos columnas en desktop, la composicion de la cabecera, donde caen las tabs o si las sustituyes por otra navegacion — libre. Unica regla dura: mobile respira en una columna y se conserva *que* informacion aparece (no *como*).
 3. **Tres modos** (propio / ajeno / contextual) — pinta los tres, no solo el propio.
 4. **Sentence case en todo el copy**. Cero UPPERCASE.
 5. **Pinta los estados** (loading, empty por tab, error), no solo el happy path.
-6. **Esto es estructura, no diseno cerrado**: tienes libertad para resolver la jerarquia visual de la cabecera, los stats y las tabs. Respeta el orden y el contenido; el "como se ve" es tuyo.
+6. **Libertad maxima de diseno.** Esto es un brief de *contenido y datos*, no una maqueta. Tienes libertad total para reinventar jerarquia, composicion, color, motion y personalidad de la pantalla. No te ates a como se ve hoy. Las unicas dos anclas no negociables: (a) la **atmosfera cosmica/alien dark** y (b) que el diseno se apoye **solo en datos que existen de verdad** (ver §0.6) — nada de inventar metricas o secciones que la app no puede llenar.
+
+### 0.6 Solo datos reales (regla dura)
+
+Disena **solo sobre datos que la app ya puede mostrar**. No construyas UI cuyo unico proposito sea lucir un dato que hoy no existe: si lo pintas, queda vacio en produccion. Esto es deuda disfrazada de belleza, no libertad.
+
+**Datos reales (apoyate en estos sin miedo):**
+
+- Avatar, nombre (`display_name`), handle (`@username`), bio global.
+- Banner (`banner_url`).
+- Publicaciones del usuario (globales y, en contextual, las de esa Orbita).
+- Orbitas a las que pertenece (tarjeta por comunidad: nombre, avatar, descripcion, miembros, online, categoria).
+- Conteo de **Orbitas** y de **Publicaciones** (derivados de esas listas — son reales).
+- Rol en la Orbita y fecha de union (modo contextual).
+- Fecha de alta en Nexo (`created_at`).
+- Acciones reales: seguir/dejar de seguir, mensaje (chat directo), bloquear, reportar, editar perfil.
+
+**NO existen todavia — NO disenes apoyandote en ellos:**
+
+- **Conteo de seguidores / siguiendo** → no hay servicio. No pongas las cifras como heroe de la cabecera. Si quieres una fila de stats, construyela alrededor de Orbitas + Publicaciones (que si son reales); seguidores/siguiendo entran en V2.
+- **Lista de intereses del perfil** → no hay lectura. No disenes una seccion de chips de intereses poblada. (En perfil propio si cabe un CTA suave "Anade tus intereses".)
+- **Bio por Orbita** (presentacion distinta por comunidad) → no persiste. En contextual usa la bio global + rol + posts de esa Orbita; no disenes un editor de bio por-Orbita como pieza central.
+- **Estado real de follow** ya resuelto visualmente (boton Seguir/Siguiendo); no necesita dato extra.
+
+> Estos cuatro llegaran en una segunda tanda. Si el diseno los necesitase, registralo como **propuesta V2**, no como elemento del frame principal.
 
 ### Paleta dark mode (la unica que importa)
 
@@ -97,8 +121,8 @@ Fondo **una sola capa continua** full-bleed por debajo del chrome de navegacion.
 
 - **Dark mode primario** con la atmosfera cosmica continua de §0.5.
 - **Sentence case en todo el copy**. Sin UPPERCASE en eyebrows, labels ni titulos de seccion.
-- **Una sola columna** centrada (max 860 px). No hay layout de dos columnas: en desktop la misma columna respira con mas margen; en mobile ocupa el ancho.
-- **La cabecera ancla, las tabs organizan**. La identidad va arriba; el contenido (posts, orbitas, info) se reparte en tabs para no apilar bloques infinitos.
+- **Layout libre** (§0.5): puedes usar una o dos columnas en desktop; en mobile, una columna. No hay un ancho impuesto — elige el que mejor sirva a tu composicion.
+- **La cabecera ancla, el contenido se organiza debajo**. La identidad va arriba; posts/orbitas/info se reparten en secciones para no apilar bloques infinitos (la forma de esa navegacion es tuya).
 - **Sin saturar**: la cabecera no debe convertirse en un panel de control. Banner + identidad + stats + acciones, con aire.
 
 ---
@@ -130,15 +154,16 @@ Orden vertical. El "como" (overlap del avatar, glass o no, jerarquia de tamaños
 
 ### 2.4 Stats
 
-Fila de metricas. Cada una: numero (Inter Bold, color text) + label (Inter Medium, textMuted/textFaint), sentence case.
+Fila/bloque de metricas (si decides incluirla — su forma es libre). Cada una: numero (Inter Bold, color text) + label (Inter Medium, textMuted/textFaint), sentence case.
 
-- **Seguidores** · **Siguiendo** · **Orbitas** · **Publicaciones**.
+- **Datos reales hoy: Orbitas · Publicaciones.** Construye los stats alrededor de estos dos.
+- **Seguidores / Siguiendo NO existen aun** (sin servicio de conteo). No los pongas como heroe ni inventes la cifra. Entran en V2; si los dejas previstos en la composicion, que sea de forma que no quede un hueco roto cuando esten vacios.
 - Tocar una stat NO navega en esta version (lista de seguidores es V2).
 
 ### 2.5 Intereses
 
-- Chips (pills) con los intereses de la persona (los elegidos en onboarding). Icono opcional + nombre.
-- Si no tiene intereses: se omiten (no placeholder vacio) en ajeno; en propio puede mostrarse un CTA suave "Anade tus intereses" → `/settings/edit-profile`.
+- **No hay lectura de intereses todavia**, asi que no disenes una seccion de chips poblada con datos reales.
+- En perfil propio si cabe un CTA suave "Anade tus intereses" → `/settings/edit-profile`. En ajeno: se omite, sin placeholder.
 
 ### 2.6 Acciones
 
@@ -161,7 +186,7 @@ Tabs horizontales (pills seleccionables). El tab activo cambia el contenido infe
 
 ### 3.1 Tab Publicaciones
 
-- Lista vertical de tarjetas de post (`PostCard`): autor, Orbita de origen, tiempo relativo, tipo (debate/ayuda/fanart/encuesta/historia/recomendacion/evento), titulo, cuerpo, contador de Ecos, acciones (comentar, guardar, reaccionar, reportar).
+- Lista vertical de tarjetas de post (`PostCard`): riel lateral con el color del tipo; cabecera con avatar, autor, nombre de la Orbita coloreado + tiempo relativo, y badge de tipo (icono propio + color por tipo: debate/ayuda/fanart/encuesta/historia/recomendacion/evento); titulo y cuerpo; pie separado por linea superior con el **boton Eco** (pildora ambar que se alterna, muestra el total de Ecos) a la izquierda y acciones (comentar, guardar, reportar) a la derecha.
 - Tap → detalle del post.
 
 ### 3.2 Tab Orbitas
@@ -231,7 +256,7 @@ Cuando un bloque depende de datos aun no implementados (ver §6), el diseno debe
 | **Intereses del perfil** | `getUserInterests(userId)` | **PENDIENTE — NUEVO** (onboarding solo escribe en `user_interests`) |
 | **Bio por Orbita** | columna nueva en `community_members` + `updateMembershipBio` | **PENDIENTE — NUEVO** (requiere migracion + tipo + demo) |
 
-> Orden de trabajo acordado: **UI primero con los datos que ya existen** (banner, orbitas, publicaciones, tabs, stats parciales), y cablear los 4 pendientes en una segunda tanda. El diseno debe contemplar el estado intermedio: seguidores/siguiendo e intereses pueden mostrarse como placeholder/empty hasta que lleguen los servicios.
+> Orden de trabajo acordado: **diseno y UI sobre los datos que ya existen** (banner, orbitas, publicaciones, tabs, stats de Orbitas/Publicaciones, acciones), y cablear los 4 pendientes en una segunda tanda. **El diseno NO debe apoyarse en los 4 pendientes** (ver §0.6): nada de heroes de seguidores/siguiendo, secciones de intereses pobladas ni editor de bio por-Orbita. Si los quieres prever, que sea como V2, no como pieza del frame principal.
 
 ---
 
@@ -263,14 +288,15 @@ Tono: conversacional, ligero, ligeramente alien. Evita "feed/timeline". Usa "Orb
 
 ## 8. Decisiones cerradas (no volver a abrir)
 
-- **Una sola columna** (max 860 px). No layout de dos columnas.
-- **Tabs bajo la cabecera**: Publicaciones / Orbitas / Info. Orbitas se oculta en contextual.
+Estas son de **producto/datos**, no de estilo. El layout, la composicion y el color son libres (§0.5–§0.6).
+
 - **Ajustes fuera del perfil** (vive en sidebar/topbar). En propio solo `Editar perfil`.
-- **Acciones destructivas/secundarias (Bloquear, Reportar) colapsadas** en `•••` en perfil ajeno.
-- **Bio por Orbita** existe en modo contextual; es la unica edicion permitida desde el perfil.
+- **Acciones destructivas/secundarias (Bloquear, Reportar) colapsadas** en perfil ajeno (en un `•••` o equivalente).
+- **El contenido se reparte por secciones/tabs**; el contenido de Orbitas no aparece en modo contextual (es redundante). La *forma* de esa navegacion es libre.
+- **Stats reales hoy = Orbitas + Publicaciones**; seguidores/siguiendo e intereses son V2 (§0.6) y no anclan el diseno.
 - **Stats no navegan** a listas en esta version.
 - **Sentence case** en todo el copy.
-- **Dark mode primario**.
+- **Dark mode primario** con atmosfera cosmica continua.
 
 ---
 
@@ -284,7 +310,7 @@ Tono: conversacional, ligero, ligeramente alien. Evita "feed/timeline". Usa "Orb
 6. **Sentence case siempre**.
 7. **Reutiliza componentes** del sistema (Button, Avatar, Badge, tabs tipo pill, tarjetas de post y de Orbita) antes de inventar.
 8. **Spacing en multiplos de 4 u 8**.
-9. **No tomes decisiones de backend**: para los datos pendientes (§6) pinta placeholder/empty, no inventes el endpoint.
+9. **No tomes decisiones de backend ni te apoyes en datos pendientes** (§0.6): no disenes la pantalla alrededor de seguidores/siguiendo, intereses o bio por-Orbita. Son V2.
 10. **Avatares siempre circulares**.
 
 ---

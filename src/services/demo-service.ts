@@ -340,6 +340,8 @@ const posts: Post[] = [
   },
 ];
 
+// El Eco es una unica interaccion: el cliente solo escribe "inspire". Los otros
+// tipos siguen permitidos en el schema por compatibilidad, pero no se siembran.
 const reactions: Array<{
   post_id: string;
   user_id: string;
@@ -355,19 +357,19 @@ const reactions: Array<{
   {
     post_id: posts[0]!.id,
     user_id: profiles[2]!.id,
-    reaction: "support",
+    reaction: "inspire",
     created_at: now(),
   },
   {
     post_id: posts[1]!.id,
     user_id: profiles[0]!.id,
-    reaction: "curious",
+    reaction: "inspire",
     created_at: now(),
   },
   {
     post_id: posts[2]!.id,
     user_id: profiles[0]!.id,
-    reaction: "relate",
+    reaction: "inspire",
     created_at: now(),
   },
 ];

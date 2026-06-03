@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
+import { Image } from "expo-image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { Camera, Save } from "lucide-react-native";
+import { Camera, Image as ImageIcon, Save, Trash2 } from "lucide-react-native";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Button } from "../../../components/ui/Button";
 import { TextInput } from "../../../components/ui/TextInput";
@@ -21,6 +22,7 @@ export function EditProfileScreen() {
   const auth = useAuth();
   const updateProfile = useUpdateProfileMutation(auth.session?.user.id);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBg, setUploadingBg] = useState(false);
   const form = useForm<ProfileInput>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -33,6 +35,7 @@ export function EditProfileScreen() {
   });
 
   const avatarUrl = form.watch("avatarUrl");
+  const bannerUrl = form.watch("bannerUrl");
   const displayName = form.watch("displayName");
 
   useEffect(() => {
@@ -74,6 +77,33 @@ export function EditProfileScreen() {
     }
   }
 
+  async function handlePickBackground() {
+    try {
+      if (!auth.session?.user.id) {
+        return;
+      }
+
+      setUploadingBg(true);
+      const asset = await pickImage({ aspect: [9, 16] });
+
+      if (!asset?.base64) {
+        return;
+      }
+
+      const url = await uploadBase64Image({
+        bucket: "banners",
+        path: `${auth.session.user.id}/background.jpg`,
+        base64: asset.base64,
+        contentType: asset.mimeType ?? "image/jpeg",
+      });
+      form.setValue("bannerUrl", url, { shouldValidate: true });
+    } catch (error) {
+      Alert.alert("No se pudo subir", getErrorMessage(error));
+    } finally {
+      setUploadingBg(false);
+    }
+  }
+
   async function handleSubmit(input: ProfileInput) {
     try {
       await updateProfile.mutateAsync(input);
@@ -106,6 +136,54 @@ export function EditProfileScreen() {
             loading={uploading}
             onPress={handlePickAvatar}
           />
+        </View>
+
+        <View style={styles.bgSection}>
+          <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>
+            Fondo del perfil
+          </Text>
+          <Text style={[styles.sectionHint, { color: theme.colors.textMuted }]}>
+            La imagen que elijas se aplica como fondo de tu perfil. Si no eliges
+            ninguna, se usa el fondo cósmico por defecto.
+          </Text>
+          <View
+            style={[
+              styles.bgPreview,
+              { borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+            ]}
+          >
+            {bannerUrl ? (
+              <Image
+                source={{ uri: bannerUrl }}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={styles.bgEmpty}>
+                <ImageIcon size={24} color={theme.colors.textFaint} />
+                <Text style={[styles.bgEmptyText, { color: theme.colors.textFaint }]}>
+                  Sin fondo · se usa el cósmico
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.bgActions}>
+            <Button
+              title={bannerUrl ? "Cambiar fondo" : "Elegir fondo"}
+              variant="secondary"
+              icon={<ImageIcon size={18} color={theme.colors.text} />}
+              loading={uploadingBg}
+              onPress={handlePickBackground}
+            />
+            {bannerUrl ? (
+              <Button
+                title="Quitar"
+                variant="ghost"
+                icon={<Trash2 size={18} color={theme.colors.text} />}
+                onPress={() => form.setValue("bannerUrl", null, { shouldValidate: true })}
+              />
+            ) : null}
+          </View>
         </View>
         <Controller
           control={form.control}
@@ -183,6 +261,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+  },
+  bgSection: {
+    gap: 8,
+  },
+  sectionLabel: {
+    fontSize: typography.h3,
+    fontWeight: "800",
+  },
+  sectionHint: {
+    fontSize: typography.small,
+    lineHeight: 18,
+  },
+  bgPreview: {
+    height: 120,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+    marginTop: 4,
+  },
+  bgEmpty: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  bgEmptyText: {
+    fontSize: typography.small,
+    fontWeight: "600",
+  },
+  bgActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
   },
   bioInput: {
     minHeight: 92,

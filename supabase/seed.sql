@@ -87,12 +87,14 @@ on conflict (id) do update set
   body = excluded.body,
   status = excluded.status;
 
+-- El Eco es una unica interaccion: solo se siembra "inspire". El schema permite
+-- los otros tipos por compatibilidad, pero el cliente ya no los escribe.
 insert into public.post_reactions (post_id, user_id, reaction)
 values
   ('cccccccc-0000-4000-8000-000000000001', '22222222-2222-4222-8222-222222222222', 'inspire'),
-  ('cccccccc-0000-4000-8000-000000000001', '33333333-3333-4333-8333-333333333333', 'support'),
-  ('cccccccc-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', 'curious'),
-  ('cccccccc-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', 'relate')
+  ('cccccccc-0000-4000-8000-000000000001', '33333333-3333-4333-8333-333333333333', 'inspire'),
+  ('cccccccc-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', 'inspire'),
+  ('cccccccc-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', 'inspire')
 on conflict do nothing;
 
 insert into public.comments (id, post_id, author_id, body, status)

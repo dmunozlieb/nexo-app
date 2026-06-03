@@ -43,6 +43,7 @@ export function HomeFeedScreen() {
   const auth = useAuth();
   const theme = useTheme();
   const { width } = useWindowDimensions();
+  const sidePad = width >= 720 ? 36 : 18;
   const [selected, setSelected] = useState<{
     community: CommunityWithMeta;
     colors: PlanetColors;
@@ -135,7 +136,7 @@ export function HomeFeedScreen() {
     return (
       <View style={styles.root}>
         <CosmicBackground source={HOME_BACKGROUND} />
-        <ScreenContainer contentStyle={styles.screen}>
+        <ScreenContainer contentStyle={[styles.screen, { paddingHorizontal: sidePad }]}>
           <View style={styles.desktopLayout}>
             {/* Stage: header + mapa */}
             <View style={styles.stagePane}>
@@ -401,8 +402,10 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   screen: {
-    maxWidth: "100%",
-    paddingHorizontal: 0,
+    // Mismo tope de contenido que Discover y Profile (el fondo cosmico sigue a
+    // pantalla completa por detras; solo se acota el contenido, centrado). El
+    // padding horizontal lo aporta el inline `sidePad` (responsive).
+    maxWidth: 1360,
     paddingBottom: 0,
   },
 

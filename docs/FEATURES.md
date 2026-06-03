@@ -128,7 +128,7 @@ Implementado:
 - Tipos de post: debate, ayuda, fanart, encuesta, historia, recomendacion, evento.
 - Detalle de post.
 - Comentarios y replies basicos.
-- Reacciones/Ecos: inspirar, me pasa, curiosidad, apoyo.
+- Eco: una unica reaccion por post (boton "Eco" que se alterna). El cliente escribe `inspire`; la migracion `009` dejo el schema `post_reactions` admitiendo solo ese valor.
 - Guardar/desguardar post.
 - Reportar posts.
 - Feed por comunidad.

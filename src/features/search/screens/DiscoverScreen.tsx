@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import { Radio, Star, TrendingUp } from "lucide-react-native";
 import { CommunityCard } from "../../../components/content/CommunityCard";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
-import { CosmicBackground } from "../../../components/ui/CosmicBackground";
 import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
@@ -40,6 +39,7 @@ const CATEGORIES = [
 export function DiscoverScreen() {
   const theme = useTheme();
   const { width } = useWindowDimensions();
+  const sidePad = width >= 720 ? 36 : 18;
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string | undefined>();
   const debouncedQuery = useDebouncedValue(query, 280);
@@ -226,9 +226,8 @@ export function DiscoverScreen() {
   }
 
   return (
-    <View style={styles.root}>
-      <CosmicBackground />
-      <ScreenContainer contentStyle={styles.screen}>
+    <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
+      <ScreenContainer contentStyle={[styles.screen, { paddingHorizontal: sidePad }]}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scroll}
