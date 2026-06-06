@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { ProfileScreen } from "../../src/features/profile/screens/ProfileScreen";
 
 export default function ProfileByIdRoute() {
@@ -6,5 +6,17 @@ export default function ProfileByIdRoute() {
     id: string;
     communityId?: string;
   }>();
-  return <ProfileScreen profileId={id} communityId={communityId} />;
+  return (
+    <>
+      {/* Header flotante: la flecha atras se superpone al banner inmersivo en
+          vez de una banda oscura propia. Solo en el perfil. */}
+      <Stack.Screen
+        options={{
+          headerTransparent: true,
+          headerStyle: { backgroundColor: "transparent" },
+        }}
+      />
+      <ProfileScreen profileId={id} communityId={communityId} />
+    </>
+  );
 }

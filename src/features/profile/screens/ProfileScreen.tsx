@@ -1190,7 +1190,7 @@ const styles = StyleSheet.create({
     gap: 28,
   },
   leftCol: {
-    width: 400,
+    width: 480,
     flexShrink: 0,
   },
   rightCol: {

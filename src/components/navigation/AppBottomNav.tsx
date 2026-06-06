@@ -1,7 +1,4 @@
 import { StyleSheet, View } from "react-native";
-import { BlurView } from "expo-blur";
-import { radius } from "../../theme/tokens";
-import { useTheme } from "../../theme/useTheme";
 import { CreateActionButton } from "./CreateActionButton";
 import { NavItem, type NavItemConfig } from "./NavItem";
 
@@ -18,7 +15,6 @@ export function AppBottomNav({
   bottomInset,
   onSelect,
 }: AppBottomNavProps) {
-  const theme = useTheme();
   const createItem = items.find((item) => item.create);
   const regularItems = items.filter((item) => !item.create);
   const leadingItems = regularItems.slice(0, 2);
@@ -29,50 +25,34 @@ export function AppBottomNav({
       pointerEvents="box-none"
       style={[styles.root, { paddingBottom: Math.max(bottomInset, 8) }]}
     >
-      <View
-        style={[
-          styles.shell,
-          {
-            borderColor: theme.colors.border,
-            shadowColor: theme.colors.secondary,
-          },
-        ]}
-      >
-        <BlurView
-          intensity={82}
-          tint="dark"
-          blurMethod="dimezisBlurViewSdk31Plus"
-          style={styles.blur}
-        >
-          <View style={styles.tint} />
-          <View style={styles.row}>
-            {leadingItems.map((item) => (
-              <NavItem
-                key={item.routeName}
-                item={item}
-                layout="bottom"
-                active={activeRouteName === item.routeName}
-                onPress={() => onSelect(item)}
-              />
-            ))}
-            {createItem ? (
-              <CreateActionButton
-                layout="bottom"
-                active={activeRouteName === createItem.routeName}
-                onPress={() => onSelect(createItem)}
-              />
-            ) : null}
-            {trailingItems.map((item) => (
-              <NavItem
-                key={item.routeName}
-                item={item}
-                layout="bottom"
-                active={activeRouteName === item.routeName}
-                onPress={() => onSelect(item)}
-              />
-            ))}
-          </View>
-        </BlurView>
+      <View style={styles.shell}>
+        <View style={styles.row}>
+          {leadingItems.map((item) => (
+            <NavItem
+              key={item.routeName}
+              item={item}
+              layout="bottom"
+              active={activeRouteName === item.routeName}
+              onPress={() => onSelect(item)}
+            />
+          ))}
+          {createItem ? (
+            <CreateActionButton
+              layout="bottom"
+              active={activeRouteName === createItem.routeName}
+              onPress={() => onSelect(createItem)}
+            />
+          ) : null}
+          {trailingItems.map((item) => (
+            <NavItem
+              key={item.routeName}
+              item={item}
+              layout="bottom"
+              active={activeRouteName === item.routeName}
+              onPress={() => onSelect(item)}
+            />
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -95,26 +75,7 @@ const styles = StyleSheet.create({
     // ocupando el ancho disponible.
     maxWidth: 480,
     minHeight: 68,
-    borderWidth: 1,
-    borderRadius: 28,
-    overflow: "hidden",
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 10,
-  },
-  blur: {
-    minHeight: 68,
     justifyContent: "center",
-  },
-  tint: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "rgba(7,11,26,0.76)",
-    borderRadius: radius.pill,
   },
   row: {
     minHeight: 68,
