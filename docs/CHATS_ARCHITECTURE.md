@@ -578,6 +578,7 @@ Estas no son P0 pero las menciono para que esta IA no las invente sin alinear pr
 006_chats_v2.sql                   PENDIENTE de aplicar
 007_chats_v2_policies.sql          PENDIENTE de aplicar (sin esto da 403 al crear chats)
 008_create_chat_rpc.sql            PENDIENTE de aplicar (sin esto createChat falla — el cliente la invoca)
+011_list_user_conversations.sql    PENDIENTE de aplicar (aplica despues de 010; RPC para previews con last_message, unread_count y member_count reales)
 ```
 
 Orden de aplicacion en el SQL Editor de Supabase: 005 → 006 → 007 → 008.
