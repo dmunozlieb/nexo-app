@@ -283,8 +283,6 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
         full
         onChange={setTab}
       />
-    ) : contextual ? (
-      <ContextChip accent={accent} label="Posts en esta Orbita" />
     ) : null;
 
   const content = (
@@ -939,20 +937,6 @@ function SegmentedTabs({
   );
 }
 
-function ContextChip({ accent, label }: { accent: AccentPair; label: string }) {
-  return (
-    <View
-      style={[
-        styles.contextChip,
-        { backgroundColor: `${accent[0]}1F`, borderColor: `${accent[0]}66` },
-      ]}
-    >
-      <View style={[styles.contextDot, { backgroundColor: accent[0] }]} />
-      <Text style={[styles.contextChipText, { color: accent[0] }]}>{label}</Text>
-    </View>
-  );
-}
-
 /* ──────────────────────────── Contenido por tab ──────────────────────────── */
 
 type PostsTabProps = {
@@ -1438,27 +1422,6 @@ const styles = StyleSheet.create({
   segCountText: {
     fontSize: 11,
     fontWeight: "800",
-  },
-
-  // Context chip (contextual sin tabs)
-  contextChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    alignSelf: "center",
-    paddingVertical: 9,
-    paddingHorizontal: 16,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
-  contextDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  contextChipText: {
-    fontSize: 14,
-    fontWeight: "700",
   },
 
   // Content
