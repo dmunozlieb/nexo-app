@@ -144,6 +144,9 @@ export function useMessageSubscription(conversationId?: string) {
           return [...current, message];
         },
       );
+      void queryClient.invalidateQueries({
+        queryKey: ["message-reactions", conversationId],
+      });
     });
 
     return () => {
