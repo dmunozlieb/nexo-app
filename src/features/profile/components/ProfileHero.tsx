@@ -67,8 +67,8 @@ export function ProfileHero({
 
       {/* Velo: arriba transparente (banner vivo), oscurece tras el texto y funde a la card. */}
       <LinearGradient
-        colors={["transparent", "rgba(6,7,18,0.18)", "rgba(6,7,18,0.55)", CARD_BG]}
-        locations={[0, 0.32, 0.72, 1]}
+        colors={["transparent", "transparent", "rgba(6,7,18,0.5)", CARD_BG]}
+        locations={[0, 0.55, 0.9, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
