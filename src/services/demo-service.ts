@@ -14,6 +14,7 @@ import type {
   ConversationPreview,
   Interest,
   Message,
+  MessageReaction,
   MessageWithMeta,
   Post,
   PostWithMeta,
@@ -505,6 +506,7 @@ const messages: Message[] = [
 ];
 
 const reports: Report[] = [];
+const messageReactions: MessageReaction[] = [];
 
 function notifyAuth(session: Session | null) {
   for (const listener of authListeners) {
@@ -1353,6 +1355,41 @@ export async function demoListChatAuditLog(
   _conversationId: string,
 ): Promise<ChatAuditEntry[]> {
   return [];
+}
+
+export async function demoListMessageReactions(
+  messageIds: string[],
+): Promise<MessageReaction[]> {
+  if (messageIds.length === 0) return [];
+  return messageReactions.filter((r) => messageIds.includes(r.message_id));
+}
+
+export async function demoReactToMessage(
+  messageId: string,
+  userId: string,
+  emoji: string,
+): Promise<void> {
+  const exists = messageReactions.some(
+    (r) => r.message_id === messageId && r.user_id === userId && r.emoji === emoji,
+  );
+  if (exists) return;
+  messageReactions.push({
+    message_id: messageId,
+    user_id: userId,
+    emoji,
+    created_at: now(),
+  });
+}
+
+export async function demoUnreactToMessage(
+  messageId: string,
+  userId: string,
+  emoji: string,
+): Promise<void> {
+  const index = messageReactions.findIndex(
+    (r) => r.message_id === messageId && r.user_id === userId && r.emoji === emoji,
+  );
+  if (index >= 0) messageReactions.splice(index, 1);
 }
 
 export async function demoGetProfileById(profileId: string) {

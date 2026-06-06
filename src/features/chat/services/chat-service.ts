@@ -6,10 +6,13 @@ import {
   demoGetChatDetails,
   demoListConversations,
   demoListChatMembers,
+  demoListMessageReactions,
   demoListMessages,
   demoListPinnedMessages,
+  demoReactToMessage,
   demoSendMessage,
   demoSubscribeToMessages,
+  demoUnreactToMessage,
 } from "../../../services/demo-service";
 import type {
   ChatAuditEntry,
@@ -644,7 +647,7 @@ export async function unpinMessage(
 export async function listMessageReactions(
   messageIds: string[],
 ): Promise<MessageReaction[]> {
-  ensureNotDemo();
+  if (env.demoMode) { return demoListMessageReactions(messageIds); }
 
   if (messageIds.length === 0) {
     return [];
@@ -667,7 +670,7 @@ export async function reactToMessage(
   userId: string,
   emoji: string,
 ) {
-  ensureNotDemo();
+  if (env.demoMode) { return demoReactToMessage(messageId, userId, emoji); }
 
   const { error } = await supabase
     .from("message_reactions")
@@ -683,7 +686,7 @@ export async function unreactToMessage(
   userId: string,
   emoji: string,
 ) {
-  ensureNotDemo();
+  if (env.demoMode) { return demoUnreactToMessage(messageId, userId, emoji); }
 
   const { error } = await supabase
     .from("message_reactions")
