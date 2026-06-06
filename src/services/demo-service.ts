@@ -410,6 +410,7 @@ function buildDemoConversation(
     description: null,
     avatar_url: null,
     banner_url: null,
+    background_url: null,
     created_by: null,
     visibility: "public",
     slow_mode_seconds: 0,

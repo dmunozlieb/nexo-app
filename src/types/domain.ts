@@ -129,6 +129,7 @@ export type Conversation = {
   description: string | null;
   avatar_url: string | null;
   banner_url: string | null;
+  background_url: string | null;
   created_by: string | null;
   visibility: ChatVisibility;
   slow_mode_seconds: number;
