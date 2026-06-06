@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Animated, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Animated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -154,8 +162,13 @@ export function EditProfileScreen() {
     }
   }
 
+  const { width } = useWindowDimensions();
+  // Mismo marco que /home, /discover y /profile: ancho de pagina 1360 con
+  // padding lateral responsive. El formulario va en una columna centrada legible.
+  const sidePad = width >= 720 ? 36 : 18;
+
   return (
-    <ScreenContainer>
+    <ScreenContainer contentStyle={[styles.screen, { paddingHorizontal: sidePad }]}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -308,7 +321,17 @@ export function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    width: "100%",
+    maxWidth: 1360,
+    alignSelf: "center",
+    flex: 1,
+    paddingBottom: 16,
+  },
   content: {
+    width: "100%",
+    maxWidth: 620,
+    alignSelf: "center",
     gap: 40,
     paddingTop: 16,
     paddingBottom: 48,
