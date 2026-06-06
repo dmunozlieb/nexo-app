@@ -67,8 +67,8 @@ export function ProfileHero({
 
       {/* Velo: arriba transparente (banner vivo), oscurece tras el texto y funde a la card. */}
       <LinearGradient
-        colors={["transparent", "transparent", "rgba(6,7,18,0.45)", CARD_BG]}
-        locations={[0, 0.4, 0.78, 1]}
+        colors={["transparent", "rgba(6,7,18,0.18)", "rgba(6,7,18,0.55)", CARD_BG]}
+        locations={[0, 0.32, 0.72, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -160,10 +160,19 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.5,
     marginTop: 12,
+    textAlign: "center",
+    // Sombra para que resalte sobre cualquier banner (claro u oscuro).
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 12,
   },
   handle: {
     fontSize: typography.body,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 2,
+    textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.55)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 10,
   },
 });
