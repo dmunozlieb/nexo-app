@@ -61,9 +61,9 @@ Reutiliza el `listMessageReactions(messageIds)` existente; la agregación se hac
 
 ---
 
-## 3. `last_message` + `unread_count` reales — migración `009_list_user_conversations.sql`
+## 3. `last_message` + `unread_count` reales — migración `011_list_user_conversations.sql`
 
-**Migración (nueva, ≥009):** RPC `public.list_user_conversations(input_user_id uuid)` `SECURITY DEFINER`, `set search_path = public`, que por cada membership no `banned` del usuario devuelve el `conversation` + `community` + `last_message` (jsonb del último `messages.status='sent'`) + `unread_count` (mensajes con `created_at > coalesce(last_read_at, '-infinity')`) + `member_count` (miembros con `role <> 'banned'`) + `role`.
+**Migración (nueva, 011):** RPC `public.list_user_conversations(input_user_id uuid)` `SECURITY DEFINER`, `set search_path = public`, que por cada membership no `banned` del usuario devuelve el `conversation` + `community` + `last_message` (jsonb del último `messages.status='sent'`) + `unread_count` (mensajes con `created_at > coalesce(last_read_at, '-infinity')`) + `member_count` (miembros con `role <> 'banned'`) + `role`.
 - Validar `input_user_id = auth.uid()` para no filtrar conversaciones ajenas.
 
 **Cliente:**
@@ -96,7 +96,7 @@ Sigue las convenciones visuales existentes (NebulaBackdrop, tokens, breakpoints;
 
 ---
 
-## 5. Fondo del chat (wallpaper) — migración `010_chat_background.sql`
+## 5. Fondo del chat (wallpaper) — migración `012_chat_background.sql`
 
 **Modelo:** columna nueva `background_url text` en `conversations` (separada del `banner_url` de identidad). Guarda o un id de preset (`preset:<id>`) o una URL de imagen subida. Compartido a nivel de conversación (lo que cambia uno lo ve el otro).
 
@@ -127,8 +127,8 @@ Sigue las convenciones visuales existentes (NebulaBackdrop, tokens, breakpoints;
 
 | Archivo | Contenido |
 |---|---|
-| `009_list_user_conversations.sql` | RPC `list_user_conversations` (last_message + unread_count + member_count + role). |
-| `010_chat_background.sql` | Columna `conversations.background_url` + RPC `set_chat_background` (permisos community vs direct). |
+| `011_list_user_conversations.sql` | RPC `list_user_conversations` (last_message + unread_count + member_count + role). |
+| `012_chat_background.sql` | Columna `conversations.background_url` + RPC `set_chat_background` (permisos community vs direct). |
 
 No editar migraciones existentes. Documentar orden de aplicación en `CHATS_ARCHITECTURE.md` §10 al cerrar.
 
@@ -145,7 +145,7 @@ Cualquier campo nuevo (`background_url`) debe quedar coherente en los tres sitio
 - `npm run typecheck` (gate principal; `npm run lint` está roto en este entorno).
 - `npm test`.
 - Prueba visual en demo (app en `:8081`): abrir sala, reaccionar, cambiar fondo, abrir ajustes, ver unread en la lista.
-- Si se prueba en real: aplicar 009 y 010 en orden tras 006–008.
+- Si se prueba en real: aplicar 011 y 012 en orden tras 006–010.
 
 ---
 
@@ -169,3 +169,12 @@ src/features/chat/screens/ChatListScreen.tsx              (consumir unread/last_
 app/chat/[id]/index.tsx                                    (reestructura desde app/chat/[id].tsx)
 app/chat/[id]/settings.tsx                                 (nuevo)
 ```
+
+---
+
+## 10. Decisiones aparcadas (NO entran en esta rama)
+
+Surgieron al revisar la lista de chats pero quedan abiertas a propósito; **esta rama no las resuelve**.
+
+- **Modelo de DM (general vs por Órbita) + identidad por Órbita.** Hoy el backend hace **un DM general por pareja** (`get_or_create_direct_conversation`, sin `community_id`). Antes de decidir si los DM se separan por Órbita hay que resolver una pregunta de producto mayor: **¿un usuario tiene un perfil único global o un perfil/persona distinto por Órbita?** Si la identidad es por Órbita, un DM "general" no sabe a qué persona apunta. Decisión bloqueada hasta cerrar el modelo de identidad.
+- **Display del DM (nombre + foto del otro en vez de "Mensaje directo / MD").** Es un bug real visible en la lista, pero **qué** nombre/foto mostrar depende directamente de la decisión de identidad anterior. Se aparca con ella; cuando se resuelva, se arregla en la misma tanda (resolver el perfil del otro participante en `list_user_conversations` + demo + `ConversationPreview.direct_peer` + `ChatRow`/`ChatHeader`).
