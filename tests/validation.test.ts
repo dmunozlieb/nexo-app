@@ -5,6 +5,7 @@ import {
   authRegisterSchema,
   commentSchema,
   postFormSchema,
+  profileSchema,
   usernameSchema,
 } from "../src/utils/validation";
 import { sanitizePlainText } from "../src/utils/sanitize";
@@ -66,5 +67,84 @@ describe("validaciones de Nexo", () => {
     expect(sanitizePlainText(" <script>hola</script> ")).toBe(
       "scripthola/script",
     );
+  });
+
+  it("acepta una bio larga de hasta 2000 caracteres", () => {
+    const parsed = profileSchema.parse({
+      displayName: "Luna",
+      username: "luna_123",
+      bio: "x".repeat(2000),
+      accentColor: null,
+      links: [],
+    });
+    expect(parsed.bio?.length).toBe(2000);
+  });
+
+  it("rechaza una bio de mas de 2000 caracteres", () => {
+    expect(() =>
+      profileSchema.parse({
+        displayName: "Luna",
+        username: "luna_123",
+        bio: "x".repeat(2001),
+        accentColor: null,
+        links: [],
+      }),
+    ).toThrow();
+  });
+
+  it("acepta accent color hex valido y rechaza el invalido", () => {
+    expect(
+      profileSchema.parse({
+        displayName: "Luna",
+        username: "luna_123",
+        bio: null,
+        accentColor: "#A1B2C3",
+        links: [],
+      }).accentColor,
+    ).toBe("#A1B2C3");
+
+    expect(() =>
+      profileSchema.parse({
+        displayName: "Luna",
+        username: "luna_123",
+        bio: null,
+        accentColor: "rojo",
+        links: [],
+      }),
+    ).toThrow();
+  });
+
+  it("acepta links https con label y rechaza http", () => {
+    const parsed = profileSchema.parse({
+      displayName: "Luna",
+      username: "luna_123",
+      bio: null,
+      accentColor: null,
+      links: [{ label: "Mi web", url: "https://luna.example" }],
+    });
+    expect(parsed.links?.[0]?.url).toBe("https://luna.example");
+
+    expect(() =>
+      profileSchema.parse({
+        displayName: "Luna",
+        username: "luna_123",
+        bio: null,
+        accentColor: null,
+        links: [{ label: "Inseguro", url: "http://luna.example" }],
+      }),
+    ).toThrow();
+  });
+
+  it("rechaza mas de 5 links", () => {
+    const link = { label: "x", url: "https://a.example" };
+    expect(() =>
+      profileSchema.parse({
+        displayName: "Luna",
+        username: "luna_123",
+        bio: null,
+        accentColor: null,
+        links: [link, link, link, link, link, link],
+      }),
+    ).toThrow();
   });
 });

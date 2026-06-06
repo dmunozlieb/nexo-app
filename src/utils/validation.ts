@@ -52,16 +52,42 @@ export const onboardingSchema = z.object({
   avatarUrl: z.string().url().optional().nullable(),
 });
 
+export const accentColorSchema = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, "Usa un color hex valido (#RRGGBB).");
+
+const profileLinkSchema = z.object({
+  label: z
+    .string()
+    .trim()
+    .min(1, "La etiqueta no puede estar vacia.")
+    .max(40, "La etiqueta no puede superar 40 caracteres."),
+  url: z
+    .string()
+    .trim()
+    .max(200, "El enlace no puede superar 200 caracteres.")
+    .url("Introduce un enlace valido.")
+    .refine((value) => value.startsWith("https://"), "Solo se permiten enlaces https seguros."),
+});
+
+export const linksSchema = z
+  .array(profileLinkSchema)
+  .max(5, "Maximo 5 enlaces.");
+
 export const profileSchema = z.object({
   displayName: displayNameSchema,
   username: usernameSchema,
+  // El edit perfil permite una bio larga (2000). El onboarding mantiene 160 a proposito.
   bio: z
     .string()
     .trim()
-    .max(160, "La bio no puede superar 160 caracteres.")
+    .max(2000, "La bio no puede superar 2000 caracteres.")
     .nullable(),
   avatarUrl: z.string().url().nullable().optional(),
   bannerUrl: z.string().url().nullable().optional(),
+  accentColor: accentColorSchema.nullable().optional(),
+  links: linksSchema.optional(),
 });
 
 export const postFormSchema = z.object({
@@ -143,6 +169,7 @@ export type AuthRegisterInput = z.infer<typeof authRegisterSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
 export type ProfileInput = z.infer<typeof profileSchema>;
+export type ProfileLinkInput = z.infer<typeof profileLinkSchema>;
 export type PostFormInput = z.infer<typeof postFormSchema>;
 export type CreateCommunityInput = z.infer<typeof createCommunitySchema>;
 export type CommentInput = z.infer<typeof commentSchema>;
