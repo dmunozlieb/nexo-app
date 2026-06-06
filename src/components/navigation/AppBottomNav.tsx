@@ -74,11 +74,11 @@ const styles = StyleSheet.create({
     // en vez de estirar los iconos de borde a borde. En movil estrecho sigue
     // ocupando el ancho disponible.
     maxWidth: 480,
-    minHeight: 68,
+    minHeight: 46,
     justifyContent: "center",
   },
   row: {
-    minHeight: 68,
+    minHeight: 46,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",

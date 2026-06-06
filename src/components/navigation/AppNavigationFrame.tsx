@@ -19,7 +19,7 @@ import { AppTopBar, APP_TOP_BAR_HEIGHT } from "./AppTopBar";
 import type { NavItemConfig } from "./NavItem";
 
 const DESKTOP_WIDTH = 980;
-const MOBILE_NAV_SPACE = 90;
+const MOBILE_NAV_SPACE = 72;
 
 const NAV_ITEMS: NavItemConfig[] = [
   {

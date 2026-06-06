@@ -105,7 +105,7 @@ export function CreateActionButton({
 const styles = StyleSheet.create({
   bottomButton: {
     width: 52,
-    minHeight: 52,
+    minHeight: 46,
     alignItems: "center",
     justifyContent: "center",
   },

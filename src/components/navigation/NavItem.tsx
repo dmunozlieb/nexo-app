@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   bottom: {
     width: 56,
-    minHeight: 58,
+    minHeight: 46,
     borderRadius: radius.lg,
     alignItems: "center",
     justifyContent: "center",
