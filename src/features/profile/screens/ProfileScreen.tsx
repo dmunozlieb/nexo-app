@@ -1184,7 +1184,7 @@ const styles = StyleSheet.create({
   },
   twoCol: {
     width: "100%",
-    maxWidth: 1360,
+    maxWidth: 1100,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 28,
