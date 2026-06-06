@@ -26,12 +26,15 @@ import { useCreateReportMutation } from "../../moderation/hooks/useModeration";
 import {
   useChatDetails,
   useMarkReadMutation,
+  useMessageReactions,
   useMessageSubscription,
   useMessages,
   usePinMessageMutation,
+  useReactMutation,
   useSendMessageMutation,
   useSetMutedMutation,
   useUnpinMessageMutation,
+  useUnreactMutation,
 } from "../hooks/useChat";
 import { ChatHeader } from "../components/ChatHeader";
 import { ChatInfoPanel } from "../components/ChatInfoPanel";
@@ -60,6 +63,27 @@ export function ChatRoomScreen() {
   const markRead = useMarkReadMutation(userId);
   const toggleMute = useSetMutedMutation(userId);
   const report = useCreateReportMutation(userId);
+
+  const messageIds = useMemo(
+    () => (messages.data ?? []).map((m) => m.id),
+    [messages.data],
+  );
+  const reactions = useMessageReactions(conversationId, messageIds, userId);
+  const react = useReactMutation(conversationId, userId);
+  const unreact = useUnreactMutation(conversationId, userId);
+
+  function handleToggleReaction(
+    messageId: string,
+    emoji: string,
+    reactedByMe: boolean,
+  ) {
+    if (reactedByMe) {
+      unreact.mutate({ messageId, emoji });
+    } else {
+      react.mutate({ messageId, emoji });
+    }
+  }
+
   const [reportMessageId, setReportMessageId] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const listRef = useRef<FlatList<MessageWithSender>>(null);
@@ -212,6 +236,10 @@ export function ChatRoomScreen() {
               }
               onPin={() => handlePin(item.id)}
               onUnpin={() => handleUnpin(item.id)}
+              reactions={reactions.data?.get(item.id) ?? []}
+              onToggleReaction={(emoji, reactedByMe) =>
+                handleToggleReaction(item.id, emoji, reactedByMe)
+              }
             />
           )}
         />

@@ -8,6 +8,9 @@ import { useTheme } from "../../../theme/useTheme";
 import type { ChatRole, Message, Profile } from "../../../types/domain";
 import { formatRelativeDate } from "../../../utils/format";
 import { RoleBadge } from "./RoleBadge";
+import { ReactionPills } from "./ReactionPills";
+import { ReactionPopover } from "./ReactionPopover";
+import type { ReactionSummary } from "../utils/reactions";
 
 export type MessageBubbleProps = {
   message: Message & { sender?: Profile | null };
@@ -18,7 +21,8 @@ export type MessageBubbleProps = {
   onReport?: (() => void) | undefined;
   onPin?: (() => void) | undefined;
   onUnpin?: (() => void) | undefined;
-  onReact?: (() => void) | undefined;
+  reactions?: ReactionSummary[] | undefined;
+  onToggleReaction?: ((emoji: string, reactedByMe: boolean) => void) | undefined;
 };
 
 export function MessageBubble({
@@ -30,10 +34,12 @@ export function MessageBubble({
   onReport,
   onPin,
   onUnpin,
-  onReact,
+  reactions,
+  onToggleReaction,
 }: MessageBubbleProps) {
   const theme = useTheme();
   const [hovered, setHovered] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const name =
     message.sender?.display_name ?? message.sender?.username ?? "Usuario";
 
@@ -142,8 +148,11 @@ export function MessageBubble({
                 { borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
               ]}
             >
-              {onReact ? (
-                <ActionButton onPress={onReact} accessibilityLabel="Reaccionar">
+              {onToggleReaction ? (
+                <ActionButton
+                  onPress={() => setPickerOpen((v) => !v)}
+                  accessibilityLabel="Reaccionar"
+                >
                   <Smile size={14} color={theme.colors.textMuted} />
                 </ActionButton>
               ) : null}
@@ -165,6 +174,25 @@ export function MessageBubble({
             </View>
           ) : null}
         </View>
+
+        {pickerOpen && onToggleReaction ? (
+          <ReactionPopover
+            align={own ? "flex-end" : "flex-start"}
+            onPick={(emoji) => {
+              setPickerOpen(false);
+              const existing = (reactions ?? []).find((r) => r.emoji === emoji);
+              onToggleReaction(emoji, existing?.reacted_by_me ?? false);
+            }}
+          />
+        ) : null}
+
+        {reactions && reactions.length > 0 && onToggleReaction ? (
+          <ReactionPills
+            reactions={reactions}
+            align={own ? "flex-end" : "flex-start"}
+            onToggle={onToggleReaction}
+          />
+        ) : null}
 
         {isPinned ? (
           <View style={styles.pinnedRow}>
