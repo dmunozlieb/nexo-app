@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session } from "@supabase/supabase-js";
 import type {
+  ChatAuditEntry,
+  ChatDetails,
   ChatRole,
   Comment,
   CommentWithAuthor,
@@ -8,9 +10,11 @@ import type {
   CommunityMember,
   CommunityWithMeta,
   Conversation,
+  ConversationMemberWithProfile,
   ConversationPreview,
   Interest,
   Message,
+  MessageWithMeta,
   Post,
   PostWithMeta,
   Profile,
@@ -1291,6 +1295,64 @@ export function demoSubscribeToMessages(
       return Promise.resolve();
     },
   };
+}
+
+export async function demoListChatMembers(
+  conversationId: string,
+): Promise<ConversationMemberWithProfile[]> {
+  return conversationMembers
+    .filter((item) => item.conversation_id === conversationId)
+    .map((item) => ({
+      ...item,
+      profile: profiles.find((p) => p.id === item.user_id) ?? null,
+    }));
+}
+
+export async function demoListPinnedMessages(
+  _conversationId: string,
+): Promise<MessageWithMeta[]> {
+  return [];
+}
+
+export async function demoGetChatDetails(
+  conversationId: string,
+  currentUserId: string,
+): Promise<ChatDetails> {
+  const conversation = conversations.find((c) => c.id === conversationId);
+  if (!conversation) {
+    throw new Error("Chat no encontrado");
+  }
+  const members = await demoListChatMembers(conversationId);
+  const current = members.find((m) => m.user_id === currentUserId);
+  return {
+    conversation,
+    members,
+    pinned_messages: [],
+    current_user_role: current?.role ?? null,
+  };
+}
+
+export async function demoUpdateChat(
+  conversationId: string,
+  patch: Partial<Conversation>,
+): Promise<Conversation> {
+  const conversation = conversations.find((c) => c.id === conversationId);
+  if (!conversation) {
+    throw new Error("Chat no encontrado");
+  }
+  Object.assign(conversation, patch, { updated_at: now() });
+  return conversation;
+}
+
+export async function demoDeleteChat(conversationId: string): Promise<void> {
+  const index = conversations.findIndex((c) => c.id === conversationId);
+  if (index >= 0) conversations.splice(index, 1);
+}
+
+export async function demoListChatAuditLog(
+  _conversationId: string,
+): Promise<ChatAuditEntry[]> {
+  return [];
 }
 
 export async function demoGetProfileById(profileId: string) {

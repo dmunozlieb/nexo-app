@@ -3,8 +3,11 @@ import { supabase } from "../../../lib/supabase";
 import {
   demoGetOrCreateDirectConversation,
   demoGetOrCreateCommunityConversation,
+  demoGetChatDetails,
   demoListConversations,
+  demoListChatMembers,
   demoListMessages,
+  demoListPinnedMessages,
   demoSendMessage,
   demoSubscribeToMessages,
 } from "../../../services/demo-service";
@@ -123,7 +126,9 @@ export async function getChatDetails(
   conversationId: string,
   currentUserId: string,
 ): Promise<ChatDetails> {
-  ensureNotDemo();
+  if (env.demoMode) {
+    return demoGetChatDetails(conversationId, currentUserId);
+  }
 
   const [conversation, members, pinned] = await Promise.all([
     getConversation(conversationId),
@@ -282,7 +287,9 @@ export async function deleteChat(conversationId: string) {
 export async function listChatMembers(
   conversationId: string,
 ): Promise<ConversationMemberWithProfile[]> {
-  ensureNotDemo();
+  if (env.demoMode) {
+    return demoListChatMembers(conversationId);
+  }
 
   const { data, error } = await supabase
     .from("conversation_members")
@@ -569,7 +576,9 @@ export function subscribeToMessages(
 export async function listPinnedMessages(
   conversationId: string,
 ): Promise<MessageWithMeta[]> {
-  ensureNotDemo();
+  if (env.demoMode) {
+    return demoListPinnedMessages(conversationId);
+  }
 
   const { data, error } = await supabase
     .from("chat_pinned_messages")
