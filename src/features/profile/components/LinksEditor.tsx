@@ -5,6 +5,8 @@ import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
 import type { ProfileLink } from "../../../types/domain";
 import { hoverTransition, pointerStyle } from "../../../utils/web-style";
+import { BrandIcon } from "./BrandIcon";
+import { linkPresentation } from "../utils/link-presentation";
 
 const MAX_LINKS = 5;
 
@@ -36,12 +38,16 @@ export function LinksEditor({
       {value.map((link, index) => {
         const urlInvalid =
           link.url.trim().length > 0 && !link.url.trim().startsWith("https://");
+        const platform = link.url.trim() ? linkPresentation(link.url).platform : "generic";
         return (
           <View key={`${link.url}-${index}`} style={[styles.item, { borderColor: theme.colors.border }]}>
             <View style={styles.itemHeader}>
-              <Text style={[styles.itemTitle, { color: theme.colors.textMuted }]}>
-                Enlace {index + 1}
-              </Text>
+              <View style={styles.itemTitleRow}>
+                <BrandIcon platform={platform} size={16} />
+                <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
+                  Enlace {index + 1}
+                </Text>
+              </View>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Quitar enlace ${index + 1}`}
@@ -119,6 +125,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  itemTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   itemTitle: {
     fontSize: typography.small,
