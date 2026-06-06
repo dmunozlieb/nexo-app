@@ -5,7 +5,7 @@
 
 export type AccentPair = readonly [string, string];
 
-const ACCENT_PAIRS: AccentPair[] = [
+export const ACCENT_PAIRS: AccentPair[] = [
   ["#8B5CF6", "#FF4FD8"], // violeta -> magenta
   ["#18D7FF", "#4DF0B0"], // cyan -> aurora
   ["#7B5CFF", "#18D7FF"], // violeta -> cyan
