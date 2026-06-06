@@ -70,6 +70,8 @@ import {
 import { getProfileAccent, type AccentPair } from "../utils/profile-accent";
 import { resolveAccent } from "../utils/resolve-accent";
 import { ProfileLinks } from "../components/ProfileLinks";
+import { CosmicBackground } from "../../../components/ui/CosmicBackground";
+import { useStaggerIn } from "../../../hooks/useStaggerIn";
 
 type ProfileScreenProps = {
   profileId?: string;
@@ -162,6 +164,9 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
     id: profile.data?.id ?? viewedId ?? "",
     accent_color: profile.data?.accent_color ?? null,
   });
+  const enterHeader = useStaggerIn(0);
+  const enterNav = useStaggerIn(1);
+  const enterContent = useStaggerIn(2);
 
   function handleReact(post: PostWithMeta, nextReaction: ReactionType) {
     reaction.mutate({ post, reaction: nextReaction });
@@ -324,25 +329,27 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
         {isDesktop ? (
           <View style={styles.twoColOuter}>
             <View style={styles.twoCol}>
-              <View style={styles.leftCol}>{header}</View>
+              <View style={styles.leftCol}>
+                <Animated.View style={enterHeader}>{header}</Animated.View>
+              </View>
               <View style={styles.rightCol}>
-                {nav}
-                {content}
+                <Animated.View style={enterNav}>{nav}</Animated.View>
+                <Animated.View style={enterContent}>{content}</Animated.View>
               </View>
             </View>
           </View>
         ) : isCompact ? (
           <>
-            {header}
-            {nav ? <View style={styles.navMobileWrap}>{nav}</View> : null}
-            {content}
+            <Animated.View style={enterHeader}>{header}</Animated.View>
+            {nav ? <Animated.View style={[styles.navMobileWrap, enterNav]}>{nav}</Animated.View> : null}
+            <Animated.View style={enterContent}>{content}</Animated.View>
           </>
         ) : (
           <View style={styles.wideOuter}>
             <View style={[styles.wideColumn, { maxWidth: columnMaxWidth }]}>
-              {header}
-              {nav ? <View style={styles.navWideWrap}>{nav}</View> : null}
-              {content}
+              <Animated.View style={enterHeader}>{header}</Animated.View>
+              {nav ? <Animated.View style={[styles.navWideWrap, enterNav]}>{nav}</Animated.View> : null}
+              <Animated.View style={enterContent}>{content}</Animated.View>
             </View>
           </View>
         )}
@@ -377,7 +384,9 @@ function ProfileShell({
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       {backgroundUri ? (
         <NebulaBackdrop source={{ uri: backgroundUri }} dim="rgba(6,7,22,0.72)" />
-      ) : null}
+      ) : (
+        <CosmicBackground dim="rgba(6,7,22,0.62)" />
+      )}
       <ScreenContainer scroll contentStyle={[styles.screen, { paddingHorizontal: sidePad }]}>
         {children}
       </ScreenContainer>
@@ -483,7 +492,7 @@ function Identity(props: IdentityProps) {
           </Text>
 
           <View style={[styles.badges, centered ? styles.badgesCentered : null]}>
-            <HeaderBadge label="Perfil público" color={theme.colors.textMuted} />
+            <HeaderBadge label="Perfil público" color={accent[0]} />
             {contextual && role ? <RoleBadge role={role} /> : null}
             {data.is_banned ? (
               <HeaderBadge label="Baneado" color={theme.colors.error} />
@@ -550,7 +559,7 @@ function CollapsibleBio({
       <Text
         style={[
           styles.bio,
-          { color: theme.colors.textMuted },
+          { color: theme.colors.text },
           centered ? styles.bioCentered : null,
         ]}
         numberOfLines={expanded ? undefined : 5}
@@ -585,18 +594,49 @@ function AvatarRing({
   size: number;
   online: boolean;
 }) {
+  const reducedMotion = useReducedMotion();
+  const ringSpinValue = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reducedMotion) {
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(ringSpinValue, {
+        toValue: 1,
+        duration: 6000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [ringSpinValue, reducedMotion]);
+  const ringSpin = ringSpinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
   const theme = useTheme();
   return (
     <View style={styles.avatarRingWrap}>
-      <LinearGradient
-        colors={accent as unknown as readonly [string, string]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      <View
         style={[
           styles.avatarRing,
           { borderRadius: radius.pill, shadowColor: accent[0] },
         ]}
       >
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { borderRadius: radius.pill, overflow: "hidden", transform: reducedMotion ? [] : [{ rotate: ringSpin }] },
+          ]}
+        >
+          <LinearGradient
+            colors={accent as unknown as readonly [string, string]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
         <View
           style={[
             styles.avatarInner,
@@ -631,7 +671,7 @@ function AvatarRing({
             </LinearGradient>
           )}
         </View>
-      </LinearGradient>
+      </View>
       {online ? (
         <View
           style={[
