@@ -31,7 +31,6 @@ import { RoleBadge } from "../../../components/community/RoleBadge";
 import { ScreenContainer } from "../../../components/layout/ScreenContainer";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Button } from "../../../components/ui/Button";
-import { NebulaBackdrop } from "../../../components/ui/NebulaBackdrop";
 import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { LoadingState } from "../../../components/ui/LoadingState";
@@ -70,6 +69,8 @@ import {
 import { getProfileAccent, type AccentPair } from "../utils/profile-accent";
 import { resolveAccent } from "../utils/resolve-accent";
 import { ProfileLinks } from "../components/ProfileLinks";
+import { DerivedBackdrop } from "../components/DerivedBackdrop";
+import { ProfileHero } from "../components/ProfileHero";
 import { CosmicBackground } from "../../../components/ui/CosmicBackground";
 import { useStaggerIn } from "../../../hooks/useStaggerIn";
 
@@ -98,15 +99,6 @@ function onAccentColor(hex: string): string {
   const b = parseInt(h.slice(4, 6), 16);
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return lum > 0.6 ? "#0A0A16" : "#FFFFFF";
-}
-
-function avatarInitials(label: string): string {
-  return (label || "NX")
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 const CARD_BG = "#0D1230";
@@ -383,7 +375,7 @@ function ProfileShell({
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       {backgroundUri ? (
-        <NebulaBackdrop source={{ uri: backgroundUri }} dim="rgba(6,7,22,0.72)" />
+        <DerivedBackdrop source={backgroundUri} />
       ) : (
         <CosmicBackground dim="rgba(6,7,22,0.62)" />
       )}
@@ -454,44 +446,27 @@ function Identity(props: IdentityProps) {
     onEdit,
   } = props;
   const theme = useTheme();
-  const avatarSize = centered ? 104 : 88;
 
   return (
-    <View style={[styles.headerWrap, { paddingTop: avatarSize * 0.5 + 40 }]}>
-      <View style={[styles.card, centered ? styles.cardCentered : null]}>
-        <LinearGradient
-          colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0)"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.cardWash}
-          pointerEvents="none"
-        />
-
+    <View style={styles.headerWrap}>
+      <View style={styles.card}>
         {!isOwn ? (
           <View style={styles.cornerMenu}>
             <MoreMenu onReport={onReport} onBlock={onBlock} />
           </View>
         ) : null}
 
-        <View style={[styles.avatarSlot, { marginTop: -(avatarSize * 0.5) }]}>
-          <AvatarRing
-            uri={data.avatar_url}
-            label={displayName}
-            accent={accent}
-            size={avatarSize}
-            online={!isOwn}
-          />
-        </View>
+        <ProfileHero
+          avatarUrl={data.avatar_url}
+          displayName={displayName}
+          username={data.username}
+          bannerUrl={data.banner_url}
+          accent={accent}
+          online={!isOwn}
+        />
 
-        <View style={centered ? styles.identityCentered : undefined}>
-          <Text style={[styles.name, { color: theme.colors.text }]}>
-            {displayName}
-          </Text>
-          <Text style={[styles.handle, { color: accent[0] }]}>
-            @{data.username}
-          </Text>
-
-          <View style={[styles.badges, centered ? styles.badgesCentered : null]}>
+        <View style={styles.cardBody}>
+          <View style={styles.badges}>
             <HeaderBadge label="Perfil público" color={accent[0]} />
             {contextual && role ? <RoleBadge role={role} /> : null}
             {data.is_banned ? (
@@ -503,37 +478,32 @@ function Identity(props: IdentityProps) {
             <CollapsibleBio bio={data.bio} accent={accent} centered={centered} />
           ) : null}
           <ProfileLinks links={data.links ?? []} accent={accent} />
-        </View>
 
-        <StatsBlock stats={stats} centered={centered} />
+          <StatsBlock stats={stats} centered={centered} />
 
-        <MetaInfo
-          accent={accent}
-          contextual={contextual}
-          role={role}
-          isOwn={isOwn}
-          joinedNexo={data.created_at}
-          joinedCommunity={joinedCommunity}
-          centered={centered}
-        />
-
-        <View
-          style={[
-            styles.actionsSlot,
-            centered ? styles.actionsCentered : null,
-          ]}
-        >
-          <ProfileActions
-            isOwn={isOwn}
+          <MetaInfo
             accent={accent}
-            following={following}
-            followPending={followPending}
-            chatPending={chatPending}
-            stacked={stacked}
-            onToggleFollow={onToggleFollow}
-            onMessage={onMessage}
-            onEdit={onEdit}
+            contextual={contextual}
+            role={role}
+            isOwn={isOwn}
+            joinedNexo={data.created_at}
+            joinedCommunity={joinedCommunity}
+            centered={centered}
           />
+
+          <View style={styles.actionsSlot}>
+            <ProfileActions
+              isOwn={isOwn}
+              accent={accent}
+              following={following}
+              followPending={followPending}
+              chatPending={chatPending}
+              stacked={stacked}
+              onToggleFollow={onToggleFollow}
+              onMessage={onMessage}
+              onEdit={onEdit}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -576,112 +546,6 @@ function CollapsibleBio({
             {expanded ? "ver menos" : "ver mas"}
           </Text>
         </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
-function AvatarRing({
-  uri,
-  label,
-  accent,
-  size,
-  online,
-}: {
-  uri?: string | null;
-  label: string;
-  accent: AccentPair;
-  size: number;
-  online: boolean;
-}) {
-  const reducedMotion = useReducedMotion();
-  const ringSpinValue = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (reducedMotion) {
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.timing(ringSpinValue, {
-        toValue: 1,
-        duration: 6000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [ringSpinValue, reducedMotion]);
-  const ringSpin = ringSpinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
-  const theme = useTheme();
-  return (
-    <View style={styles.avatarRingWrap}>
-      <View
-        style={[
-          styles.avatarRing,
-          { borderRadius: radius.pill, shadowColor: accent[0] },
-        ]}
-      >
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { borderRadius: radius.pill, overflow: "hidden", transform: reducedMotion ? [] : [{ rotate: ringSpin }] },
-          ]}
-        >
-          <LinearGradient
-            colors={accent as unknown as readonly [string, string]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-        <View
-          style={[
-            styles.avatarInner,
-            { backgroundColor: theme.colors.background, borderRadius: radius.pill },
-          ]}
-        >
-          {uri ? (
-            <Avatar uri={uri} label={label} size={size} />
-          ) : (
-            <LinearGradient
-              colors={accent as unknown as readonly [string, string]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#FFFFFF",
-                  fontWeight: "800",
-                  fontSize: size * 0.38,
-                  letterSpacing: -0.5,
-                }}
-              >
-                {avatarInitials(label)}
-              </Text>
-            </LinearGradient>
-          )}
-        </View>
-      </View>
-      {online ? (
-        <View
-          style={[
-            styles.onlineDot,
-            {
-              backgroundColor: theme.colors.success,
-              borderColor: theme.colors.background,
-            },
-          ]}
-        />
       ) : null}
     </View>
   );
@@ -1361,13 +1225,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
     borderRadius: 28,
-    paddingHorizontal: 22,
+    paddingTop: 0,
+    paddingHorizontal: 0,
     paddingBottom: 28,
+    overflow: "hidden",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.5,
     shadowRadius: 28,
     elevation: 14,
+  },
+  cardBody: {
+    paddingHorizontal: 22,
   },
   cardCentered: {
     alignItems: "center",
