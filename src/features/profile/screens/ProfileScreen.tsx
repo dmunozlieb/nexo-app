@@ -71,7 +71,6 @@ import { resolveAccent } from "../utils/resolve-accent";
 import { ProfileLinks } from "../components/ProfileLinks";
 import { DerivedBackdrop } from "../components/DerivedBackdrop";
 import { ProfileHero } from "../components/ProfileHero";
-import { CosmicBackground } from "../../../components/ui/CosmicBackground";
 import { useStaggerIn } from "../../../hooks/useStaggerIn";
 
 type ProfileScreenProps = {
@@ -207,7 +206,7 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
 
   if (profile.isLoading) {
     return (
-      <ProfileShell>
+      <ProfileShell accent={accent}>
         <View style={styles.fullState}>
           <LoadingState label="Cargando perfil..." />
         </View>
@@ -217,7 +216,7 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
 
   if (profile.isError || !profile.data) {
     return (
-      <ProfileShell>
+      <ProfileShell accent={accent}>
         <View style={styles.fullState}>
           <ErrorState
             title="No pudimos cargar este perfil."
@@ -317,7 +316,7 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
 
   return (
     <>
-      <ProfileShell backgroundUri={data.banner_url}>
+      <ProfileShell backgroundUri={data.banner_url} accent={accent}>
         {isDesktop ? (
           <View style={styles.twoColOuter}>
             <View style={styles.twoCol}>
@@ -368,17 +367,14 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
 function ProfileShell({
   children,
   backgroundUri,
-}: PropsWithChildren<{ backgroundUri?: string | null }>) {
+  accent,
+}: PropsWithChildren<{ backgroundUri?: string | null; accent: AccentPair }>) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const sidePad = width >= BREAKPOINT_WIDE ? 36 : 18;
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
-      {backgroundUri ? (
-        <DerivedBackdrop source={backgroundUri} />
-      ) : (
-        <CosmicBackground dim="rgba(6,7,22,0.62)" />
-      )}
+      <DerivedBackdrop source={backgroundUri} accent={accent} />
       <ScreenContainer scroll contentStyle={[styles.screen, { paddingHorizontal: sidePad }]}>
         {children}
       </ScreenContainer>
