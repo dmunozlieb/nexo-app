@@ -134,7 +134,7 @@ export function EditProfileScreen() {
         return;
       }
       setUploadingBg(true);
-      const asset = await pickImage({ aspect: [9, 16] });
+      const asset = await pickImage({ aspect: [3, 1] });
       if (!asset?.base64) {
         return;
       }
@@ -215,14 +215,14 @@ export function EditProfileScreen() {
             <View style={styles.bgEmpty}>
               <ImageIcon size={24} color={theme.colors.textFaint} />
               <Text style={[styles.bgEmptyText, { color: theme.colors.textFaint }]}>
-                Sin fondo · se usa el cosmico
+                Sin banner · el fondo se genera de el
               </Text>
             </View>
           )}
         </View>
         <View style={styles.bgActions}>
           <Button
-            title={bannerUrl ? "Cambiar fondo" : "Elegir fondo"}
+            title={bannerUrl ? "Cambiar banner" : "Elegir banner"}
             variant="secondary"
             icon={<ImageIcon size={18} color={theme.colors.text} />}
             loading={uploadingBg}
