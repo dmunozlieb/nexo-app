@@ -101,6 +101,11 @@ export async function updateProfile(
       bio: input.bio ? sanitizePlainText(input.bio) : null,
       avatar_url: input.avatarUrl ?? null,
       banner_url: input.bannerUrl ?? null,
+      accent_color: input.accentColor ?? null,
+      links: (input.links ?? []).map((link) => ({
+        label: sanitizePlainText(link.label),
+        url: link.url,
+      })),
       updated_at: new Date().toISOString(),
     })
     .eq("id", profileId)
@@ -108,6 +113,15 @@ export async function updateProfile(
     .single();
 
   if (error) {
+    // El trigger de cooldown lanza "USERNAME_COOLDOWN" con la fecha de desbloqueo en details.
+    if (error.message?.includes("USERNAME_COOLDOWN")) {
+      const unlockDate = error.details ?? null;
+      throw new Error(
+        unlockDate
+          ? `Podras cambiar tu username de nuevo el ${unlockDate}.`
+          : "Solo puedes cambiar tu username una vez cada 90 dias.",
+      );
+    }
     throw error;
   }
 
