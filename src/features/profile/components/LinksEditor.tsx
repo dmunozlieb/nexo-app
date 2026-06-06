@@ -37,7 +37,7 @@ export function LinksEditor({
         const urlInvalid =
           link.url.trim().length > 0 && !link.url.trim().startsWith("https://");
         return (
-          <View key={index} style={[styles.item, { borderColor: theme.colors.border }]}>
+          <View key={`${link.url}-${index}`} style={[styles.item, { borderColor: theme.colors.border }]}>
             <View style={styles.itemHeader}>
               <Text style={[styles.itemTitle, { color: theme.colors.textMuted }]}>
                 Enlace {index + 1}

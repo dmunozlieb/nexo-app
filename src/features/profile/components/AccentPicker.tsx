@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Check, Pipette } from "lucide-react-native";
@@ -22,6 +22,15 @@ export function AccentPicker({
     ACCENT_PAIRS.some((pair) => pair[0].toLowerCase() === value.toLowerCase());
   const [customOpen, setCustomOpen] = useState(value != null && !isPreset);
   const [customText, setCustomText] = useState(value && !isPreset ? value : "");
+
+  // El value llega async (form.reset tras cargar el perfil): si es un color
+  // custom (no preset), abrimos el input y reflejamos el hex guardado.
+  useEffect(() => {
+    if (value != null && !isPreset) {
+      setCustomOpen(true);
+      setCustomText(value);
+    }
+  }, [value, isPreset]);
 
   function handleCustomChange(text: string) {
     setCustomText(text);
