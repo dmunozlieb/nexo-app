@@ -1132,11 +1132,19 @@ export async function demoListConversations(
       const memberCount = conversationMembers.filter(
         (entry) => entry.conversation_id === conversation.id,
       ).length;
+      const lastRead = item.last_read_at;
+      const unreadCount = messages.filter(
+        (entry) =>
+          entry.conversation_id === conversation.id &&
+          entry.status === "sent" &&
+          entry.sender_id !== userId &&
+          (!lastRead || entry.created_at > lastRead),
+      ).length;
       return {
         ...conversation,
         community,
         last_message: lastMessage,
-        unread_count: 0,
+        unread_count: unreadCount,
         member_count: memberCount,
         role: item.role,
       };

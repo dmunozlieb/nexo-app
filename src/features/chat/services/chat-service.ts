@@ -50,32 +50,29 @@ export async function listConversations(
     return demoListConversations(userId);
   }
 
-  const { data, error } = await supabase
-    .from("conversation_members")
-    .select(
-      "role, conversation:conversations(*, community:communities(*))",
-    )
-    .eq("user_id", userId)
-    .neq("role", "banned")
-    .order("joined_at", { ascending: false });
+  const { data, error } = await supabase.rpc("list_user_conversations", {
+    input_user_id: userId,
+  });
 
   if (error) {
     throw error;
   }
 
-  const rows =
-    (data ?? []) as unknown as Array<{
-      role: ConversationPreview["role"];
-      conversation: Conversation & {
-        community: ConversationPreview["community"];
-      };
-    }>;
+  const rows = (data ?? []) as Array<{
+    conv: Conversation;
+    community: ConversationPreview["community"];
+    last_message: Message | null;
+    unread_count: number;
+    member_count: number;
+    role: ConversationPreview["role"];
+  }>;
 
   return rows.map((row) => ({
-    ...row.conversation,
-    last_message: null,
-    unread_count: 0,
-    member_count: 0,
+    ...row.conv,
+    community: row.community,
+    last_message: row.last_message,
+    unread_count: row.unread_count,
+    member_count: row.member_count,
     role: row.role,
   }));
 }
