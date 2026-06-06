@@ -1336,6 +1336,12 @@ export async function demoUpdateProfile(
   profile.bio = input.bio ? sanitizePlainText(input.bio) : null;
   profile.avatar_url = input.avatarUrl ?? null;
   profile.banner_url = input.bannerUrl ?? null;
+  profile.accent_color = input.accentColor ?? null;
+  profile.links = (input.links ?? []).map((link) => ({
+    label: sanitizePlainText(link.label),
+    url: link.url,
+  }));
+  // Nota: el cooldown de username solo aplica en Supabase real (lo enforce el trigger en BD).
   profile.updated_at = now();
   return profile;
 }
