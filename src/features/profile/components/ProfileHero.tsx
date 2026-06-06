@@ -9,13 +9,14 @@ import { useReducedMotion } from "../../../hooks/useReducedMotion";
 import { useTheme } from "../../../theme/useTheme";
 import type { AccentPair } from "../utils/profile-accent";
 
-const BANNER_HEIGHT = 140;
+const BANNER_HEIGHT = 240;
 const AVATAR_SIZE = 96;
 const CARD_BG = "#0F1330";
 
-// Cabecera "hero" del perfil: banner a sangre arriba (imagen nitida o gradiente
-// de acento si no hay), con el avatar (aro girando) + nombre + handle centrados
-// solapando el banner. Reutilizada por ProfileScreen y por la preview del editor.
+// Cabecera "hero" del perfil: banner grande a sangre con el avatar (aro girando)
+// + nombre + handle CENTRADOS dentro del propio banner. Un velo inferior mantiene
+// el texto legible y funde el banner hacia el color de la card. Sin banner, se usa
+// el gradiente de acento. Reutilizada por ProfileScreen y la preview del editor.
 export function ProfileHero({
   avatarUrl,
   displayName,
@@ -54,24 +55,27 @@ export function ProfileHero({
   const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
 
   return (
-    <View>
-      <View style={styles.banner}>
-        {bannerUrl ? (
-          <Image source={{ uri: bannerUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
-        ) : (
-          <AnimatedGradient
-            style={StyleSheet.absoluteFill}
-            colors={[accent[0], accent[1], "#22D3FF", accent[0]]}
-          />
-        )}
-        <LinearGradient
-          colors={["transparent", "transparent", CARD_BG]}
+    <View style={styles.banner}>
+      {bannerUrl ? (
+        <Image source={{ uri: bannerUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+      ) : (
+        <AnimatedGradient
           style={StyleSheet.absoluteFill}
-          pointerEvents="none"
+          colors={[accent[0], accent[1], "#22D3FF", accent[0]]}
         />
-      </View>
+      )}
 
-      <View style={styles.identity}>
+      {/* Velo: arriba transparente (banner vivo), oscurece tras el texto y funde a la card. */}
+      <LinearGradient
+        colors={["transparent", "transparent", "rgba(6,7,18,0.45)", CARD_BG]}
+        locations={[0, 0.4, 0.78, 1]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      <View style={styles.overlay}>
         <View style={styles.avatarWrap}>
           <View style={styles.ring}>
             <Animated.View
@@ -115,10 +119,16 @@ const styles = StyleSheet.create({
   banner: {
     height: BANNER_HEIGHT,
     width: "100%",
+    justifyContent: "center",
   },
-  identity: {
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: "center",
-    marginTop: -(AVATAR_SIZE / 2),
+    justifyContent: "center",
     paddingHorizontal: 16,
   },
   avatarWrap: {
@@ -149,7 +159,7 @@ const styles = StyleSheet.create({
     fontSize: typography.h1,
     fontWeight: "900",
     letterSpacing: -0.5,
-    marginTop: 10,
+    marginTop: 12,
   },
   handle: {
     fontSize: typography.body,
