@@ -14,6 +14,9 @@ import {
   demoSetChatBackground,
   demoSubscribeToMessages,
   demoUnreactToMessage,
+  demoUpdateChat,
+  demoDeleteChat,
+  demoListChatAuditLog,
 } from "../../../services/demo-service";
 import type {
   ChatAuditEntry,
@@ -243,7 +246,17 @@ export async function updateChat(
   conversationId: string,
   patch: UpdateChatPatch,
 ): Promise<Conversation> {
-  ensureNotDemo();
+  if (env.demoMode) {
+    const patchRow: Partial<Conversation> = {};
+    if (patch.name !== undefined) patchRow.name = patch.name;
+    if (patch.description !== undefined) patchRow.description = patch.description;
+    if (patch.avatarUrl !== undefined) patchRow.avatar_url = patch.avatarUrl;
+    if (patch.bannerUrl !== undefined) patchRow.banner_url = patch.bannerUrl;
+    if (patch.visibility !== undefined) patchRow.visibility = patch.visibility;
+    if (patch.slowModeSeconds !== undefined)
+      patchRow.slow_mode_seconds = patch.slowModeSeconds;
+    return demoUpdateChat(conversationId, patchRow);
+  }
 
   const row: Record<string, unknown> = {};
   if (patch.name !== undefined) row.name = patch.name;
@@ -289,7 +302,9 @@ export async function setChatBackground(
 }
 
 export async function deleteChat(conversationId: string) {
-  ensureNotDemo();
+  if (env.demoMode) {
+    return demoDeleteChat(conversationId);
+  }
 
   const { error } = await supabase
     .from("conversations")
@@ -725,7 +740,9 @@ export async function unreactToMessage(
 export async function listChatAuditLog(
   conversationId: string,
 ): Promise<ChatAuditEntry[]> {
-  ensureNotDemo();
+  if (env.demoMode) {
+    return demoListChatAuditLog(conversationId);
+  }
 
   const { data, error } = await supabase
     .from("chat_audit_log")
