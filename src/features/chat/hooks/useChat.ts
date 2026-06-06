@@ -3,6 +3,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "../../../lib/query-client";
 import type { Message } from "../../../types/domain";
 import type { MessageInput } from "../../../utils/validation";
+import { aggregateReactions } from "../utils/reactions";
+import type { ReactionSummary } from "../utils/reactions";
 import {
   banMember,
   createChat,
@@ -19,6 +21,7 @@ import {
   listChatMembers,
   listCommunityChats,
   listConversations,
+  listMessageReactions,
   listMessages,
   listPinnedMessages,
   markRead,
@@ -98,6 +101,21 @@ export function useChatAuditLog(conversationId?: string) {
     queryKey: ["chat-audit", conversationId],
     queryFn: () => listChatAuditLog(conversationId ?? ""),
     enabled: Boolean(conversationId),
+  });
+}
+
+export function useMessageReactions(
+  conversationId: string | undefined,
+  messageIds: string[],
+  currentUserId: string | undefined,
+) {
+  return useQuery({
+    queryKey: ["message-reactions", conversationId],
+    enabled: Boolean(conversationId) && messageIds.length > 0,
+    queryFn: async () => {
+      const rows = await listMessageReactions(messageIds);
+      return aggregateReactions(rows, currentUserId ?? "");
+    },
   });
 }
 
@@ -328,27 +346,94 @@ export function useUnpinMessageMutation(conversationId: string) {
 // Mutations: reactions
 // =========================
 
-export function useReactMutation(userId?: string) {
+export function useReactMutation(
+  conversationId: string,
+  userId?: string,
+) {
   return useMutation({
-    mutationFn: ({
-      messageId,
-      emoji,
-    }: {
-      messageId: string;
-      emoji: string;
-    }) => reactToMessage(messageId, userId ?? "", emoji),
+    mutationFn: ({ messageId, emoji }: { messageId: string; emoji: string }) =>
+      reactToMessage(messageId, userId ?? "", emoji),
+    onMutate: async ({ messageId, emoji }) => {
+      const key = ["message-reactions", conversationId];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous =
+        queryClient.getQueryData<Map<string, ReactionSummary[]>>(key);
+      const next = new Map(previous ?? []);
+      const list = [...(next.get(messageId) ?? [])];
+      const idx = list.findIndex((r) => r.emoji === emoji);
+      if (idx >= 0) {
+        if (list[idx]!.reacted_by_me) {
+          // no-op: ya reaccionó
+        } else {
+          list[idx] = {
+            ...list[idx]!,
+            count: list[idx]!.count + 1,
+            reacted_by_me: true,
+          };
+        }
+      } else {
+        list.push({ emoji, count: 1, reacted_by_me: true });
+      }
+      next.set(messageId, list);
+      queryClient.setQueryData(key, next);
+      return { previous };
+    },
+    onError: (_e, _v, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          ["message-reactions", conversationId],
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["message-reactions", conversationId],
+      });
+    },
   });
 }
 
-export function useUnreactMutation(userId?: string) {
+export function useUnreactMutation(
+  conversationId: string,
+  userId?: string,
+) {
   return useMutation({
-    mutationFn: ({
-      messageId,
-      emoji,
-    }: {
-      messageId: string;
-      emoji: string;
-    }) => unreactToMessage(messageId, userId ?? "", emoji),
+    mutationFn: ({ messageId, emoji }: { messageId: string; emoji: string }) =>
+      unreactToMessage(messageId, userId ?? "", emoji),
+    onMutate: async ({ messageId, emoji }) => {
+      const key = ["message-reactions", conversationId];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous =
+        queryClient.getQueryData<Map<string, ReactionSummary[]>>(key);
+      const next = new Map(previous ?? []);
+      const list = [...(next.get(messageId) ?? [])];
+      const idx = list.findIndex((r) => r.emoji === emoji);
+      if (idx >= 0) {
+        const count = list[idx]!.count - 1;
+        if (count <= 0) {
+          list.splice(idx, 1);
+        } else {
+          list[idx] = { ...list[idx]!, count, reacted_by_me: false };
+        }
+      }
+      next.set(messageId, list);
+      queryClient.setQueryData(key, next);
+      return { previous };
+    },
+    onError: (_e, _v, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          ["message-reactions", conversationId],
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["message-reactions", conversationId],
+      });
+    },
   });
 }
 
