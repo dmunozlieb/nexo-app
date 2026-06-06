@@ -47,7 +47,13 @@ export function ChatListScreen() {
     const q = query.trim().toLowerCase();
     if (!q) return all;
     return all.filter((chat) => {
-      const name = (chat.name ?? chat.community?.name ?? "").toLowerCase();
+      const name = (
+        chat.name ??
+        chat.direct_peer?.display_name ??
+        chat.direct_peer?.username ??
+        chat.community?.name ??
+        ""
+      ).toLowerCase();
       const description = (chat.description ?? "").toLowerCase();
       return name.includes(q) || description.includes(q);
     });
@@ -209,11 +215,18 @@ function ChatRow({
   chat: ConversationPreview;
   themeColors: ReturnType<typeof useTheme>["colors"];
 }) {
+  const directName =
+    chat.direct_peer?.display_name ??
+    chat.direct_peer?.username ??
+    null;
   const title =
-    chat.name ??
-    (chat.type === "direct"
-      ? "Mensaje directo"
-      : (chat.community?.name ?? "Conversacion"));
+    chat.type === "direct"
+      ? (directName ?? "Mensaje directo")
+      : (chat.name ?? chat.community?.name ?? "Conversacion");
+  const avatarUri =
+    chat.type === "direct"
+      ? chat.direct_peer?.avatar_url
+      : (chat.avatar_url ?? chat.community?.avatar_url);
   const hasUnread = chat.unread_count > 0;
   const isPrivate = chat.visibility === "invite_only";
 
@@ -243,7 +256,7 @@ function ChatRow({
     >
       <View style={styles.rowAvatarWrap}>
         <Avatar
-          uri={chat.avatar_url ?? chat.community?.avatar_url}
+          uri={avatarUri}
           label={title}
           size={42}
         />

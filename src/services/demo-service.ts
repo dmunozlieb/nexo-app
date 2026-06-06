@@ -1140,6 +1140,19 @@ export async function demoListConversations(
           entry.sender_id !== userId &&
           (!lastRead || entry.created_at > lastRead),
       ).length;
+      const directPeer =
+        conversation.type === "direct"
+          ? (profiles.find(
+              (p) =>
+                p.id !==
+                  userId /* the current user */ &&
+                conversationMembers.some(
+                  (cm) =>
+                    cm.conversation_id === conversation.id &&
+                    cm.user_id === p.id,
+                ),
+            ) ?? null)
+          : null;
       return {
         ...conversation,
         community,
@@ -1147,6 +1160,7 @@ export async function demoListConversations(
         unread_count: unreadCount,
         member_count: memberCount,
         role: item.role,
+        direct_peer: directPeer,
       };
     });
 }

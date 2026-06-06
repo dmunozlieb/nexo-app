@@ -13,13 +13,14 @@ import {
 import { Avatar } from "../../../components/ui/Avatar";
 import { radius, typography } from "../../../theme/tokens";
 import { useTheme } from "../../../theme/useTheme";
-import type { ChatRole, Conversation } from "../../../types/domain";
+import type { ChatRole, Conversation, Profile } from "../../../types/domain";
 import { RoleBadge } from "./RoleBadge";
 
 type ChatHeaderProps = {
   conversation: Conversation;
   memberCount: number;
   currentUserRole: ChatRole | null;
+  directPeer?: Profile | null;
   muted?: boolean;
   showBack?: boolean;
   onToggleInfo: () => void;
@@ -34,6 +35,7 @@ export function ChatHeader({
   conversation,
   memberCount,
   currentUserRole,
+  directPeer,
   muted,
   showBack = false,
   onToggleInfo,
@@ -45,7 +47,12 @@ export function ChatHeader({
 }: ChatHeaderProps) {
   const theme = useTheme();
   const isPrivate = conversation.visibility === "invite_only";
-  const title = conversation.name ?? "Conversacion";
+  const title =
+    conversation.type === "direct"
+      ? (directPeer?.display_name ?? directPeer?.username ?? "Mensaje directo")
+      : (conversation.name ?? "Conversacion");
+  const avatarUri =
+    conversation.type === "direct" ? directPeer?.avatar_url : conversation.avatar_url;
 
   return (
     <View
@@ -75,7 +82,7 @@ export function ChatHeader({
           </Pressable>
         ) : null}
         <Avatar
-          uri={conversation.avatar_url}
+          uri={avatarUri}
           label={title}
           size={42}
         />

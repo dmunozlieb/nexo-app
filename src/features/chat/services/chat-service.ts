@@ -68,6 +68,7 @@ export async function listConversations(
     last_message: Message | null;
     unread_count: number;
     member_count: number;
+    direct_peer: Profile | null;
     role: ConversationPreview["role"];
   }>;
 
@@ -77,6 +78,7 @@ export async function listConversations(
     last_message: row.last_message,
     unread_count: row.unread_count,
     member_count: row.member_count,
+    direct_peer: row.direct_peer,
     role: row.role,
   }));
 }

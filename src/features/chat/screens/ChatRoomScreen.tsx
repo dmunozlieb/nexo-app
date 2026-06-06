@@ -121,6 +121,11 @@ export function ChatRoomScreen() {
     return map;
   }, [members]);
 
+  const directPeer =
+    conversation?.type === "direct"
+      ? (members.find((m) => m.user_id !== userId)?.profile ?? null)
+      : null;
+
   const pinnedIds = useMemo(
     () => new Set(pinned.map((p) => p.id)),
     [pinned],
@@ -228,6 +233,7 @@ export function ChatRoomScreen() {
           conversation={conversation}
           memberCount={members.length}
           currentUserRole={currentUserRole}
+          directPeer={directPeer}
           muted={muted}
           showBack={!isDesktop}
           onToggleInfo={() => setInfoOpen((v) => !v)}

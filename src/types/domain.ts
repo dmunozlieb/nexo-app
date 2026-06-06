@@ -238,6 +238,7 @@ export type ConversationPreview = Conversation & {
   unread_count: number;
   member_count: number;
   role: ChatRole | null;
+  direct_peer: Profile | null;
 };
 
 export type ConversationMemberWithProfile = ConversationMember & {
