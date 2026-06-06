@@ -43,6 +43,8 @@ export type ReportTargetType =
   | "community";
 export type ReportStatus = "open" | "reviewing" | "resolved" | "rejected";
 
+export type ProfileLink = { label: string; url: string };
+
 export type Profile = {
   id: string;
   username: string;
@@ -54,6 +56,9 @@ export type Profile = {
   updated_at: string;
   last_seen_at?: string | null;
   is_banned: boolean;
+  username_changed_at?: string | null;
+  accent_color?: string | null;
+  links?: ProfileLink[];
 };
 
 export type Interest = {
