@@ -178,7 +178,7 @@ export function EditProfileScreen() {
           />
         </Animated.View>
 
-        <Animated.View style={enterAppearance}>
+        <Animated.View style={[enterAppearance, styles.section]}>
         <SectionHeader label="Apariencia" color={accent[0]} />
         <View style={styles.avatarRow}>
           <Avatar uri={avatarUrl} label={displayName} size={64} />
@@ -226,7 +226,7 @@ export function EditProfileScreen() {
         </View>
 
         </Animated.View>
-        <Animated.View style={enterIdentity}>
+        <Animated.View style={[enterIdentity, styles.section]}>
         <SectionHeader label="Identidad" color={accent[1]} />
         <Controller
           control={form.control}
@@ -279,7 +279,7 @@ export function EditProfileScreen() {
         />
 
         </Animated.View>
-        <Animated.View style={enterAccent}>
+        <Animated.View style={[enterAccent, styles.section]}>
         <SectionHeader label="Color de acento" color={accent[0]} />
         <AccentPicker
           value={accentColor ?? null}
@@ -287,7 +287,7 @@ export function EditProfileScreen() {
         />
         </Animated.View>
 
-        <Animated.View style={enterLinks}>
+        <Animated.View style={[enterLinks, styles.section]}>
         <SectionHeader label="Enlaces" color={accent[1]} />
         <LinksEditor
           value={links as ProfileLink[]}
@@ -309,9 +309,12 @@ export function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   content: {
+    gap: 28,
+    paddingTop: 12,
+    paddingBottom: 40,
+  },
+  section: {
     gap: 16,
-    paddingTop: 8,
-    paddingBottom: 28,
   },
   header: {
     gap: 6,
@@ -328,7 +331,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginTop: 4,
+    marginBottom: 2,
   },
   sectionBar: {
     width: 4,
