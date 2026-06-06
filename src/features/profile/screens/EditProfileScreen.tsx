@@ -309,12 +309,12 @@ export function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: 28,
-    paddingTop: 12,
-    paddingBottom: 40,
+    gap: 40,
+    paddingTop: 16,
+    paddingBottom: 48,
   },
   section: {
-    gap: 16,
+    gap: 22,
   },
   header: {
     gap: 6,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 2,
+    marginBottom: 6,
   },
   sectionBar: {
     width: 4,
