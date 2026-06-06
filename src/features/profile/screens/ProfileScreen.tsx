@@ -68,6 +68,8 @@ import {
   useUnfollowMutation,
 } from "../hooks/useProfile";
 import { getProfileAccent, type AccentPair } from "../utils/profile-accent";
+import { resolveAccent } from "../utils/resolve-accent";
+import { ProfileLinks } from "../components/ProfileLinks";
 
 type ProfileScreenProps = {
   profileId?: string;
@@ -156,7 +158,10 @@ export function ProfileScreen({ profileId, communityId }: ProfileScreenProps) {
     }
   }, [contextual, tab]);
 
-  const accent = getProfileAccent(profile.data?.id ?? viewedId);
+  const accent = resolveAccent({
+    id: profile.data?.id ?? viewedId ?? "",
+    accent_color: profile.data?.accent_color ?? null,
+  });
 
   function handleReact(post: PostWithMeta, nextReaction: ReactionType) {
     reaction.mutate({ post, reaction: nextReaction });
@@ -486,17 +491,9 @@ function Identity(props: IdentityProps) {
           </View>
 
           {data.bio ? (
-            <Text
-              style={[
-                styles.bio,
-                { color: theme.colors.textMuted },
-                centered ? styles.bioCentered : null,
-              ]}
-              numberOfLines={3}
-            >
-              {data.bio}
-            </Text>
+            <CollapsibleBio bio={data.bio} accent={accent} centered={centered} />
           ) : null}
+          <ProfileLinks links={data.links ?? []} accent={accent} />
         </View>
 
         <StatsBlock stats={stats} centered={centered} />
@@ -530,6 +527,47 @@ function Identity(props: IdentityProps) {
           />
         </View>
       </View>
+    </View>
+  );
+}
+
+function CollapsibleBio({
+  bio,
+  accent,
+  centered,
+}: {
+  bio: string;
+  accent: AccentPair;
+  centered: boolean;
+}) {
+  const theme = useTheme();
+  const [expanded, setExpanded] = useState(false);
+  // Solo ofrecemos "ver mas" cuando la bio es larga (heuristica por longitud).
+  const isLong = bio.length > 220;
+
+  return (
+    <View>
+      <Text
+        style={[
+          styles.bio,
+          { color: theme.colors.textMuted },
+          centered ? styles.bioCentered : null,
+        ]}
+        numberOfLines={expanded ? undefined : 5}
+      >
+        {bio}
+      </Text>
+      {isLong ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setExpanded((value) => !value)}
+          style={[hoverTransition, pointerStyle]}
+        >
+          <Text style={[styles.bioToggle, { color: accent[0] }]}>
+            {expanded ? "ver menos" : "ver mas"}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -1373,6 +1411,11 @@ const styles = StyleSheet.create({
   bioCentered: {
     textAlign: "center",
     maxWidth: 520,
+  },
+  bioToggle: {
+    fontSize: typography.small,
+    fontWeight: "800",
+    marginTop: 6,
   },
 
   // Stats
