@@ -1234,68 +1234,11 @@ const styles = StyleSheet.create({
   cardBody: {
     paddingHorizontal: 22,
   },
-  cardCentered: {
-    alignItems: "center",
-    paddingHorizontal: 28,
-  },
-  cardWash: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "55%",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-  },
-  avatarSlot: {
-    marginBottom: 12,
-  },
-  identityCentered: {
-    alignItems: "center",
-  },
-
-  avatarRingWrap: {
-    position: "relative",
-    alignSelf: "flex-start",
-  },
-  avatarRing: {
-    padding: 3,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    elevation: 8,
-  },
-  avatarInner: {
-    padding: 2,
-  },
-  onlineDot: {
-    position: "absolute",
-    right: 6,
-    bottom: 6,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 3,
-  },
-
-  name: {
-    fontSize: typography.h1,
-    fontWeight: "900",
-    letterSpacing: -0.5,
-  },
-  handle: {
-    fontSize: typography.body,
-    fontWeight: "700",
-    marginTop: 4,
-  },
   badges: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
     marginTop: 12,
-  },
-  badgesCentered: {
-    justifyContent: "center",
   },
   hBadge: {
     alignSelf: "flex-start",
@@ -1392,9 +1335,6 @@ const styles = StyleSheet.create({
   // Actions
   actionsSlot: {
     marginTop: 20,
-  },
-  actionsCentered: {
-    alignItems: "center",
   },
   actionsRow: {
     flexDirection: "row",
