@@ -4,8 +4,10 @@ import {
   ArrowLeft,
   Bell,
   BellOff,
+  Image as ImageIcon,
   Info,
   Lock,
+  Settings,
   Users,
 } from "lucide-react-native";
 import { Avatar } from "../../../components/ui/Avatar";
@@ -22,6 +24,10 @@ type ChatHeaderProps = {
   showBack?: boolean;
   onToggleInfo: () => void;
   onToggleMute?: () => void;
+  canEditBackground?: boolean;
+  onOpenBackground?: () => void;
+  canOpenSettings?: boolean;
+  onOpenSettings?: () => void;
 };
 
 export function ChatHeader({
@@ -32,6 +38,10 @@ export function ChatHeader({
   showBack = false,
   onToggleInfo,
   onToggleMute,
+  canEditBackground,
+  onOpenBackground,
+  canOpenSettings,
+  onOpenSettings,
 }: ChatHeaderProps) {
   const theme = useTheme();
   const isPrivate = conversation.visibility === "invite_only";
@@ -120,6 +130,32 @@ export function ChatHeader({
             ) : (
               <Bell size={16} color={theme.colors.textMuted} />
             )}
+          </Pressable>
+        ) : null}
+        {canEditBackground && onOpenBackground ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Fondo del chat"
+            onPress={onOpenBackground}
+            style={({ pressed }) => [
+              styles.iconButton,
+              { borderColor: theme.colors.border, opacity: pressed ? 0.78 : 1 },
+            ]}
+          >
+            <ImageIcon size={16} color={theme.colors.textMuted} />
+          </Pressable>
+        ) : null}
+        {canOpenSettings && onOpenSettings ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ajustes del chat"
+            onPress={onOpenSettings}
+            style={({ pressed }) => [
+              styles.iconButton,
+              { borderColor: theme.colors.border, opacity: pressed ? 0.78 : 1 },
+            ]}
+          >
+            <Settings size={16} color={theme.colors.textMuted} />
           </Pressable>
         ) : null}
         <Pressable

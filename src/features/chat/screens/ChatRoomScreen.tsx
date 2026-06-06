@@ -7,7 +7,9 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { ReportModal } from "../../../components/content/ReportModal";
 import { AlienEmptyState } from "../../../components/ui/AlienEmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
@@ -32,6 +34,7 @@ import {
   usePinMessageMutation,
   useReactMutation,
   useSendMessageMutation,
+  useSetChatBackgroundMutation,
   useSetMutedMutation,
   useUnpinMessageMutation,
   useUnreactMutation,
@@ -41,6 +44,8 @@ import { ChatInfoPanel } from "../components/ChatInfoPanel";
 import { MessageBubble } from "../components/MessageBubble";
 import { MessageComposer } from "../components/MessageComposer";
 import { PinnedBar } from "../components/PinnedBar";
+import { BackgroundPicker } from "../components/BackgroundPicker";
+import { resolveBackground } from "../utils/backgrounds";
 
 const DESKTOP_WIDTH = 1100;
 
@@ -86,7 +91,9 @@ export function ChatRoomScreen() {
 
   const [reportMessageId, setReportMessageId] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [backgroundOpen, setBackgroundOpen] = useState(false);
   const listRef = useRef<FlatList<MessageWithSender>>(null);
+  const setBackground = useSetChatBackgroundMutation(conversationId);
 
   useMessageSubscription(conversationId);
 
@@ -181,6 +188,10 @@ export function ChatRoomScreen() {
   const rows: MessageWithSender[] =
     (messages.data ?? []) as MessageWithSender[];
 
+  const background = resolveBackground(conversation.background_url);
+  const canEditBackground =
+    conversation.type === "direct" ? true : canModerate;
+
   return (
     <View
       style={[
@@ -189,6 +200,30 @@ export function ChatRoomScreen() {
       ]}
     >
       <View style={styles.main}>
+        {background.kind !== "none" ? (
+          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+            {background.kind === "preset" ? (
+              <LinearGradient
+                colors={[background.gradient[0], background.gradient[1]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            ) : (
+              <Image
+                source={{ uri: background.uri }}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+              />
+            )}
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: "rgba(7,11,26,0.82)" },
+              ]}
+            />
+          </View>
+        ) : null}
         <ChatHeader
           conversation={conversation}
           memberCount={members.length}
@@ -198,6 +233,12 @@ export function ChatRoomScreen() {
           onToggleInfo={() => setInfoOpen((v) => !v)}
           onToggleMute={() =>
             toggleMute.mutate({ conversationId, muted: !muted })
+          }
+          canEditBackground={canEditBackground}
+          onOpenBackground={() => setBackgroundOpen(true)}
+          canOpenSettings={conversation.type === "community" && canModerate}
+          onOpenSettings={() =>
+            router.push({ pathname: "/chat/[id]/settings", params: { id: conversationId } })
           }
         />
 
@@ -294,6 +335,19 @@ export function ChatRoomScreen() {
             details: details_,
           })
         }
+      />
+
+      <BackgroundPicker
+        visible={backgroundOpen}
+        current={conversation.background_url}
+        conversationId={conversationId}
+        userId={userId ?? ""}
+        saving={setBackground.isPending}
+        onClose={() => setBackgroundOpen(false)}
+        onSelect={(value) => {
+          setBackgroundOpen(false);
+          setBackground.mutate(value);
+        }}
       />
     </View>
   );
