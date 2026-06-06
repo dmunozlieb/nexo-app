@@ -56,6 +56,9 @@ export function AccentPicker({
                 setCustomOpen(false);
                 onChange(pair[0]);
               }}
+              style={({ pressed }) => ({
+                transform: [{ scale: pressed ? 0.88 : selected ? 1.08 : 1 }],
+              })}
             >
               <LinearGradient
                 colors={pair as unknown as readonly [string, string]}
