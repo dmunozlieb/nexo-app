@@ -1,0 +1,159 @@
+import { useEffect, useRef } from "react";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { Avatar } from "../../../components/ui/Avatar";
+import { AnimatedGradient } from "../../../components/ui/AnimatedGradient";
+import { radius, typography } from "../../../theme/tokens";
+import { useReducedMotion } from "../../../hooks/useReducedMotion";
+import { useTheme } from "../../../theme/useTheme";
+import type { AccentPair } from "../utils/profile-accent";
+
+const BANNER_HEIGHT = 140;
+const AVATAR_SIZE = 96;
+const CARD_BG = "#0F1330";
+
+// Cabecera "hero" del perfil: banner a sangre arriba (imagen nitida o gradiente
+// de acento si no hay), con el avatar (aro girando) + nombre + handle centrados
+// solapando el banner. Reutilizada por ProfileScreen y por la preview del editor.
+export function ProfileHero({
+  avatarUrl,
+  displayName,
+  username,
+  bannerUrl,
+  accent,
+  online = false,
+}: {
+  avatarUrl: string | null;
+  displayName: string;
+  username: string;
+  bannerUrl: string | null;
+  accent: AccentPair;
+  online?: boolean;
+}) {
+  const theme = useTheme();
+  const reduced = useReducedMotion();
+  const spin = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (reduced) {
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 6000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [spin, reduced]);
+
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+
+  return (
+    <View>
+      <View style={styles.banner}>
+        {bannerUrl ? (
+          <Image source={{ uri: bannerUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        ) : (
+          <AnimatedGradient
+            style={StyleSheet.absoluteFill}
+            colors={[accent[0], accent[1], "#22D3FF", accent[0]]}
+          />
+        )}
+        <LinearGradient
+          colors={["transparent", "transparent", CARD_BG]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      </View>
+
+      <View style={styles.identity}>
+        <View style={styles.avatarWrap}>
+          <View style={styles.ring}>
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFill,
+                { borderRadius: radius.pill, overflow: "hidden", transform: reduced ? [] : [{ rotate }] },
+              ]}
+            >
+              <LinearGradient
+                colors={accent as unknown as readonly [string, string]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+            <View style={[styles.ringInner, { backgroundColor: theme.colors.background }]}>
+              <Avatar uri={avatarUrl} label={displayName || username} size={AVATAR_SIZE} />
+            </View>
+          </View>
+          {online ? (
+            <View
+              style={[
+                styles.onlineDot,
+                { backgroundColor: theme.colors.success, borderColor: theme.colors.background },
+              ]}
+            />
+          ) : null}
+        </View>
+        <Text style={[styles.name, { color: theme.colors.text }]} numberOfLines={1}>
+          {displayName || "Tu nombre"}
+        </Text>
+        <Text style={[styles.handle, { color: accent[0] }]} numberOfLines={1}>
+          @{username || "username"}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  banner: {
+    height: BANNER_HEIGHT,
+    width: "100%",
+  },
+  identity: {
+    alignItems: "center",
+    marginTop: -(AVATAR_SIZE / 2),
+    paddingHorizontal: 16,
+  },
+  avatarWrap: {
+    position: "relative",
+  },
+  ring: {
+    width: AVATAR_SIZE + 6,
+    height: AVATAR_SIZE + 6,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 3,
+  },
+  ringInner: {
+    borderRadius: radius.pill,
+    padding: 2,
+  },
+  onlineDot: {
+    position: "absolute",
+    right: 6,
+    bottom: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 3,
+  },
+  name: {
+    fontSize: typography.h1,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    marginTop: 10,
+  },
+  handle: {
+    fontSize: typography.body,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+});
