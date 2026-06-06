@@ -40,6 +40,11 @@ supabase/.temp/
 # typescript
 *.tsbuildinfo
 
+# superpowers brainstorm mockups
+.superpowers/
+.metro-clear*.log
+.metro-clear*.err.log
+
 # generated native folders
 /ios
 /android
