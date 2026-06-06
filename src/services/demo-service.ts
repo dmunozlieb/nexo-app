@@ -1354,6 +1354,20 @@ export async function demoUpdateChat(
   return conversation;
 }
 
+export async function demoSetChatBackground(
+  conversationId: string,
+  backgroundUrl: string | null,
+): Promise<Conversation> {
+  const conversation = conversations.find((c) => c.id === conversationId);
+  if (!conversation) {
+    throw new Error("Chat no encontrado");
+  }
+  conversation.background_url =
+    backgroundUrl && backgroundUrl.trim() !== "" ? backgroundUrl : null;
+  conversation.updated_at = now();
+  return conversation;
+}
+
 export async function demoDeleteChat(conversationId: string): Promise<void> {
   const index = conversations.findIndex((c) => c.id === conversationId);
   if (index >= 0) conversations.splice(index, 1);

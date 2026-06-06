@@ -29,6 +29,7 @@ import {
   promoteToCoAdmin,
   reactToMessage,
   sendMessage,
+  setChatBackground,
   setMuted,
   subscribeToMessages,
   transferChatAdmin,
@@ -466,6 +467,21 @@ export function useMarkReadMutation(userId?: string) {
   return useMutation({
     mutationFn: (conversationId: string) =>
       markRead(conversationId, userId ?? ""),
+  });
+}
+
+export function useSetChatBackgroundMutation(conversationId: string) {
+  return useMutation({
+    mutationFn: (backgroundUrl: string | null) =>
+      setChatBackground(conversationId, backgroundUrl),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["chat-details", conversationId],
+      });
+    },
   });
 }
 

@@ -11,6 +11,7 @@ import {
   demoListPinnedMessages,
   demoReactToMessage,
   demoSendMessage,
+  demoSetChatBackground,
   demoSubscribeToMessages,
   demoUnreactToMessage,
 } from "../../../services/demo-service";
@@ -259,6 +260,26 @@ export async function updateChat(
     .eq("id", conversationId)
     .select("*")
     .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as Conversation;
+}
+
+export async function setChatBackground(
+  conversationId: string,
+  backgroundUrl: string | null,
+): Promise<Conversation> {
+  if (env.demoMode) {
+    return demoSetChatBackground(conversationId, backgroundUrl);
+  }
+
+  const { data, error } = await supabase.rpc("set_chat_background", {
+    input_conversation_id: conversationId,
+    input_background_url: backgroundUrl,
+  });
 
   if (error) {
     throw error;
