@@ -9,6 +9,23 @@ export type LinkPlatform =
   | "tiktok"
   | "generic";
 
+/**
+ * Color de marca por plataforma (para teñir icono/fila). Para marcas oscuras
+ * (X, GitHub) usamos blanco para que se vean sobre el tema oscuro.
+ * `generic` es un fallback neutro; en la UI se suele sustituir por el acento.
+ */
+export const BRAND_COLORS: Record<LinkPlatform, string> = {
+  youtube: "#FF0000",
+  twitch: "#9146FF",
+  twitter: "#FFFFFF",
+  instagram: "#E4405F",
+  github: "#FFFFFF",
+  linkedin: "#0A66C2",
+  facebook: "#1877F2",
+  tiktok: "#FF0050",
+  generic: "#8B5CF6",
+};
+
 function extractDomain(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, "");

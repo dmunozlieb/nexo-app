@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { linkPresentation } from "../src/features/profile/utils/link-presentation";
+import { BRAND_COLORS, linkPresentation } from "../src/features/profile/utils/link-presentation";
 
 describe("linkPresentation", () => {
   it("detecta youtube y limpia el dominio", () => {
@@ -23,5 +23,28 @@ describe("linkPresentation", () => {
       platform: "generic",
       domain: "luna.art",
     });
+  });
+
+  it("expone un color de marca por plataforma conocida", () => {
+    expect(BRAND_COLORS.youtube).toBe("#FF0000");
+    expect(BRAND_COLORS.instagram).toBe("#E4405F");
+    expect(BRAND_COLORS.twitch).toBe("#9146FF");
+  });
+
+  it("tiene color para todas las plataformas, incluida generic", () => {
+    const platforms = [
+      "youtube",
+      "twitch",
+      "twitter",
+      "instagram",
+      "github",
+      "linkedin",
+      "facebook",
+      "tiktok",
+      "generic",
+    ] as const;
+    for (const p of platforms) {
+      expect(BRAND_COLORS[p]).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
   });
 });
