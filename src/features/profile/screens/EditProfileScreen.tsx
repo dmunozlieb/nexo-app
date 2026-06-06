@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Animated, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,8 +21,18 @@ import { AccentPicker } from "../components/AccentPicker";
 import { LinksEditor } from "../components/LinksEditor";
 import { LivePreviewHeader } from "../components/LivePreviewHeader";
 import { resolveAccent } from "../utils/resolve-accent";
+import { useStaggerIn } from "../../../hooks/useStaggerIn";
 
 const USERNAME_COOLDOWN_DAYS = 90;
+
+function SectionHeader({ label, color }: { label: string; color: string }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <View style={[styles.sectionBar, { backgroundColor: color }]} />
+      <Text style={[styles.sectionHeaderText, { color: "#FFFFFF" }]}>{label}</Text>
+    </View>
+  );
+}
 
 export function EditProfileScreen() {
   const theme = useTheme();
@@ -49,6 +59,12 @@ export function EditProfileScreen() {
   const username = form.watch("username");
   const accentColor = form.watch("accentColor");
   const links = form.watch("links") ?? [];
+
+  const enterPreview = useStaggerIn(0);
+  const enterAppearance = useStaggerIn(1);
+  const enterIdentity = useStaggerIn(2);
+  const enterAccent = useStaggerIn(3);
+  const enterLinks = useStaggerIn(4);
 
   const accent = resolveAccent({
     id: auth.session?.user.id ?? "",
@@ -152,15 +168,18 @@ export function EditProfileScreen() {
           </Text>
         </View>
 
-        <LivePreviewHeader
-          displayName={displayName}
-          username={username}
-          avatarUrl={avatarUrl ?? null}
-          bannerUrl={bannerUrl ?? null}
-          accent={accent}
-        />
+        <Animated.View style={enterPreview}>
+          <LivePreviewHeader
+            displayName={displayName}
+            username={username}
+            avatarUrl={avatarUrl ?? null}
+            bannerUrl={bannerUrl ?? null}
+            accent={accent}
+          />
+        </Animated.View>
 
-        <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>Apariencia</Text>
+        <Animated.View style={enterAppearance}>
+        <SectionHeader label="Apariencia" color={accent[0]} />
         <View style={styles.avatarRow}>
           <Avatar uri={avatarUrl} label={displayName} size={64} />
           <Button
@@ -206,7 +225,9 @@ export function EditProfileScreen() {
           ) : null}
         </View>
 
-        <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>Identidad</Text>
+        </Animated.View>
+        <Animated.View style={enterIdentity}>
+        <SectionHeader label="Identidad" color={accent[1]} />
         <Controller
           control={form.control}
           name="displayName"
@@ -257,17 +278,22 @@ export function EditProfileScreen() {
           )}
         />
 
-        <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>Color de acento</Text>
+        </Animated.View>
+        <Animated.View style={enterAccent}>
+        <SectionHeader label="Color de acento" color={accent[0]} />
         <AccentPicker
           value={accentColor ?? null}
           onChange={(hex) => form.setValue("accentColor", hex, { shouldValidate: true })}
         />
+        </Animated.View>
 
-        <Text style={[styles.sectionLabel, { color: theme.colors.text }]}>Enlaces</Text>
+        <Animated.View style={enterLinks}>
+        <SectionHeader label="Enlaces" color={accent[1]} />
         <LinksEditor
           value={links as ProfileLink[]}
           onChange={(next) => form.setValue("links", next, { shouldValidate: true })}
         />
+        </Animated.View>
 
         <Button
           title="Guardar cambios"
@@ -298,10 +324,20 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     lineHeight: 21,
   },
-  sectionLabel: {
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 4,
+  },
+  sectionBar: {
+    width: 4,
+    height: 18,
+    borderRadius: 2,
+  },
+  sectionHeaderText: {
     fontSize: typography.h3,
     fontWeight: "800",
-    marginTop: 4,
   },
   avatarRow: {
     flexDirection: "row",
